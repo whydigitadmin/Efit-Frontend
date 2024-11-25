@@ -13,6 +13,16 @@ const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')))
 // login option 3 routing
 // const Fin1 = Loadable(lazy(() => import('views/Finance')));
 const AdjustmentJournal = Loadable(lazy(() => import('views/Finance/AdjustmentJournal')));
+const Department = Loadable(lazy(() => import('views/Finance/opsTransaction/Department')));
+const Designation = Loadable(lazy(() => import('views/Finance/opsTransaction/Designation')));
+const DrawingMaster = Loadable(lazy(() => import('views/Finance/opsTransaction/DrawingMaster')));
+const Gst = Loadable(lazy(() => import('views/Finance/opsTransaction/Gst')));
+const ItemMaster = Loadable(lazy(() => import('views/Finance/opsTransaction/ItemMaster')));
+const MachineMaster = Loadable(lazy(() => import('views/Finance/opsTransaction/MachineMaster')));
+const MaterialType = Loadable(lazy(() => import('views/Finance/opsTransaction/MaterialType')));
+const MeasuringInstrument = Loadable(lazy(() => import('views/Finance/opsTransaction/MeasuringInstrument')));
+const StockLocation = Loadable(lazy(() => import('views/Finance/opsTransaction/StockLocation')));
+const Uom = Loadable(lazy(() => import('views/Finance/opsTransaction/Uom')));
 const Deposit = Loadable(lazy(() => import('views/Finance/Deposit')));
 const Withdrawal = Loadable(lazy(() => import('views/Finance/Withdrawal')));
 const ContraVoucher = Loadable(lazy(() => import('views/Finance/ContraVoucher')));
@@ -60,7 +70,7 @@ const Employee = Loadable(lazy(() => import('views/basicMaster/employee')));
 const ChargeTypeRequest = Loadable(lazy(() => import('views/Finance/ChargeTypeRequest')));
 const JobCard = Loadable(lazy(() => import('views/Finance/JobCard')));
 const AdjustmentOffset = Loadable(lazy(() => import('views/Finance/AdjustmentOffset')));
-// const ExcelUpload = Loadable(lazy(() => import('views/Finance/excelUpload'))); 
+// const ExcelUpload = Loadable(lazy(() => import('views/Finance/excelUpload')));
 const TaxInvoiceDetail = Loadable(lazy(() => import('views/Finance/taxInvoice/taxInvoiceDetail')));
 const CreditNoteDetail = Loadable(lazy(() => import('views/Finance/creditNote/CreditNoteDetail')));
 const CostInvoice = Loadable(lazy(() => import('views/Finance/costInvoice/CostInvoice')));
@@ -329,6 +339,46 @@ const FinanceRoute = {
     {
       path: '/Finance/ContraVoucher',
       element: <ContraVoucher />
+    },
+    {
+      path: '/Finance/opsTransaction/Department',
+      element: <Department />
+    },
+    {
+      path: '/Finance/opsTransaction/Designation',
+      element: <Designation />
+    },
+    {
+      path: '/Finance/opsTransaction/DrawingMaster',
+      element: <DrawingMaster />
+    },
+    {
+      path: '/Finance/opsTransaction/Gst',
+      element: <Gst />
+    },
+    {
+      path: '/Finance/opsTransaction/ItemMaster',
+      element: <ItemMaster />
+    },
+    {
+      path: '/Finance/opsTransaction/MachineMaster',
+      element: <MachineMaster />
+    },
+    {
+      path: '/Finance/opsTransaction/MaterialType',
+      element: <MaterialType />
+    },
+    {
+      path: '/Finance/opsTransaction/MeasuringInstrument',
+      element: <MeasuringInstrument />
+    },
+    {
+      path: '/Finance/opsTransaction/StockLocation',
+      element: <StockLocation />
+    },
+    {
+      path: '/Finance/opsTransaction/Uom',
+      element: <Uom />
     }
   ]
 };
