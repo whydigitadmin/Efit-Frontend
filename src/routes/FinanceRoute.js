@@ -19,10 +19,12 @@ const DrawingMaster = Loadable(lazy(() => import('views/Finance/opsTransaction/D
 const Gst = Loadable(lazy(() => import('views/Finance/opsTransaction/Gst')));
 const ItemMaster = Loadable(lazy(() => import('views/Finance/opsTransaction/ItemMaster')));
 const MachineMaster = Loadable(lazy(() => import('views/Finance/opsTransaction/MachineMaster')));
-const MaterialType = Loadable(lazy(() => import('views/Finance/opsTransaction/MaterialType')));
 const MeasuringInstrument = Loadable(lazy(() => import('views/Finance/opsTransaction/MeasuringInstrument')));
 const StockLocation = Loadable(lazy(() => import('views/Finance/opsTransaction/StockLocation')));
 const Uom = Loadable(lazy(() => import('views/Finance/opsTransaction/Uom')));
+const ItemWiseProcess = Loadable(lazy(() => import('views/Finance/opsTransaction/ItemWiseProcess')));
+const ShiftMaster = Loadable(lazy(() => import('views/Finance/opsTransaction/ShiftMaster')));
+const ProcessMaster = Loadable(lazy(() => import('views/Finance/opsTransaction/ProcessMaster')));
 const Deposit = Loadable(lazy(() => import('views/Finance/Deposit')));
 const Withdrawal = Loadable(lazy(() => import('views/Finance/Withdrawal')));
 const ContraVoucher = Loadable(lazy(() => import('views/Finance/ContraVoucher')));
@@ -365,10 +367,6 @@ const FinanceRoute = {
       element: <MachineMaster />
     },
     {
-      path: '/Finance/opsTransaction/MaterialType',
-      element: <MaterialType />
-    },
-    {
       path: '/Finance/opsTransaction/MeasuringInstrument',
       element: <MeasuringInstrument />
     },
@@ -379,6 +377,18 @@ const FinanceRoute = {
     {
       path: '/Finance/opsTransaction/Uom',
       element: <Uom />
+    },
+    {
+      path: '/Finance/opsTransaction/ItemWiseProcess',
+      element: <ItemWiseProcess />
+    },
+    {
+      path: '/Finance/opsTransaction/ShiftMaster',
+      element: <ShiftMaster />
+    },
+    {
+      path: '/Finance/opsTransaction/ProcessMaster',
+      element: <ProcessMaster />
     }
   ]
 };

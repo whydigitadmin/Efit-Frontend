@@ -52,16 +52,16 @@ const opsTransaction = {
           url: '/Finance/opsTransaction/ItemMaster'
         },
         {
+          id: 'itemWiseProcess',
+          title: 'Item Wise Process Master',
+          type: 'item',
+          url: '/Finance/opsTransaction/ItemWiseProcess'
+        },
+        {
           id: 'machineMaster',
           title: 'Machine Master',
           type: 'item',
           url: '/Finance/opsTransaction/MachineMaster'
-        },
-        {
-          id: 'materialType',
-          title: 'Material Type',
-          type: 'item',
-          url: '/Finance/opsTransaction/MaterialType'
         },
         {
           id: 'measuringInstrument',
@@ -70,10 +70,22 @@ const opsTransaction = {
           url: '/Finance/opsTransaction/MeasuringInstrument'
         },
         {
+          id: 'shiftMaster',
+          title: 'Shift Master',
+          type: 'item',
+          url: '/Finance/opsTransaction/ShiftMaster'
+        },
+        {
           id: 'stockLocation',
           title: 'Stock Location',
           type: 'item',
           url: '/Finance/opsTransaction/StockLocation'
+        },
+        {
+          id: 'processMaster',
+          title: 'Process Master',
+          type: 'item',
+          url: '/Finance/opsTransaction/ProcessMaster'
         },
         {
           id: 'uom',
