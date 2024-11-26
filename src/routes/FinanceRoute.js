@@ -86,6 +86,12 @@ const MaterialType = Loadable(lazy(() => import('views/Finance/opsTransaction/Ma
 const Enquiry = Loadable(lazy(() => import('views/Operations/Customer-Enquiry/Enquiry')));
 const Quotation = Loadable(lazy(() => import('views/Operations/Customer-Enquiry/Quotation')));
 const WorkOrder = Loadable(lazy(() => import('views/Operations/Customer-Enquiry/WorkOrder')));
+const PurchaseEnquiry = Loadable(lazy(() => import('views/Operations/Purchase/PurchaseEnquiry')));
+const PurChaseIndent = Loadable(lazy(() => import('views/Operations/Purchase/PurchaseIndent')));
+const PurchaseQuotation = Loadable(lazy(() => import('views/Operations/Purchase/PurchaseQuotation')));
+const PurchaseOrder = Loadable(lazy(() => import('views/Operations/Purchase/PurchaseOrder')));
+const PurchaseInvoice = Loadable(lazy(() => import('views/Operations/Purchase/PurchaseInvoice')));
+const PurchaseReturn = Loadable(lazy(() => import('views/Operations/Purchase/PurchaseReturn')));
 
 // const AuthRegister3 = Loadable(lazy(() => import('views/pages/authentication/authentication3/Register3')));
 
@@ -410,6 +416,30 @@ const FinanceRoute = {
     {
       path: '/Operations/Customer-Enquiry/WorkOrder',
       element: <WorkOrder />
+    },
+    {
+      path: '/Operations/Purchase/PurchaseEnquiry',
+      element: <PurchaseEnquiry />
+    },
+    {
+      path: '/Operations/Purchase/PurchaseIndent',
+      element: <PurChaseIndent />
+    },
+    {
+      path: '/Operations/Purchase/PurchaseQuotation',
+      element: <PurchaseQuotation />
+    },
+    {
+      path: '/Operations/Purchase/PurchaseOrder',
+      element: <PurchaseOrder />
+    },
+    {
+      path: '/Operations/Purchase/PurchaseInvoice',
+      element: <PurchaseInvoice />
+    },
+    {
+      path: '/Operations/Purchase/PurchaseReturn',
+      element: <PurchaseReturn />
     },
   ]
 };
