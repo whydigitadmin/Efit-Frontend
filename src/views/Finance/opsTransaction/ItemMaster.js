@@ -33,8 +33,9 @@ const ItemMaster = () => {
     needQcApproval: '',
     itemType: '',
     inspection: '',
-    itemGroup: '',
-    itemSubGroup: '',
+    materialType: '',
+    materialGroup: '',
+    materialSubGroup: '',
     itemDescription: '',
     instrumentSeqCode: '',
     primaryUnit: '',
@@ -50,8 +51,9 @@ const ItemMaster = () => {
     needQcApproval: '',
     itemType: '',
     inspection: '',
-    itemGroup: '',
-    itemSubGroup: '',
+    materialType: '',
+    materialGroup: '',
+    materialSubGroup: '',
     itemDescription: '',
     instrumentSeqCode: '',
     primaryUnit: '',
@@ -230,8 +232,9 @@ const ItemMaster = () => {
       needQcApproval: '',
       itemType: '',
       inspection: '',
-      itemGroup: '',
-      itemSubGroup: '',
+      materialType: '',
+      materialGroup: '',
+      materialSubGroup: '',
       itemDescription: '',
       instrumentSeqCode: '',
       primaryUnit: '',
@@ -270,8 +273,9 @@ const ItemMaster = () => {
     if (!formData.needQcApproval) errors.needQcApproval = 'Need Qc Approval is required';
     if (!formData.itemType) errors.itemType = 'Item Type is required';
     if (!formData.inspection) errors.inspection = 'Inspection is required';
-    if (!formData.itemGroup) errors.itemGroup = 'Item Group is required';
-    if (!formData.itemSubGroup) errors.itemSubGroup = 'Item Sub Group is required';
+    if (!formData.materialType) errors.materialType = 'Material Type is required';
+    if (!formData.materialGroup) errors.materialGroup = 'Material Group is required';
+    if (!formData.materialSubGroup) errors.materialSubGroup = 'Material Sub Group is required';
     if (!formData.itemDescription) errors.itemDescription = 'Item Description is required';
     if (!formData.instrumentSeqCode) errors.instrumentSeqCode = 'Instrument Seq Code is required';
     if (!formData.primaryUnit) errors.primaryUnit = 'Primary Unit is required';
@@ -434,6 +438,25 @@ const ItemMaster = () => {
           <>
             <div className="row d-flex">
               <div className="col-md-3 mb-3">
+                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.itemType}>
+                  <InputLabel id="itemType">Item Type</InputLabel>
+                  <Select
+                    labelId="itemType"
+                    id="itemType"
+                    label="Item Type"
+                    onChange={handleInputChange}
+                    name="itemType"
+                    value={formData.itemType}
+                  >
+                    <MenuItem value="FG">FG</MenuItem>
+                    <MenuItem value="SFG">SFG</MenuItem>
+                    <MenuItem value="Raw Material">Raw Material</MenuItem>
+                  </Select>
+                  {fieldErrors.itemType && <FormHelperText>{fieldErrors.itemType}</FormHelperText>}
+                </FormControl>
+              </div>
+
+              <div className="col-md-3 mb-3">
                 <FormControl fullWidth variant="filled">
                   <TextField
                     id="itemName"
@@ -449,6 +472,26 @@ const ItemMaster = () => {
                     inputProps={{ maxLength: 30 }}
                     error={!!fieldErrors.itemName}
                     helperText={fieldErrors.itemName}
+                  />
+                </FormControl>
+              </div>
+
+              <div className="col-md-3 mb-3">
+                <FormControl fullWidth variant="filled">
+                  <TextField
+                    id="itemDescription"
+                    label={
+                      <span>
+                        Item Description <span className="asterisk">*</span>
+                      </span>
+                    }
+                    name="itemDescription"
+                    size="small"
+                    value={formData.itemDescription}
+                    onChange={handleInputChange}
+                    inputProps={{ maxLength: 30 }}
+                    error={!!fieldErrors.itemDescription}
+                    helperText={fieldErrors.itemDescription}
                   />
                 </FormControl>
               </div>
@@ -472,20 +515,56 @@ const ItemMaster = () => {
               </div>
 
               <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.itemType}>
-                  <InputLabel id="itemType">Item Type</InputLabel>
+                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.materialType}>
+                  <InputLabel id="materialType">Material Type</InputLabel>
                   <Select
-                    labelId="itemType"
-                    id="itemType"
-                    label="Item Type"
+                    labelId="materialType"
+                    id="materialType"
+                    label="Material Type"
                     onChange={handleInputChange}
-                    name="itemType"
-                    value={formData.itemType}
+                    name="materialType"
+                    value={formData.materialType}
                   >
                     <MenuItem value="Head Office">Head Office</MenuItem>
                     <MenuItem value="Branch">Branch</MenuItem>
                   </Select>
-                  {fieldErrors.itemType && <FormHelperText>{fieldErrors.itemType}</FormHelperText>}
+                  {fieldErrors.materialType && <FormHelperText>{fieldErrors.materialType}</FormHelperText>}
+                </FormControl>
+              </div>
+
+              <div className="col-md-3 mb-3">
+                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.materialGroup}>
+                  <InputLabel id="materialGroup">Material Group</InputLabel>
+                  <Select
+                    labelId="materialGroup"
+                    id="materialGroup"
+                    label="Material Group"
+                    onChange={handleInputChange}
+                    name="materialGroup"
+                    value={formData.materialGroup}
+                  >
+                    <MenuItem value="Head Office">Head Office</MenuItem>
+                    <MenuItem value="Branch">Branch</MenuItem>
+                  </Select>
+                  {fieldErrors.materialGroup && <FormHelperText>{fieldErrors.materialGroup}</FormHelperText>}
+                </FormControl>
+              </div>
+
+              <div className="col-md-3 mb-3">
+                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.materialSubGroup}>
+                  <InputLabel id="materialSubGroup">Material Sub Group</InputLabel>
+                  <Select
+                    labelId="materialSubGroup"
+                    id="materialSubGroup"
+                    label="Material Sub Group"
+                    onChange={handleInputChange}
+                    name="materialSubGroup"
+                    value={formData.materialSubGroup}
+                  >
+                    <MenuItem value="Head Office">Head Office</MenuItem>
+                    <MenuItem value="Branch">Branch</MenuItem>
+                  </Select>
+                  {fieldErrors.materialSubGroup && <FormHelperText>{fieldErrors.materialSubGroup}</FormHelperText>}
                 </FormControl>
               </div>
 
@@ -504,62 +583,6 @@ const ItemMaster = () => {
                     <MenuItem value="Branch">Branch</MenuItem>
                   </Select>
                   {fieldErrors.inspection && <FormHelperText>{fieldErrors.inspection}</FormHelperText>}
-                </FormControl>
-              </div>
-
-              <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.itemGroup}>
-                  <InputLabel id="itemGroup">Item Group</InputLabel>
-                  <Select
-                    labelId="itemGroup"
-                    id="itemGroup"
-                    label="Item Group"
-                    onChange={handleInputChange}
-                    name="itemGroup"
-                    value={formData.itemGroup}
-                  >
-                    <MenuItem value="Head Office">Head Office</MenuItem>
-                    <MenuItem value="Branch">Branch</MenuItem>
-                  </Select>
-                  {fieldErrors.itemGroup && <FormHelperText>{fieldErrors.itemGroup}</FormHelperText>}
-                </FormControl>
-              </div>
-
-              <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.itemSubGroup}>
-                  <InputLabel id="itemSubGroup">Item Sub Group</InputLabel>
-                  <Select
-                    labelId="itemSubGroup"
-                    id="itemSubGroup"
-                    label="Item Sub Group"
-                    onChange={handleInputChange}
-                    name="itemSubGroup"
-                    value={formData.itemSubGroup}
-                  >
-                    <MenuItem value="Head Office">Head Office</MenuItem>
-                    <MenuItem value="Branch">Branch</MenuItem>
-                  </Select>
-                  {fieldErrors.itemSubGroup && <FormHelperText>{fieldErrors.itemSubGroup}</FormHelperText>}
-                </FormControl>
-              </div>
-
-              <div className="col-md-3 mb-3">
-                <FormControl fullWidth variant="filled">
-                  <TextField
-                    id="itemDescription"
-                    label={
-                      <span>
-                        Item Description <span className="asterisk">*</span>
-                      </span>
-                    }
-                    name="itemDescription"
-                    size="small"
-                    value={formData.itemDescription}
-                    onChange={handleInputChange}
-                    inputProps={{ maxLength: 30 }}
-                    error={!!fieldErrors.itemDescription}
-                    helperText={fieldErrors.itemDescription}
-                  />
                 </FormControl>
               </div>
 
@@ -796,7 +819,9 @@ const ItemMaster = () => {
                                         value={row.taxEffectiveFrom}
                                         onChange={(e) => {
                                           const value = e.target.value;
-                                          setTaxSlabData((prev) => prev.map((r) => (r.id === row.id ? { ...r, taxEffectiveFrom: value } : r)));
+                                          setTaxSlabData((prev) =>
+                                            prev.map((r) => (r.id === row.id ? { ...r, taxEffectiveFrom: value } : r))
+                                          );
                                           setTaxSlabErrors((prev) => {
                                             const newErrors = [...prev];
                                             newErrors[index] = {
@@ -897,7 +922,9 @@ const ItemMaster = () => {
                                         value={row.priceEffectiveFrom}
                                         onChange={(e) => {
                                           const value = e.target.value;
-                                          setPriceSlabData((prev) => prev.map((r) => (r.id === row.id ? { ...r, priceEffectiveFrom: value } : r)));
+                                          setPriceSlabData((prev) =>
+                                            prev.map((r) => (r.id === row.id ? { ...r, priceEffectiveFrom: value } : r))
+                                          );
                                           setPriceSlabErrors((prev) => {
                                             const newErrors = [...prev];
                                             newErrors[index] = {
