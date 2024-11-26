@@ -82,6 +82,11 @@ const PaymentVoucher = Loadable(lazy(() => import('views/Finance/paymentVoucher/
 const ARAPDetail = Loadable(lazy(() => import('views/Finance/ARAP-Details')));
 const ARAPAdjustment = Loadable(lazy(() => import('views/Finance/APAP-Adjustment')));
 const PartMaster = Loadable(lazy(() => import('views/Finance/PartyMaster')));
+const MaterialType = Loadable(lazy(() => import('views/Finance/opsTransaction/MaterialType')));
+const Enquiry = Loadable(lazy(() => import('views/Operations/Customer-Enquiry/Enquiry')));
+const Quotation = Loadable(lazy(() => import('views/Operations/Customer-Enquiry/Quotation')));
+const WorkOrder = Loadable(lazy(() => import('views/Operations/Customer-Enquiry/WorkOrder')));
+
 // const AuthRegister3 = Loadable(lazy(() => import('views/pages/authentication/authentication3/Register3')));
 
 // ==============================|| AUTHENTICATION ROUTING ||============================== //
@@ -389,7 +394,23 @@ const FinanceRoute = {
     {
       path: '/Finance/opsTransaction/ProcessMaster',
       element: <ProcessMaster />
-    }
+    },
+    {
+      path: '/Finance/opsTransaction/MaterialType',
+      element: <MaterialType />
+    },
+    {
+      path: '/Operations/Customer-Enquiry/Enquiry',
+      element: <Enquiry />
+    },
+    {
+      path: '/Operations/Customer-Enquiry/Quotation',
+      element: <Quotation />
+    },
+    {
+      path: '/Operations/Customer-Enquiry/WorkOrder',
+      element: <WorkOrder />
+    },
   ]
 };
 

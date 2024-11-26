@@ -92,6 +92,12 @@ const opsTransaction = {
           title: 'Uom',
           type: 'item',
           url: '/Finance/opsTransaction/Uom'
+        },
+        {
+          id: 'materialType',
+          title: 'Material Type',
+          type: 'item',
+          url: '/Finance/opsTransaction/MaterialType'
         }
       ]
     }
