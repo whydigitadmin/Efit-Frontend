@@ -447,7 +447,7 @@ const FinanceRoute = {
       element: <PurchaseInvoice />
     },
     {
-      path: '/Operations//PurchaseReturn',
+      path: '/Operations/Purchase/PurchaseReturn',
       element: <PurchaseReturn />
     },
     {
