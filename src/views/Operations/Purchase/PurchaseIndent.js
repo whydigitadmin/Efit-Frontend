@@ -225,22 +225,54 @@ const PurchaseIndent = () => {
     if (!formData.customerPONo) {
       errors.customerPONo = 'Customer PO No is required';
     }
+    if (!formData.verifiedBy) {
+      errors.verifiedBy = 'Verified By is required';
+    }
+    if (!formData.remarks) {
+      errors.remarks = 'Remarks is required';
+    }
 
     setFieldErrors(errors);
 
 
     let indentDocumentsDataValid = true;
-    const newTableErrors1 = indentDocumentsData.map((row) => {
-      const rowErrors = {};
-      if (!row.branchCode) {
-        rowErrors.branchCode = 'Branch Code is required';
-        indentDocumentsDataValid = false;
-      }
-      return rowErrors;
-    });
+    if (!indentDocumentsData || !Array.isArray(indentDocumentsData) || indentDocumentsData.length === 0) {
+      indentDocumentsDataValid = false;
+      setIndentDocumentsErrors([{ general: 'PurchaseIndent is required' }]);
+    } else {
+      const newTableErrors = indentDocumentsData.map((row, index) => {
+        const rowErrors = {};
+        if (!row.item) {
+          rowErrors.item = 'Item is required';
+          indentDocumentsDataValid = false;
+        }
+        if (!row.description) {
+          rowErrors.description = 'Decription is required';
+          indentDocumentsDataValid = false;
+        }
+        if (!row.uom) {
+          rowErrors.uom = 'UOM is required';
+          indentDocumentsDataValid = false;
+        }
+        if (!row.qty) {
+          rowErrors.qty = 'Required QTY is required';
+          indentDocumentsDataValid = false;
+        }
+        if (!row.avlStock) {
+          rowErrors.avlStock = 'Avl Stock is required';
+          indentDocumentsDataValid = false;
+        }
+        if (!row.indentQty) {
+          rowErrors.indentQty = 'Indent QTY is required';
+          indentDocumentsDataValid = false;
+        }
+
+        return rowErrors;
+      });
+      setIndentDocumentsErrors(newTableErrors);
+    }
     setFieldErrors(errors);
 
-    setIndentDocumentsErrors(newTableErrors1);
 
     if (Object.keys(errors).length === 0 && indentDocumentsDataValid) {
       setIsLoading(true);
@@ -317,7 +349,7 @@ const PurchaseIndent = () => {
 
   const handleAddRow = () => {
     if (isLastRowEmpty(indentDocumentsData)) {
-      displayRowError(indentDocumentsErrors);
+      displayRowError(indentDocumentsData);
       return;
     }
     const newRow = {
@@ -338,9 +370,7 @@ const PurchaseIndent = () => {
     if (!lastRow) return false;
 
     if (table === indentDocumentsData) {
-      return !lastRow.role || !lastRow.startDate;
-    } else if (table === indentDocumentsData) {
-      return !lastRow.branchCode;
+      return !lastRow.item || !lastRow.description || !lastRow.uom || !lastRow.qty || !lastRow.avlStock || !lastRow.indentQty || !lastRow.verifiedBy || !lastRow.remarks;
     }
     return false;
   };
@@ -351,7 +381,14 @@ const PurchaseIndent = () => {
         const newErrors = [...prevErrors];
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
-          branchCode: !table[table.length - 1].branchCode ? 'Branch Code is required' : ''
+          item: !table[table.length - 1].item ? 'Item is required' : '',
+          description: !table[table.length - 1].description ? 'Item Description is required' : '',
+          uom: !table[table.length - 1].uom ? 'UOM is required' : '',
+          qty: !table[table.length - 1].qty ? 'Require Qty is required' : '',
+          avlStock: !table[table.length - 1].avlStock ? 'Avl Stock is required' : '',
+          indentQty: !table[table.length - 1].indentQty ? 'Indent Qty is required' : '',
+          verifiedBy: !table[table.length - 1].verifiedBy ? 'VerifiedBy is required' : '',
+          remarks: !table[table.length - 1].remarks ? 'Remarks is required' : '',
         };
         return newErrors;
       });

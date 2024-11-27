@@ -219,13 +219,13 @@ const ProcessMaster = () => {
   const handleSave = async () => {
     const errors = {};
 
-    // if (!formData.processId) {
-    //   errors.processId = 'Process ID is required';
-    // }
+    if (!formData.processId) {
+      errors.processId = 'Process ID is required';
+    }
     if (!formData.processName) {
       errors.processName = 'Process Name is required';
     }
-    
+
 
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
@@ -318,7 +318,7 @@ const ProcessMaster = () => {
                   error={!!fieldErrors.processName}
                   helperText={fieldErrors.processName}
                 />
-              </div>  
+              </div>
             </div>
           </>
         )}
