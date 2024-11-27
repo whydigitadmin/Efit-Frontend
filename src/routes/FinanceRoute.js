@@ -92,6 +92,15 @@ const PurchaseQuotation = Loadable(lazy(() => import('views/Operations/Purchase/
 const PurchaseOrder = Loadable(lazy(() => import('views/Operations/Purchase/PurchaseOrder')));
 const PurchaseInvoice = Loadable(lazy(() => import('views/Operations/Purchase/PurchaseInvoice')));
 const PurchaseReturn = Loadable(lazy(() => import('views/Operations/Purchase/PurchaseReturn')));
+const GateInwardEntry = Loadable(lazy(() => import('views/Operations/Inbound-Outbound/GateInwardEntry')));
+const GateOutwardEntry = Loadable(lazy(() => import('views/Operations/Inbound-Outbound/GateOutwardEntry')));
+const GRN = Loadable(lazy(() => import('views/Operations/Inventory/GRN')));
+const PutAway = Loadable(lazy(() => import('views/Operations/Inventory/Putaway')));
+const ThirdPartyReportDetails = Loadable(lazy(() => import('views/Operations/Inventory/ThirdPartyReportDetails')));
+const RouteCardEntry = Loadable(lazy(() => import('views/Operations/Inventory/RouteCardEntry')));
+const ItemIssueToProduction = Loadable(lazy(() => import('views/Operations/Inventory/ItemIssueToProduction')));
+const PickList = Loadable(lazy(() => import('views/Operations/Inventory/PickList')));
+const IdentificationTag = Loadable(lazy(() => import('views/Operations/Inventory/IdentificationTag')));
 
 // const AuthRegister3 = Loadable(lazy(() => import('views/pages/authentication/authentication3/Register3')));
 
@@ -438,8 +447,44 @@ const FinanceRoute = {
       element: <PurchaseInvoice />
     },
     {
-      path: '/Operations/Purchase/PurchaseReturn',
+      path: '/Operations//PurchaseReturn',
       element: <PurchaseReturn />
+    },
+    {
+      path: '/Inbound-Outbound/Gate-Inward-Entry',
+      element: <GateInwardEntry />
+    },
+    {
+      path: '/Inbound-Outbound/Gate-Outward-Entry',
+      element: <GateOutwardEntry />
+    },
+    {
+      path: '/Inventory/GRN',
+      element: <GRN />
+    },
+    {
+      path: '/Inventory/Putaway',
+      element: <PutAway />
+    },
+    {
+      path: '/Inventory/Third-Party-Report-Details',
+      element: <ThirdPartyReportDetails />
+    },
+    {
+      path: '/Inventory/Route-Card-Entry',
+      element: <RouteCardEntry />
+    },
+    {
+      path: '/Inventory/Item-Issue-To-Production',
+      element: <ItemIssueToProduction />
+    },
+    {
+      path: '/Inventory/Pick-List',
+      element: <PickList />
+    },
+    {
+      path: '/Inventory/Identification-Tag',
+      element: <IdentificationTag />
     },
   ]
 };
