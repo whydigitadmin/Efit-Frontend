@@ -298,7 +298,6 @@ const ProcessMaster = () => {
                   variant="outlined"
                   size="small"
                   fullWidth
-                  disabled
                   name="processId"
                   value={formData.processId}
                   onChange={handleInputChange}
@@ -312,7 +311,6 @@ const ProcessMaster = () => {
                   label="Process Name"
                   variant="outlined"
                   size="small"
-                  required
                   fullWidth
                   name="processName"
                   value={formData.processName}

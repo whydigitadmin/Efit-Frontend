@@ -23,6 +23,8 @@ import ToastComponent, { showToast } from 'utils/toast-component';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 import { encryptPassword } from 'views/utilities/passwordEnc';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import CommonBulkUpload from 'utils/CommonBulkUpload';
+import { toast, ToastContainer } from 'react-toastify';
 
 const ShiftMaster = () => {
   const [showForm, setShowForm] = useState(true);
@@ -42,6 +44,7 @@ const ShiftMaster = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [listView, setListView] = useState(false);
   const [empList, setEmpList] = useState([]);
+  const [uploadOpen, setUploadOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     shiftName: '',
@@ -563,6 +566,25 @@ const ShiftMaster = () => {
     setValue(newValue);
   };
 
+  const handleBulkUploadOpen = () => {
+    setUploadOpen(true);
+  };
+
+  const handleBulkUploadClose = () => {
+    setUploadOpen(false);
+  };
+
+  const handleFileUpload = (event) => {
+    console.log(event.target.files[0]);
+  };
+
+  const handleSubmit = () => {
+    toast.success("File uploded sucessfully")
+    console.log('Submit clicked');
+    handleBulkUploadClose();
+    // getAllData();
+  };
+
   return (
     <>
       <div>
@@ -688,7 +710,23 @@ const ShiftMaster = () => {
                       <div className="row d-flex ml">
                         <div className="mb-1">
                           <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} />
-                          <ActionButton icon={CloudUploadIcon} title='Upload' />
+                          <ActionButton icon={CloudUploadIcon} title='Upload' onClick={handleBulkUploadOpen} />
+
+                          {uploadOpen && (
+                            <CommonBulkUpload
+                              open={uploadOpen}
+                              handleClose={handleBulkUploadClose}
+                              title="Upload Files"
+                              uploadText="Upload file"
+                              downloadText="Sample File"
+                              onSubmit={handleSubmit}
+                              // sampleFileDownload={FirstData}
+                              handleFileUpload={handleFileUpload}
+                              apiUrl={`excelfileupload/excelUploadForSample`}
+                              screen="PutAway"
+                            />
+                          )}
+
                         </div>
                         <div className="row mt-2">
                           <div className="col-lg-9">
