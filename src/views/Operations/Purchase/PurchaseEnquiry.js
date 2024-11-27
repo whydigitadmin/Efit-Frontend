@@ -39,6 +39,7 @@ const PurchaseEnquiry = () => {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [formData, setFormData] = useState({
     active: true,
+    purchaseEnquiryNo: '',
     docDate: dayjs(),
     docId: '',
     exRate: '',
@@ -52,6 +53,7 @@ const PurchaseEnquiry = () => {
   });
 
   const [fieldErrors, setFieldErrors] = useState({
+    purchaseEnquiryNo: '',
     docDate: new Date(),
     exRate: '',
     orgId: orgId,
@@ -64,14 +66,13 @@ const PurchaseEnquiry = () => {
   });
 
   const listViewColumns = [
-    { accessorKey: 'voucherSubType', header: 'Purchase Enquiry No', size: 140 },
+    { accessorKey: 'purchaseEnquiryNo', header: 'Purchase Enquiry No', size: 140 },
     { accessorKey: 'currency', header: 'Date  ', size: 140 },
     { accessorKey: 'exRate', header: 'Customer Name', size: 140 },
     { accessorKey: 'refNo', header: 'Work Order No', size: 140 },
     { accessorKey: 'docId', header: 'P.I No', size: 140 },
     { accessorKey: 'docId', header: 'Customer PO No', size: 140 },
     { accessorKey: 'docId', header: 'FG Item', size: 140 },
-
 
   ];
 
@@ -160,6 +161,7 @@ const PurchaseEnquiry = () => {
         setFormData({
           voucherSubType: glVO.voucherSubType || '',
           id: glVO.id || '',
+          purchaseEnquiryNo: glVO.purchaseEnquiryNo || '',
           docDate: glVO.docDate ? dayjs(glVO.docDate, 'YYYY-MM-DD') : dayjs(),
           docId: glVO.docId || '',
           currency: glVO.currency || '',
@@ -269,7 +271,13 @@ const PurchaseEnquiry = () => {
 
   const handleClear = () => {
     setFormData({
+      purchaseEnquiryNo: '',
       docDate: dayjs(),
+      customerName: '',
+      workOrderNo: '',
+      pINo:'',
+      customerPONo:'',
+      fgItem:'',
       exRate: '',
       orgId: orgId,
       refDate: null,
@@ -281,8 +289,13 @@ const PurchaseEnquiry = () => {
     });
     getAllActiveCurrency(orgId);
     setFieldErrors({
-      currency: '',
+      purchaseEnquiryNo: '',
       docDate: null,
+      customerName: '',
+      workOrderNo: '',
+      pINo:'',
+      customerPONo:'',
+      fgItem:'',
       exRate: '',
       orgId: orgId,
       refDate: '',
@@ -370,21 +383,36 @@ const PurchaseEnquiry = () => {
 
   const handleSave = async () => {
     const errors = {};
-    if (!formData.currency) {
-      errors.currency = 'customer Name';
+    if (!formData.customerName) {
+      errors.customerName = 'customer Name is required';
     }
-    if (!formData.UOMDescription) {
-      errors.UOMDescription = 'Customer PO No is required';
+    if (!formData.workOrderNo) {
+      errors.workOrderNo = 'Work Order No is required';
     }
-    if (!formData.refNo) {
-      errors.refNo = 'Customer PO No';
+    if (!formData.pINo) {
+      errors.pINo = 'p.I No is required';
     }
-    if (!formData.refDate) {
-      errors.refDate = 'Customer PO N is required';
+    if (!formData.customerPONo) {
+      errors.customerPONo = 'customer PO No is required';
     }
-    if (!formData.voucherSubType) {
-      errors.voucherSubType = 'Voucher Sub Type is required';
+    if (!formData.fgItem) {
+      errors.fgItem = 'FG Item is required';
     }
+    if (!formData.supplierName) {
+      errors.supplierName = 'Supplier Name is required';
+    }
+    if (!formData.contactPerson) {
+      errors.contactPerson = 'contact Person is required';
+    }
+    if (!formData.contactNo) {
+      errors.contactNo = 'Contact No is required';
+    }
+    if (!formData.enquiryType) {
+      errors.enquiryType = 'Enquiry Type is required';
+    }
+
+
+
 
     let detailTableDataValid = true;
     const newTableErrors = detailsTableData.map((row) => {
@@ -393,7 +421,7 @@ const PurchaseEnquiry = () => {
         rowErrors.item = 'Item is required';
         detailTableDataValid = false;
       }
-     
+
       if (!row.itemDesc) {
         rowErrors.itemDesc = 'Item Desc is required';
         detailTableDataValid = false;
@@ -534,7 +562,7 @@ const PurchaseEnquiry = () => {
                 </div>
                 {/* Customer Name */}
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.currency}>
+                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.customerName}>
                     <InputLabel id="demo-simple-select-label">
                       {
                         <span>
@@ -547,21 +575,21 @@ const PurchaseEnquiry = () => {
                       id="demo-simple-select"
                       label="Customer Name"
                       onChange={handleInputChange}
-                      name="currency"
-                      value={formData.currency}
+                      name="customerName"
+                      value={formData.customerName}
                     >
                       {currencies.map((item) => (
-                        <MenuItem key={item.id} value={item.currency}>
-                          {item.currency}
+                        <MenuItem key={item.id} value={item.customerName}>
+                          {item.customerName}
                         </MenuItem>
                       ))}
                     </Select>
-                    {fieldErrors.currency && <FormHelperText style={{ color: 'red' }}>customerName</FormHelperText>}
+                    {fieldErrors.customerName && <FormHelperText style={{ color: 'red' }}>customer Name is required</FormHelperText>}
                   </FormControl>
                 </div>
                 {/* Work Order No */}
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.currency}>
+                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.workOrderNo}>
                     <InputLabel id="demo-simple-select-label">
                       {
                         <span>
@@ -572,24 +600,24 @@ const PurchaseEnquiry = () => {
                     <Select
                       labelId="demo-simple-select-label"
                       id="demo-simple-select"
-                      label="Customer Name"
+                      label="Work Order No"
                       onChange={handleInputChange}
-                      name="currency"
-                      value={formData.currency}
+                      name="workOrderNo"
+                      value={formData.workOrderNo}
                     >
                       {currencies.map((item) => (
-                        <MenuItem key={item.id} value={item.currency}>
-                          {item.currency}
+                        <MenuItem key={item.id} value={item.workOrderNo}>
+                          {item.workOrderNo}
                         </MenuItem>
                       ))}
                     </Select>
-                    {fieldErrors.currency && <FormHelperText style={{ color: 'red' }}>customerName</FormHelperText>}
+                    {fieldErrors.workOrderNo && <FormHelperText style={{ color: 'red' }}>Work Order No is required</FormHelperText>}
                   </FormControl>
                 </div>
 
                 {/* P.I No */}
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.currency}>
+                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.pINo}>
                     <InputLabel id="demo-simple-select-label">
                       {
                         <span>
@@ -600,18 +628,18 @@ const PurchaseEnquiry = () => {
                     <Select
                       labelId="demo-simple-select-label"
                       id="demo-simple-select"
-                      label="Customer Name"
+                      label=" P.I No"
                       onChange={handleInputChange}
-                      name="currency"
-                      value={formData.currency}
+                      name="pINo"
+                      value={formData.pINo}
                     >
                       {currencies.map((item) => (
-                        <MenuItem key={item.id} value={item.currency}>
-                          {item.currency}
+                        <MenuItem key={item.id} value={item.pINo}>
+                          {item.pINo}
                         </MenuItem>
                       ))}
                     </Select>
-                    {fieldErrors.currency && <FormHelperText style={{ color: 'red' }}>customerName</FormHelperText>}
+                    {fieldErrors.pINo && <FormHelperText style={{ color: 'red' }}>P.I No is required</FormHelperText>}
                   </FormControl>
                 </div>
 
@@ -622,12 +650,11 @@ const PurchaseEnquiry = () => {
                     variant="outlined"
                     size="small"
                     fullWidth
-                    name="UOMDescription"
-                    value={formData.UOMDescription}
+                    name="customerPONo"
+                    value={formData.customerPONo}
                     onChange={handleInputChange}
-                    error={!!fieldErrors.UOMDescription}
-                    helperText={fieldErrors.UOMDescription}
-                  // inputRef={UOMDescriptionRef}
+                    error={!!fieldErrors.customerPONo}
+                    helperText={fieldErrors.customerPONo}
                   />
                 </div>
 
@@ -638,18 +665,18 @@ const PurchaseEnquiry = () => {
                     variant="outlined"
                     size="small"
                     fullWidth
-                    name="UOMDescription"
-                    value={formData.UOMDescription}
+                    name="fgItem "
+                    value={formData.fgItem}
                     onChange={handleInputChange}
-                    error={!!fieldErrors.UOMDescription}
-                    helperText={fieldErrors.UOMDescription}
+                    error={!!fieldErrors.fgItem}
+                    helperText={fieldErrors.fgItem}
                   // inputRef={UOMDescriptionRef}
                   />
                 </div>
 
                 {/* Supplier Name */}
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.currency}>
+                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.supplierName}>
                     <InputLabel id="demo-simple-select-label">
                       {
                         <span>
@@ -660,24 +687,24 @@ const PurchaseEnquiry = () => {
                     <Select
                       labelId="demo-simple-select-label"
                       id="demo-simple-select"
-                      label="Customer Name"
+                      label="Supplier Name"
                       onChange={handleInputChange}
-                      name="currency"
-                      value={formData.currency}
+                      name="supplierName"
+                      value={formData.supplierName}
                     >
                       {currencies.map((item) => (
-                        <MenuItem key={item.id} value={item.currency}>
-                          {item.currency}
+                        <MenuItem key={item.id} value={item.supplierName}>
+                          {item.supplierName}
                         </MenuItem>
                       ))}
                     </Select>
-                    {fieldErrors.currency && <FormHelperText style={{ color: 'red' }}>customerName</FormHelperText>}
+                    {fieldErrors.supplierName && <FormHelperText style={{ color: 'red' }}>Supplier Name is required</FormHelperText>}
                   </FormControl>
                 </div>
 
                 {/* Contact Person */}
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.currency}>
+                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.contactPerson}>
                     <InputLabel id="demo-simple-select-label">
                       {
                         <span>
@@ -688,40 +715,41 @@ const PurchaseEnquiry = () => {
                     <Select
                       labelId="demo-simple-select-label"
                       id="demo-simple-select"
-                      label="Customer Name"
+                      label=" Contact Person"
                       onChange={handleInputChange}
-                      name="currency"
-                      value={formData.currency}
+                      name="contactPerson"
+                      value={formData.contactPerson}
                     >
                       {currencies.map((item) => (
-                        <MenuItem key={item.id} value={item.currency}>
-                          {item.currency}
+                        <MenuItem key={item.id} value={item.contactPerson}>
+                          {item.contactPerson}
                         </MenuItem>
                       ))}
                     </Select>
-                    {fieldErrors.currency && <FormHelperText style={{ color: 'red' }}>customerName</FormHelperText>}
+                    {fieldErrors.contactPerson && <FormHelperText style={{ color: 'red' }}>Contact Person is required</FormHelperText>}
                   </FormControl>
                 </div>
 
-                {/* Contact No */}
-                <div className="col-md-3 mb-3">
+                 {/* Contact No */}
+                 <div className="col-md-3 mb-3">
                   <TextField
-                    id="outlined-textarea-zip"
                     label="Contact No"
                     variant="outlined"
                     size="small"
                     fullWidth
-                    name="docId"
-                    value={formData.docId}
+                    name="contactNo "
+                    value={formData.contactNo}
                     onChange={handleInputChange}
-                    disabled
-                    inputProps={{ maxLength: 10 }}
+                    error={!!fieldErrors.contactNo}
+                    helperText={fieldErrors.contactNo}
+                  // inputRef={UOMDescriptionRef}
                   />
                 </div>
 
+                
                 {/* Enquiry Type */}
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.currency}>
+                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.enquiryType}>
                     <InputLabel id="demo-simple-select-label">
                       {
                         <span>
@@ -732,18 +760,18 @@ const PurchaseEnquiry = () => {
                     <Select
                       labelId="demo-simple-select-label"
                       id="demo-simple-select"
-                      label="Customer Name"
+                      label="Enquiry Type"
                       onChange={handleInputChange}
                       name="currency"
-                      value={formData.currency}
+                      value={formData.enquiryType}
                     >
                       {currencies.map((item) => (
-                        <MenuItem key={item.id} value={item.currency}>
-                          {item.currency}
+                        <MenuItem key={item.id} value={item.enquiryType}>
+                          {item.enquiryType}
                         </MenuItem>
                       ))}
                     </Select>
-                    {fieldErrors.currency && <FormHelperText style={{ color: 'red' }}>customerName</FormHelperText>}
+                    {fieldErrors.enquiryType && <FormHelperText style={{ color: 'red' }}>Enquiry Type is required</FormHelperText>}
                   </FormControl>
                 </div>
 

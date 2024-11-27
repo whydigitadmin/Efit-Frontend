@@ -19,7 +19,7 @@ import Box from '@mui/material/Box';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import apiCalls from 'apicall';
-import { getAllActiveCurrency } from 'utils/CommonFunctions';
+// import { getAllActiveCurrency } from 'utils/CommonFunctions';
 
 const WorkOrder = () => {
   const [showForm, setShowForm] = useState(true);
@@ -111,22 +111,22 @@ const WorkOrder = () => {
     }
   ]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const currencyData = await getAllActiveCurrency(orgId);
-        setCurrencies(currencyData);
-        console.log('currency', currencyData);
-      } catch (error) {
-        console.error('Error fetching country data:', error);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       const currencyData = await getAllActiveCurrency(orgId);
+  //       setCurrencies(currencyData);
+  //       console.log('currency', currencyData);
+  //     } catch (error) {
+  //       console.error('Error fetching country data:', error);
+  //     }
+  //   };
 
-    fetchData();
-    getGeneralJournalDocId();
-    getAllGeneralJournalByOrgId();
-    getAccountNameFromGroup();
-  }, []);
+  //   fetchData();
+  //   getGeneralJournalDocId();
+  //   getAllGeneralJournalByOrgId();
+  //   getAccountNameFromGroup();
+  // }, []);
 
 
 
@@ -257,7 +257,7 @@ const WorkOrder = () => {
       orgId: orgId,
       refDate: null,
     });
-    getAllActiveCurrency(orgId);
+    // getAllActiveCurrency(orgId);
     setFieldErrors({
       woNo: '',
       docDate: null,
@@ -546,7 +546,7 @@ const WorkOrder = () => {
                         </MenuItem>
                       ))}
                     </Select>
-                    {fieldErrors.customerName && <FormHelperText style={{ color: 'red' }}>customer Name</FormHelperText>}
+                    {fieldErrors.customerName && <FormHelperText style={{ color: 'red' }}>customer Name is required</FormHelperText>}
                   </FormControl>
                 </div>
                {/* Customer PO No */}
@@ -563,7 +563,7 @@ const WorkOrder = () => {
                     helperText={fieldErrors.customerPONo}
                   // inputRef={UOMDescriptionRef}
                   />
-                </div>
+               </div>
                 {/* Quotation No */}
                 <div className="col-md-3 mb-3">
                   <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.customerName}>
@@ -588,24 +588,25 @@ const WorkOrder = () => {
                         </MenuItem>
                       ))}
                     </Select>
-                    {fieldErrors.quotationNo && <FormHelperText style={{ color: 'red' }}>Quotation No</FormHelperText>}
+                    {fieldErrors.quotationNo && <FormHelperText style={{ color: 'red' }}>Quotation No is required</FormHelperText>}
                   </FormControl>
                 </div>
                 {/* Currency */}
                 <div className="col-md-3 mb-3">
                   <TextField
-                    id="outlined-textarea-zip"
                     label="Currency"
                     variant="outlined"
                     size="small"
                     fullWidth
-                    name=""
-                    value={''}
+                    name="currency"
+                    value={formData.currency}
                     onChange={handleInputChange}
-                    disabled
-                    inputProps={{ maxLength: 10 }}
+                    error={!!fieldErrors.currency}
+                    helperText={fieldErrors.currency}
+                  // inputRef={UOMDescriptionRef}
                   />
-                </div>
+               </div>
+                
                 {/* Customer Due Date */}
                 <div className="col-md-3 mb-3">
                   <FormControl fullWidth variant="filled" size="small">
