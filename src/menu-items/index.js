@@ -9,8 +9,12 @@ import finance from './finance';
 import InboundOutbound from './Inbound-Outbound';
 import Inventory from './Inventory';
 import opsTransaction from './opsTransaction';
+import Production from './Production';
 import Purchase from './Purchase';
+import Quality from './Quality';
 import RolesAndResponsibilities from './RolesAndResponsibilities';
+import Sales from './Sales';
+import SubContractor from './SubContractor';
 import transaction from './transaction';
 
 // Function to get menu items based on localStorage value
@@ -19,7 +23,24 @@ const getMenuItems = () => {
 
   // Define default menu items
   const defaultMenuItems = {
-    items: [dashboard, opsTransaction, CustomerEnquiry, Purchase, InboundOutbound, Inventory, admin, basicMaster, finance, transaction, ar, ap]
+    items: [
+      dashboard,
+      opsTransaction,
+      CustomerEnquiry,
+      Purchase,
+      InboundOutbound,
+      Inventory,
+      Production,
+      SubContractor,
+      Quality,
+      Sales,
+      admin,
+      basicMaster,
+      finance,
+      transaction,
+      ar,
+      ap
+    ]
   };
 
   // Define menu items based on localStorage value
@@ -30,7 +51,26 @@ const getMenuItems = () => {
       };
     case 'ROLE_ADMIN':
       return {
-        items: [dashboard, companySetup, opsTransaction, CustomerEnquiry, Purchase, InboundOutbound, Inventory, admin, RolesAndResponsibilities, basicMaster, finance, transaction, ar, ap]
+        items: [
+          dashboard,
+          companySetup,
+          opsTransaction,
+          CustomerEnquiry,
+          Purchase,
+          InboundOutbound,
+          Inventory,
+          Production,
+          SubContractor,
+          Quality,
+          Sales,
+          admin,
+          RolesAndResponsibilities,
+          basicMaster,
+          finance,
+          transaction,
+          ar,
+          ap
+        ]
       };
     // Add more cases as needed
     default:

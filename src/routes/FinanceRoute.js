@@ -13,18 +13,6 @@ const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')))
 // login option 3 routing
 // const Fin1 = Loadable(lazy(() => import('views/Finance')));
 const AdjustmentJournal = Loadable(lazy(() => import('views/Finance/AdjustmentJournal')));
-const Department = Loadable(lazy(() => import('views/Finance/opsTransaction/Department')));
-const Designation = Loadable(lazy(() => import('views/Finance/opsTransaction/Designation')));
-const DrawingMaster = Loadable(lazy(() => import('views/Finance/opsTransaction/DrawingMaster')));
-const Gst = Loadable(lazy(() => import('views/Finance/opsTransaction/Gst')));
-const ItemMaster = Loadable(lazy(() => import('views/Finance/opsTransaction/ItemMaster')));
-const MachineMaster = Loadable(lazy(() => import('views/Finance/opsTransaction/MachineMaster')));
-const MeasuringInstrument = Loadable(lazy(() => import('views/Finance/opsTransaction/MeasuringInstrument')));
-const StockLocation = Loadable(lazy(() => import('views/Finance/opsTransaction/StockLocation')));
-const Uom = Loadable(lazy(() => import('views/Finance/opsTransaction/Uom')));
-const ItemWiseProcess = Loadable(lazy(() => import('views/Finance/opsTransaction/ItemWiseProcess')));
-const ShiftMaster = Loadable(lazy(() => import('views/Finance/opsTransaction/ShiftMaster')));
-const ProcessMaster = Loadable(lazy(() => import('views/Finance/opsTransaction/ProcessMaster')));
 const Deposit = Loadable(lazy(() => import('views/Finance/Deposit')));
 const Withdrawal = Loadable(lazy(() => import('views/Finance/Withdrawal')));
 const ContraVoucher = Loadable(lazy(() => import('views/Finance/ContraVoucher')));
@@ -82,25 +70,6 @@ const PaymentVoucher = Loadable(lazy(() => import('views/Finance/paymentVoucher/
 const ARAPDetail = Loadable(lazy(() => import('views/Finance/ARAP-Details')));
 const ARAPAdjustment = Loadable(lazy(() => import('views/Finance/APAP-Adjustment')));
 const PartMaster = Loadable(lazy(() => import('views/Finance/PartyMaster')));
-const MaterialType = Loadable(lazy(() => import('views/Finance/opsTransaction/MaterialType')));
-const Enquiry = Loadable(lazy(() => import('views/Operations/Customer-Enquiry/Enquiry')));
-const Quotation = Loadable(lazy(() => import('views/Operations/Customer-Enquiry/Quotation')));
-const WorkOrder = Loadable(lazy(() => import('views/Operations/Customer-Enquiry/WorkOrder')));
-const PurchaseEnquiry = Loadable(lazy(() => import('views/Operations/Purchase/PurchaseEnquiry')));
-const PurChaseIndent = Loadable(lazy(() => import('views/Operations/Purchase/PurchaseIndent')));
-const PurchaseQuotation = Loadable(lazy(() => import('views/Operations/Purchase/PurchaseQuotation')));
-const PurchaseOrder = Loadable(lazy(() => import('views/Operations/Purchase/PurchaseOrder')));
-const PurchaseInvoice = Loadable(lazy(() => import('views/Operations/Purchase/PurchaseInvoice')));
-const PurchaseReturn = Loadable(lazy(() => import('views/Operations/Purchase/PurchaseReturn')));
-const GateInwardEntry = Loadable(lazy(() => import('views/Operations/Inbound-Outbound/GateInwardEntry')));
-const GateOutwardEntry = Loadable(lazy(() => import('views/Operations/Inbound-Outbound/GateOutwardEntry')));
-const GRN = Loadable(lazy(() => import('views/Operations/Inventory/GRN')));
-const PutAway = Loadable(lazy(() => import('views/Operations/Inventory/Putaway')));
-const ThirdPartyReportDetails = Loadable(lazy(() => import('views/Operations/Inventory/ThirdPartyReportDetails')));
-const RouteCardEntry = Loadable(lazy(() => import('views/Operations/Inventory/RouteCardEntry')));
-const ItemIssueToProduction = Loadable(lazy(() => import('views/Operations/Inventory/ItemIssueToProduction')));
-const PickList = Loadable(lazy(() => import('views/Operations/Inventory/PickList')));
-const IdentificationTag = Loadable(lazy(() => import('views/Operations/Inventory/IdentificationTag')));
 
 // const AuthRegister3 = Loadable(lazy(() => import('views/pages/authentication/authentication3/Register3')));
 
@@ -361,131 +330,7 @@ const FinanceRoute = {
     {
       path: '/Finance/ContraVoucher',
       element: <ContraVoucher />
-    },
-    {
-      path: '/Finance/opsTransaction/Department',
-      element: <Department />
-    },
-    {
-      path: '/Finance/opsTransaction/Designation',
-      element: <Designation />
-    },
-    {
-      path: '/Finance/opsTransaction/DrawingMaster',
-      element: <DrawingMaster />
-    },
-    {
-      path: '/Finance/opsTransaction/Gst',
-      element: <Gst />
-    },
-    {
-      path: '/Finance/opsTransaction/ItemMaster',
-      element: <ItemMaster />
-    },
-    {
-      path: '/Finance/opsTransaction/MachineMaster',
-      element: <MachineMaster />
-    },
-    {
-      path: '/Finance/opsTransaction/MeasuringInstrument',
-      element: <MeasuringInstrument />
-    },
-    {
-      path: '/Finance/opsTransaction/StockLocation',
-      element: <StockLocation />
-    },
-    {
-      path: '/Finance/opsTransaction/Uom',
-      element: <Uom />
-    },
-    {
-      path: '/Finance/opsTransaction/ItemWiseProcess',
-      element: <ItemWiseProcess />
-    },
-    {
-      path: '/Finance/opsTransaction/ShiftMaster',
-      element: <ShiftMaster />
-    },
-    {
-      path: '/Finance/opsTransaction/ProcessMaster',
-      element: <ProcessMaster />
-    },
-    {
-      path: '/Finance/opsTransaction/MaterialType',
-      element: <MaterialType />
-    },
-    {
-      path: '/Operations/Customer-Enquiry/Enquiry',
-      element: <Enquiry />
-    },
-    {
-      path: '/Operations/Customer-Enquiry/Quotation',
-      element: <Quotation />
-    },
-    {
-      path: '/Operations/Customer-Enquiry/WorkOrder',
-      element: <WorkOrder />
-    },
-    {
-      path: '/Operations/Purchase/PurchaseEnquiry',
-      element: <PurchaseEnquiry />
-    },
-    {
-      path: '/Operations/Purchase/PurchaseIndent',
-      element: <PurChaseIndent />
-    },
-    {
-      path: '/Operations/Purchase/PurchaseQuotation',
-      element: <PurchaseQuotation />
-    },
-    {
-      path: '/Operations/Purchase/PurchaseOrder',
-      element: <PurchaseOrder />
-    },
-    {
-      path: '/Operations/Purchase/PurchaseInvoice',
-      element: <PurchaseInvoice />
-    },
-    {
-      path: '/Operations/Purchase/PurchaseReturn',
-      element: <PurchaseReturn />
-    },
-    {
-      path: '/Inbound-Outbound/Gate-Inward-Entry',
-      element: <GateInwardEntry />
-    },
-    {
-      path: '/Inbound-Outbound/Gate-Outward-Entry',
-      element: <GateOutwardEntry />
-    },
-    {
-      path: '/Inventory/GRN',
-      element: <GRN />
-    },
-    {
-      path: '/Inventory/Putaway',
-      element: <PutAway />
-    },
-    {
-      path: '/Inventory/Third-Party-Report-Details',
-      element: <ThirdPartyReportDetails />
-    },
-    {
-      path: '/Inventory/Route-Card-Entry',
-      element: <RouteCardEntry />
-    },
-    {
-      path: '/Inventory/Item-Issue-To-Production',
-      element: <ItemIssueToProduction />
-    },
-    {
-      path: '/Inventory/Pick-List',
-      element: <PickList />
-    },
-    {
-      path: '/Inventory/Identification-Tag',
-      element: <IdentificationTag />
-    },
+    }
   ]
 };
 

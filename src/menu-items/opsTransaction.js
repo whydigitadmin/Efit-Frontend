@@ -25,79 +25,79 @@ const opsTransaction = {
           id: 'department',
           title: 'Department',
           type: 'item',
-          url: '/Finance/opsTransaction/Department'
+          url: '/Operations/opsTransaction/Department'
         },
         {
           id: 'designation',
           title: 'Designation',
           type: 'item',
-          url: '/Finance/opsTransaction/Designation'
+          url: '/Operations/opsTransaction/Designation'
         },
         {
           id: 'drawingMaster',
           title: 'Drawing Master',
           type: 'item',
-          url: '/Finance/opsTransaction/DrawingMaster'
+          url: '/Operations/opsTransaction/DrawingMaster'
         },
         {
           id: 'gst',
-          title: 'Gst',
+          title: 'GST',
           type: 'item',
-          url: '/Finance/opsTransaction/Gst'
+          url: '/Operations/opsTransaction/Gst'
         },
         {
           id: 'itemMaster',
           title: 'Item Master',
           type: 'item',
-          url: '/Finance/opsTransaction/ItemMaster'
+          url: '/Operations/opsTransaction/ItemMaster'
         },
         {
           id: 'itemWiseProcess',
           title: 'Item Wise Process Master',
           type: 'item',
-          url: '/Finance/opsTransaction/ItemWiseProcess'
+          url: '/Operations/opsTransaction/ItemWiseProcess'
         },
         {
           id: 'machineMaster',
           title: 'Machine Master',
           type: 'item',
-          url: '/Finance/opsTransaction/MachineMaster'
+          url: '/Operations/opsTransaction/MachineMaster'
         },
         {
           id: 'measuringInstrument',
           title: 'Measuring Instrument',
           type: 'item',
-          url: '/Finance/opsTransaction/MeasuringInstrument'
+          url: '/Operations/opsTransaction/MeasuringInstrument'
         },
         {
           id: 'shiftMaster',
           title: 'Shift Master',
           type: 'item',
-          url: '/Finance/opsTransaction/ShiftMaster'
+          url: '/Operations/opsTransaction/ShiftMaster'
         },
         {
           id: 'stockLocation',
           title: 'Stock Location',
           type: 'item',
-          url: '/Finance/opsTransaction/StockLocation'
+          url: '/Operations/opsTransaction/StockLocation'
         },
         {
           id: 'processMaster',
           title: 'Process Master',
           type: 'item',
-          url: '/Finance/opsTransaction/ProcessMaster'
+          url: '/Operations/opsTransaction/ProcessMaster'
         },
         {
           id: 'uom',
-          title: 'Uom',
+          title: 'Unit Of Measurement',
           type: 'item',
-          url: '/Finance/opsTransaction/Uom'
+          url: '/Operations/opsTransaction/Uom'
         },
         {
           id: 'materialType',
           title: 'Material Type',
           type: 'item',
-          url: '/Finance/opsTransaction/MaterialType'
+          url: '/Operations/opsTransaction/MaterialType'
         }
       ]
     }

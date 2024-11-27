@@ -42,7 +42,11 @@ const NavCollapse = ({ menu, level }) => {
       menu?.id !== 'purchase' &&
       menu?.id !== 'inboundOutbound' &&
       menu?.id !== 'inventory' &&
-      menu?.id !== 'customerEnquiry'
+      menu?.id !== 'customerEnquiry' &&
+      menu?.id !== 'production' &&
+      menu?.id !== 'subContractor' &&
+      menu?.id !== 'quality' &&
+      menu?.id !== 'sales'
     ) {
       navigate(menu.children[0]?.url);
     }
