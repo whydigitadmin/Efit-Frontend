@@ -4,7 +4,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import { FormControl, FormHelperText, InputLabel, MenuItem, Select } from '@mui/material';
+import { Autocomplete, FormControl, FormHelperText, InputLabel, MenuItem, Select } from '@mui/material';
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
@@ -33,6 +33,7 @@ const PickList = () => {
   const [value, setValue] = useState(0);
   const [editId, setEditId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [partyList, setPartyList] = useState([]);
   const [listView, setListView] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
 
@@ -510,11 +511,12 @@ const PickList = () => {
                     variant="outlined"
                     size="small"
                     required
+                    disabled
                     fullWidth
                     name="pickListId"
                     value={formData.pickListId}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.pickListId ? 'PickList ID is required' : ''}</span>}
+                    // helperText={<span style={{ color: 'red' }}>{fieldErrors.pickListId ? 'PickList ID is required' : ''}</span>}
                     inputProps={{ maxLength: 10 }}
                   />
                 </div>
@@ -524,6 +526,7 @@ const PickList = () => {
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <DatePicker
                         label="Date"
+                        disabled
                         value={formData.pickListDate ? dayjs(formData.pickListDate, 'YYYY-MM-DD') : dayjs()} // Default to current date
                         onChange={(date) => handleDateChange('pickListDate', date)}
                         slotProps={{
@@ -538,33 +541,67 @@ const PickList = () => {
                 </div>
 
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.customerName}>
-                    <InputLabel id="customerName-label">Customer Name</InputLabel>
-                    <Select labelId="customerName-label" label="customerName" value={formData.customerName} onChange={handleInputChange} name="customerName">
-                      {/* {Array.isArray(countryList) &&
-                        countryList?.map((row) => (
-                          <MenuItem key={row.id} value={row.customerName}>
-                            {row.customerName}
-                          </MenuItem>
-                        ))} */}
-                    </Select>
-                    {fieldErrors.customerName && <FormHelperText>{fieldErrors.customerName}</FormHelperText>}
-                  </FormControl>
+                  <Autocomplete
+                    disablePortal
+                    options={partyList.map((option, index) => ({ ...option, key: index }))}
+                    getOptionLabel={(option) => option.partyname || ''}
+                    sx={{ width: '100%' }}
+                    size="small"
+                    value={formData.customerName ? partyList.find((c) => c.partyname === formData.customerName) : null}
+                    onChange={(event, newValue) => {
+                      handleInputChange({
+                        target: {
+                          name: 'customerName',
+                          value: newValue ? newValue.partyname : '', // Adjusted to 'partyname'
+                        },
+                      });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Customer Name"
+                        name="customerName"
+                        error={!!fieldErrors.customerName}  // Shows error if supplierName has a value in fieldErrors
+                        helperText={fieldErrors.customerName} // Displays the error message
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 },
+                        }}
+                      />
+                    )}
+                  />
                 </div>
 
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.routeCardNo}>
-                    <InputLabel id="routeCardNo-label">Route Card No</InputLabel>
-                    <Select labelId="routeCardNo-label" label="routeCardNo" value={formData.routeCardNo} onChange={handleInputChange} name="routeCardNo">
-                      {/* {Array.isArray(countryList) &&
-                        countryList?.map((row) => (
-                          <MenuItem key={row.id} value={row.routeCardNo}>
-                            {row.routeCardNo}
-                          </MenuItem>
-                        ))} */}
-                    </Select>
-                    {fieldErrors.routeCardNo && <FormHelperText>{fieldErrors.routeCardNo}</FormHelperText>}
-                  </FormControl>
+                  <Autocomplete
+                    disablePortal
+                    options={partyList.map((option, index) => ({ ...option, key: index }))}
+                    getOptionLabel={(option) => option.partyname || ''}
+                    sx={{ width: '100%' }}
+                    size="small"
+                    value={formData.routeCardNo ? partyList.find((c) => c.partyname === formData.routeCardNo) : null}
+                    onChange={(event, newValue) => {
+                      handleInputChange({
+                        target: {
+                          name: 'routeCardNo',
+                          value: newValue ? newValue.partyname : '', // Adjusted to 'partyname'
+                        },
+                      });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Route Card No"
+                        name="routeCardNo"
+                        error={!!fieldErrors.routeCardNo}  // Shows error if supplierName has a value in fieldErrors
+                        helperText={fieldErrors.routeCardNo} // Displays the error message
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 },
+                        }}
+                      />
+                    )}
+                  />
                 </div>
 
                 <div className="col-md-3 mb-3">
@@ -583,78 +620,163 @@ const PickList = () => {
                 </div>
 
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.productionNo}>
-                    <InputLabel id="productionNo-label">Item Issue to Production No</InputLabel>
-                    <Select labelId="productionNo-label" label="productionNo" value={formData.productionNo} onChange={handleInputChange} name="productionNo">
-                      {/* {Array.isArray(countryList) &&
-                        countryList?.map((row) => (
-                          <MenuItem key={row.id} value={row.productionNo}>
-                            {row.productionNo}
-                          </MenuItem>
-                        ))} */}
-                    </Select>
-                    {fieldErrors.productionNo && <FormHelperText>{fieldErrors.productionNo}</FormHelperText>}
-                  </FormControl>
+                  <Autocomplete
+                    disablePortal
+                    options={partyList.map((option, index) => ({ ...option, key: index }))}
+                    getOptionLabel={(option) => option.partyname || ''}
+                    sx={{ width: '100%' }}
+                    size="small"
+                    value={formData.productionNo ? partyList.find((c) => c.partyname === formData.productionNo) : null}
+                    onChange={(event, newValue) => {
+                      handleInputChange({
+                        target: {
+                          name: 'productionNo',
+                          value: newValue ? newValue.partyname : '',
+                        },
+                      });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Item Issue to Production No"
+                        name="productionNo"
+                        error={!!fieldErrors.productionNo}
+                        helperText={fieldErrors.productionNo}
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 },
+                        }}
+                      />
+                    )}
+                  />
                 </div>
 
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.department}>
-                    <InputLabel id="department-label">Department</InputLabel>
-                    <Select labelId="department-label" label="department" value={formData.department} onChange={handleInputChange} name="department">
-                      {/* {Array.isArray(countryList) &&
-                        countryList?.map((row) => (
-                          <MenuItem key={row.id} value={row.department}>
-                            {row.department}
-                          </MenuItem>
-                        ))} */}
-                    </Select>
-                    {fieldErrors.department && <FormHelperText>{fieldErrors.department}</FormHelperText>}
-                  </FormControl>
+                  <Autocomplete
+                    disablePortal
+                    options={partyList.map((option, index) => ({ ...option, key: index }))}
+                    getOptionLabel={(option) => option.partyname || ''}
+                    sx={{ width: '100%' }}
+                    size="small"
+                    value={formData.department ? partyList.find((c) => c.partyname === formData.department) : null}
+                    onChange={(event, newValue) => {
+                      handleInputChange({
+                        target: {
+                          name: 'department',
+                          value: newValue ? newValue.partyname : '',
+                        },
+                      });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Department"
+                        name="department"
+                        error={!!fieldErrors.department}
+                        helperText={fieldErrors.department}
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 },
+                        }}
+                      />
+                    )}
+                  />
                 </div>
 
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.location}>
-                    <InputLabel id="location-label" required>Location</InputLabel>
-                    <Select labelId="location-label" label="location" value={formData.location} onChange={handleInputChange} name="location">
-                      {/* {Array.isArray(countryList) &&
-                        countryList?.map((row) => (
-                          <MenuItem key={row.id} value={row.location}>
-                            {row.location}
-                          </MenuItem>
-                        ))} */}
-                    </Select>
-                    {fieldErrors.location && <FormHelperText>{fieldErrors.location}</FormHelperText>}
-                  </FormControl>
+                  <Autocomplete
+                    disablePortal
+                    options={partyList.map((option, index) => ({ ...option, key: index }))}
+                    getOptionLabel={(option) => option.partyname || ''}
+                    sx={{ width: '100%' }}
+                    size="small"
+                    value={formData.location ? partyList.find((c) => c.partyname === formData.location) : null}
+                    onChange={(event, newValue) => {
+                      handleInputChange({
+                        target: {
+                          name: 'location',
+                          value: newValue ? newValue.partyname : '',
+                        },
+                      });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Location"
+                        name="location"
+                        error={!!fieldErrors.location}
+                        helperText={fieldErrors.location}
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 },
+                        }}
+                      />
+                    )}
+                  />
                 </div>
 
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.shift}>
-                    <InputLabel id="shift-label">Shift</InputLabel>
-                    <Select labelId="shift-label" label="shift" value={formData.shift} onChange={handleInputChange} name="shift">
-                      {/* {Array.isArray(countryList) &&
-                        countryList?.map((row) => (
-                          <MenuItem key={row.id} value={row.shift}>
-                            {row.shift}
-                          </MenuItem>
-                        ))} */}
-                    </Select>
-                    {fieldErrors.shift && <FormHelperText>{fieldErrors.shift}</FormHelperText>}
-                  </FormControl>
+                  <Autocomplete
+                    disablePortal
+                    options={partyList.map((option, index) => ({ ...option, key: index }))}
+                    getOptionLabel={(option) => option.partyname || ''}
+                    sx={{ width: '100%' }}
+                    size="small"
+                    value={formData.shift ? partyList.find((c) => c.partyname === formData.shift) : null}
+                    onChange={(event, newValue) => {
+                      handleInputChange({
+                        target: {
+                          name: 'shift',
+                          value: newValue ? newValue.partyname : '',
+                        },
+                      });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Shift"
+                        name="shift"
+                        error={!!fieldErrors.shift}
+                        helperText={fieldErrors.shift}
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 },
+                        }}
+                      />
+                    )}
+                  />
                 </div>
 
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.pickedBy}>
-                    <InputLabel id="pickedBy-label">Pickedby</InputLabel>
-                    <Select labelId="pickedBy-label" label="pickedBy" value={formData.pickedBy} onChange={handleInputChange} name="pickedBy">
-                      {/* {Array.isArray(countryList) &&
-                        countryList?.map((row) => (
-                          <MenuItem key={row.id} value={row.pickedBy}>
-                            {row.pickedBy}
-                          </MenuItem>
-                        ))} */}
-                    </Select>
-                    {fieldErrors.pickedBy && <FormHelperText>{fieldErrors.pickedBy}</FormHelperText>}
-                  </FormControl>
+                  <Autocomplete
+                    disablePortal
+                    options={partyList.map((option, index) => ({ ...option, key: index }))}
+                    getOptionLabel={(option) => option.partyname || ''}
+                    sx={{ width: '100%' }}
+                    size="small"
+                    value={formData.pickedBy ? partyList.find((c) => c.partyname === formData.pickedBy) : null}
+                    onChange={(event, newValue) => {
+                      handleInputChange({
+                        target: {
+                          name: 'pickedBy',
+                          value: newValue ? newValue.partyname : '',
+                        },
+                      });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Pickedby"
+                        name="pickedBy"
+                        error={!!fieldErrors.pickedBy}
+                        helperText={fieldErrors.pickedBy}
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 },
+                        }}
+                      />
+                    )}
+                  />
                 </div>
 
                 <div className="col-md-3 mb-3">
@@ -673,7 +795,6 @@ const PickList = () => {
                   />
                 </div>
               </div>
-
 
               <div className="row mt-2">
                 <Box sx={{ width: '100%' }}>
@@ -713,41 +834,21 @@ const PickList = () => {
                           )}
                         </div>
                         <div className="row mt-2">
-                          <div className="col-xl-16">
+                          <div className="col-xl-12">
                             <div className="table-responsive">
                               <table className="table table-bordered ">
                                 <thead>
                                   <tr style={{ backgroundColor: '#673AB7' }}>
-                                    <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
-                                      Action
-                                    </th>
-                                    <th className="px-2 py-2 text-white text-center" style={{ width: '50px' }}>
-                                      S.No
-                                    </th>
-                                    <th className="px-4 py-2 text-white text-center" style={{ width: '700px' }} >
-                                      Item
-                                    </th>
-                                    <th className="px-2 py-2 text-white text-center" style={{ width: '400px' }}>
-                                      Item Name
-                                    </th>
-                                    <th className="px-2 py-2 text-white text-center" style={{ width: '400px' }}>
-                                      Unit
-                                    </th>
-                                    <th className="px-2 py-2 text-white text-center" style={{ width: '600px' }}>
-                                      Rack No
-                                    </th>
-                                    <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
-                                      Rack Quantity
-                                    </th>
-                                    <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
-                                      Issued Quantity
-                                    </th>
-                                    <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
-                                      Picked Qty
-                                    </th>
-                                    <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
-                                      Remaining qty
-                                    </th>
+                                    <th className="table-header">Action</th>
+                                    <th className="table-header">S.No</th>
+                                    <th className="table-header">Item</th>
+                                    <th className="table-header">Item Name</th>
+                                    <th className="table-header" style={{ width: '400px' }}>Unit</th>
+                                    <th className="table-header">Rack No</th>
+                                    <th className="table-header">Rack Quantity</th>
+                                    <th className="table-header">Issued Quantity</th>
+                                    <th className="table-header">Picked Qty</th>
+                                    <th className="table-header">Remaining qty</th>
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -772,24 +873,36 @@ const PickList = () => {
                                         <div className="pt-2">{index + 1}</div>
                                       </td>
 
-                                      <td className="border px-2 py-2">
-                                        <select
-                                          value={row.item}
-                                          onChange={(e) => handleIndentChange(row, index, e)}
-                                          className={pickListErrors[index]?.role ? 'error form-control' : 'form-control'}
-                                        >
-                                          <option value="">Select Option</option>
-                                          {/* {getAvailableRoles(row.id).map((role) => (
-                                            <option key={role.id} value={role.role}>
-                                              {role.role}
-                                            </option>
-                                          ))} */}
-                                        </select>
-                                        {pickListErrors[index]?.item && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {pickListErrors[index].item}
-                                          </div>
-                                        )}
+                                      <td>
+                                        <Autocomplete
+                                          disablePortal
+                                          options={partyList.map((option, index) => ({ ...option, key: index }))}
+                                          getOptionLabel={(option) => option.partyname || ''}
+                                          sx={{ width: '100%' }}
+                                          size="small"
+                                          value={formData.item ? partyList.find((c) => c.partyname === formData.item) : null}
+                                          onChange={(event, newValue) => {
+                                            handleInputChange({
+                                              target: {
+                                                name: 'item',
+                                                value: newValue ? newValue.partyname : '', // Adjusted to 'partyname'
+                                              },
+                                            });
+                                          }}
+                                          renderInput={(params) => (
+                                            <TextField
+                                              {...params}
+                                              label="Item"
+                                              name="item"
+                                              error={!!fieldErrors.item}  // Shows red border if there's an error
+                                              helperText={fieldErrors.item}  // Shows the error message
+                                              InputProps={{
+                                                ...params.InputProps,
+                                                style: { height: 40, width: 200 },
+                                              }}
+                                            />
+                                          )}
+                                        />
                                       </td>
 
                                       <td className="border px-2 py-2">
@@ -821,6 +934,7 @@ const PickList = () => {
 
                                       <td className="border px-2 py-2">
                                         <input
+                                          disabled
                                           type="text"
                                           value={row.unit}
                                           onChange={(e) => {
