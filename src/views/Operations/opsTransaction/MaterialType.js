@@ -70,11 +70,7 @@ const MaterialType = () => {
     { accessorKey: 'listDescription', header: 'Description', size: 140 },
     // { accessorKey: 'active', header: 'Active', size: 140 }
   ];
-
-  // useEffect(() => {
-  //   getAllListOfValuesByOrgId();
-  // }, []);
-
+ 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     const inputValue = type === 'checkbox' ? checked : value;
@@ -109,63 +105,71 @@ const MaterialType = () => {
   };
 
   const handleKeyDown = (e, row, table) => {
+  
     if (e.key === 'Tab' && row.id === table[table.length - 1].id) {
-      e.preventDefault();
+      e.preventDefault();   
+  
+       
       if (isLastRowEmpty(table)) {
         displayRowError(table);
       } else {
+    
         handleAddRow();
       }
     }
   };
 
   const handleAddRow = () => {
+   
     if (isLastRowEmpty(drawingDocumentsData)) {
       displayRowError(drawingDocumentsData);
-      return;
+      return;  
     }
+   
     const newRow = {
-      id: Date.now(),
-      itemSubGroup: '',
-
+      id: Date.now(),   
+      itemSubGroup: '',  
     };
-    setDrawingDocumentsData([...drawingDocumentsData, newRow]);
-    setDrawingDocumentsErrors([...drawingDocumentsErrors, { itemSubGroup: '', }]);
+  
+    
+    setDrawingDocumentsData((prevData) => [...prevData, newRow]);
+  
+    
+    setDrawingDocumentsErrors((prevErrors) => [
+      ...prevErrors,
+      { itemSubGroup: '', attachments: '' }  
+    ]);
   };
   const isLastRowEmpty = (table) => {
-    const lastRow = table[table.length - 1];
-    if (!lastRow) return false;
-
-    if (table === drawingDocumentsData) {
-      return !lastRow.itemSubGroup || !lastRow.attachments;
-    }
-    return false;
+    const lastRow = table[table.length - 1];  
+    if (!lastRow) return false;   
+    
+    return !lastRow.itemSubGroup; 
   };
 
   const displayRowError = (table) => {
+    // Check if the table is drawingDocumentsData
     if (table === drawingDocumentsData) {
       setDrawingDocumentsErrors((prevErrors) => {
         const newErrors = [...prevErrors];
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
-          itemSubGroup: !table[table.length - 1].itemSubGroup ? 'File Name is required' : '',
-          attachments: !table[table.length - 1].attachments ? 'Attachments is required' : ''
+          itemSubGroup: !table[table.length - 1].itemSubGroup ? 'Item Sub Group is Required' : '',
+          attachments: !table[table.length - 1].attachments ? 'Attachments are Required' : '',
         };
         return newErrors;
       });
     }
   };
 
-  const handleDeleteRow = (id, table, setTable, errorTable, setErrorTable) => {
-    const rowIndex = table.findIndex((row) => row.id === id);
-    // If the row exists, proceed to delete
-    if (rowIndex !== -1) {
-      const updatedData = table.filter((row) => row.id !== id);
-      const updatedErrors = errorTable.filter((_, index) => index !== rowIndex);
-      setTable(updatedData);
-      setErrorTable(updatedErrors);
-    }
+  const handleDeleteRow = (id) => {
+    const updatedData = drawingDocumentsData.filter(row => row.id !== id);
+    const updatedErrors = drawingDocumentsErrors.filter((_, index) => index !== updatedData.findIndex(row => row.id === id));
+    
+    setDrawingDocumentsData(updatedData);
+    setDrawingDocumentsErrors(updatedErrors);
   };
+  
 
   const handleClear = () => {
     setFormData({
@@ -194,22 +198,22 @@ const MaterialType = () => {
     console.log('THE HANDLE SAVE IS WORKING');
 
     const errors = {};
-    if (!formData.materialType) errors.materialType = 'materialType is required'; 
-    if (!formData.itemGroup) errors.itemGroup = 'itemGroup is required'; 
+    if (!formData.materialType) errors.materialType = 'Material Type is Required';
+    if (!formData.itemGroup) errors.itemGroup = 'Item Group is Required';
 
     let drawingDocumentsDataValid = true;
     if (!drawingDocumentsData || !Array.isArray(drawingDocumentsData) || drawingDocumentsData.length === 0) {
       drawingDocumentsDataValid = false;
-      setDrawingDocumentsErrors([{ general: 'Drawing Documents Data is required' }]);
+      setDrawingDocumentsErrors([{ general: 'Drawing Documents Data is Required' }]);
     } else {
       const newTableErrors = drawingDocumentsData.map((row, index) => {
         const rowErrors = {};
         if (!row.itemSubGroup) {
-          rowErrors.itemSubGroup = 'File Name is required';
+          rowErrors.itemSubGroup = 'File Name is Required';
           drawingDocumentsDataValid = false;
         }
         if (!row.attachments) {
-          rowErrors.attachments = 'Attachments is required';
+          rowErrors.attachments = 'Attachments is Required';
           drawingDocumentsDataValid = false;
         }
 
@@ -261,7 +265,7 @@ const MaterialType = () => {
       setFieldErrors(errors);
     }
   };
- 
+
   const handleList = () => {
     setShowForm(!showForm);
   };
@@ -278,7 +282,7 @@ const MaterialType = () => {
           <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
           <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleList} />
           <ActionButton title="Save" icon={SaveIcon} onClick={handleSave} isLoading={isLoading} margin="0 10px 0 10px" />
-        </div> 
+        </div>
         {showForm ? (
           <>
             <div className="row d-flex">
@@ -300,8 +304,8 @@ const MaterialType = () => {
                     helperText={fieldErrors.materialType}
                   />
                 </FormControl>
-              </div> 
-             
+              </div>
+
               <div className="col-md-3 mb-3">
                 <FormControl fullWidth variant="filled">
                   <TextField
@@ -320,10 +324,10 @@ const MaterialType = () => {
                     helperText={fieldErrors.itemGroup}
                   />
                 </FormControl>
-              </div> 
-              
+              </div>
+
             </div>
-            {/* <TableComponent formData={formData} setFormData={setFormData} /> */}
+     
             <div className="row mt-2">
               <Box sx={{ width: '100%' }}>
                 <Tabs
@@ -343,20 +347,20 @@ const MaterialType = () => {
                       <div className="mb-1">
                         <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} />
                         <ActionButton icon={CloudUploadIcon} title='Upload' onClick={handleBulkUploadOpen} />
-    {uploadOpen && (
-                            <CommonBulkUpload
-                              open={uploadOpen}
-                              handleClose={handleBulkUploadClose}
-                              title="Upload Files"
-                              uploadText="Upload file"
-                              downloadText="Sample File"
-                              onSubmit={handleSubmit}
-                              // sampleFileDownload={FirstData}
-                              handleFileUpload={handleFileUpload}
-                              apiUrl={`excelfileupload/excelUploadForSample`}
-                              screen="PutAway"
-                            />
-                          )}
+                        {uploadOpen && (
+                          <CommonBulkUpload
+                            open={uploadOpen}
+                            handleClose={handleBulkUploadClose}
+                            title="Upload Files"
+                            uploadText="Upload file"
+                            downloadText="Sample File"
+                            onSubmit={handleSubmit}
+                            // sampleFileDownload={FirstData}
+                            handleFileUpload={handleFileUpload}
+                            apiUrl={`excelfileupload/excelUploadForSample`}
+                            screen="PutAway"
+                          />
+                        )}
                       </div>
                       <div className="row mt-2">
                         <div className="col-lg-7">
@@ -372,7 +376,7 @@ const MaterialType = () => {
                                   </th>
                                   <th className="px-2 py-2 text-white text-center" style={{ width: '150px' }}>
                                     item Sub Group
-                                  </th> 
+                                  </th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -382,35 +386,22 @@ const MaterialType = () => {
                                       <ActionButton
                                         title="Delete"
                                         icon={DeleteIcon}
-                                        onClick={() =>
-                                          handleDeleteRow(
-                                            row.id,
-                                            drawingDocumentsData,
-                                            setDrawingDocumentsData,
-                                            drawingDocumentsErrors,
-                                            setDrawingDocumentsErrors
-                                          )
-                                        }
+                                        onClick={() => handleDeleteRow(row.id)} // Call delete on click
                                       />
                                     </td>
-                                      <td className="text-center">
-                                      <div className="pt-2">{index + 1}</div>
-                                    </td>
+                                    <td className="text-center">{index + 1}</td>
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
                                         type="text"
                                         value={row.itemSubGroup}
                                         onChange={(e) => {
                                           const value = e.target.value;
-                                          setDrawingDocumentsData((prev) =>
-                                            prev.map((r) => (r.id === row.id ? { ...r, itemSubGroup: value } : r))
-                                          );
+                                          setDrawingDocumentsData((prev) => prev.map((r) => (r.id === row.id ? { ...r, itemSubGroup: value } : r)));
                                           setDrawingDocumentsErrors((prev) => {
                                             const newErrors = [...prev];
                                             newErrors[index] = {
                                               ...newErrors[index],
-                                              itemSubGroup: !value ? 'File Name is required' : ''
+                                              itemSubGroup: !value ? 'Item Sub Group is Required' : '',
                                             };
                                             return newErrors;
                                           });
@@ -422,7 +413,7 @@ const MaterialType = () => {
                                           {drawingDocumentsErrors[index].itemSubGroup}
                                         </div>
                                       )}
-                                    </td> 
+                                    </td>
                                   </tr>
                                 ))}
                               </tbody>

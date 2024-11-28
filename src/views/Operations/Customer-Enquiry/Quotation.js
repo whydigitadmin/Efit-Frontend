@@ -75,8 +75,8 @@ const Quotation = () => {
     currency: '',
 
 
-    grossAmount: 0,
-    amountInWords: 0,
+    grossAmount: '',
+    amountInWords: '',
   });
 
   const listViewColumns = [
@@ -143,8 +143,8 @@ const Quotation = () => {
 
     setFormData((prev) => ({
       ...prev,
-      amountInWords: totalDebit,
-      grossAmount: totalCredit
+      // amountInWords: totalDebit,
+      // grossAmount: totalCredit
     }));
   }, [detailsTableData]);
 
@@ -237,7 +237,7 @@ const Quotation = () => {
         const newErrors = [...prev];
         newErrors[index] = {
           ...newErrors[index],
-          revisionNo: !value ? 'Debit Amount is required' : ''
+          revisionNo: !value ? 'Debit Amount is Required' : ''
         };
         return newErrors;
       });
@@ -254,7 +254,7 @@ const Quotation = () => {
         const newErrors = [...prev];
         newErrors[index] = {
           ...newErrors[index],
-          unit: !value ? 'Credit Amount is required' : ''
+          unit: !value ? 'Credit Amount is Required' : ''
         };
         return newErrors;
       });
@@ -298,20 +298,21 @@ const Quotation = () => {
       customerID: '',
       orgId: orgId,
       referenceDate: null,
-
+      netAmount: '',
       taxCode: '',
-      grossAmount: 0,
-      amountInWords: 0,
+      grossAmount: '',
+      amountInWords: '',
     });
     getAllActiveCurrency(orgId);
     setFieldErrors({
-
-      date: null,
+      date: dayjs(),
       customerID: '',
       orgId: orgId,
-      referenceDate: '',
-
+      referenceDate: null,
+      netAmount: '',
       taxCode: '',
+      grossAmount: '',
+      amountInWords: '',
     });
     setDetailsTableData([
       { id: 1, partNo: '', unit: '', drawingNo: '', partDescription: '', revisionNo: '', unitPrice: '', }
@@ -369,21 +370,21 @@ const Quotation = () => {
         const newErrors = [...prevErrors];
         const lastRow = table[table.length - 1];
 
-        // Add error messages for required fields
+        // Add error messages for Required fields
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
-          partNo: !lastRow.partNo ? 'Part Number is required' : '',
-          unit: !lastRow.unit ? 'Unit is required' : '',
-          unitPrice: !lastRow.unitPrice ? 'Unit Price is required' : '',
-          drawingNo: !lastRow.drawingNo ? 'Drawing Number is required' : '',
-          partDescription: !lastRow.partDescription ? 'Part Description is required' : '',
-          revisionNo: !lastRow.revisionNo ? 'Revision Number is required' : '',
-          qtyOffered: !lastRow.qtyOffered ? 'Quantity Offered is required' : '',
-          basicPrice: !lastRow.basicPrice ? 'Basic Price is required' : '',
-          discount: !lastRow.discount ? 'Discount is required' : '',
-          discountAmount: !lastRow.discountAmount ? 'Discount Amount is required' : '',
-          quoteAmount: !lastRow.quoteAmount ? 'Quote Amount Amount is required' : '',
-          deliveryDate: !lastRow.deliveryDate ? 'Delivery Date is required' : ''
+          partNo: !lastRow.partNo ? 'Part Number is Required' : '',
+          unit: !lastRow.unit ? 'Unit is Required' : '',
+          unitPrice: !lastRow.unitPrice ? 'Unit Price is Required' : '',
+          drawingNo: !lastRow.drawingNo ? 'Drawing Number is Required' : '',
+          // partDescription: !lastRow.partDescription ? 'Part Description is Required' : '',
+          // revisionNo: !lastRow.revisionNo ? 'Revision Number is Required' : '',
+          qtyOffered: !lastRow.qtyOffered ? 'Quantity Offered is Required' : '',
+          basicPrice: !lastRow.basicPrice ? 'Basic Price is Required' : '',
+          discount: !lastRow.discount ? 'Discount is Required' : '',
+          discountAmount: !lastRow.discountAmount ? 'Discount Amount is Required' : '',
+          quoteAmount: !lastRow.quoteAmount ? 'Quote Amount Amount is Required' : '',
+          deliveryDate: !lastRow.deliveryDate ? 'Delivery Date is Required' : ''
         };
 
         return newErrors;
@@ -415,69 +416,69 @@ const Quotation = () => {
   const handleSave = async () => {
     const errors = {};
     let isValid = true;
-    // if (!formData.quoteNo) errors.quoteNo = 'Quote Number is required';
-    if (!formData.customerName) errors.customerName = 'Customer Name is required';
-    // if (!formData.customerID) errors.customerID = 'Customer ID is required';
-    if (!formData.enquiryNo) errors.enquiryNo = 'Enquiry Number is required';
-    if (!formData.referenceDate) errors.referenceDate = 'Reference Date is required';
-    if (!formData.kindAttention) errors.kindAttention = 'Kind Attention is required';
-    // if (!formData.contactNo) errors.contactNo = 'Contact Number is required';
-    // if (!formData.taxCode) errors.taxCode =   'Tax Code is required';
-    if (!formData.productionManager) errors.productionManager = 'Production Manager is required';
-    if (!formData.currency) errors.currency = 'Currency is required';
-    if (!formData.grossAmount) errors.grossAmount = 'Gross Amount is required';
-    if (!formData.amountInWords) errors.amountInWords = 'Amount in Words is required';
-    if (!formData.netAmount) errors.netAmount = 'Net Amount is required';
+    // if (!formData.quoteNo) errors.quoteNo = 'Quote Number is Required';
+    if (!formData.customerName) errors.customerName = 'Customer Name is Required';
+    // if (!formData.customerID) errors.customerID = 'Customer ID is Required';
+    if (!formData.enquiryNo) errors.enquiryNo = 'Enquiry Number is Required';
+    if (!formData.referenceDate) errors.referenceDate = 'Reference Date is Required';
+    if (!formData.kindAttention) errors.kindAttention = 'Kind Attention is Required';
+    // if (!formData.contactNo) errors.contactNo = 'Contact Number is Required';
+    // if (!formData.taxCode) errors.taxCode =   'Tax Code is Required';
+    if (!formData.productionManager) errors.productionManager = 'Production Manager is Required';
+    if (!formData.currency) errors.currency = 'Currency is Required';
+    if (!formData.grossAmount) errors.grossAmount = 'Gross Amount is Required';
+    if (!formData.amountInWords) errors.amountInWords = 'Amount in Words is Required';
+    if (!formData.netAmount) errors.netAmount = 'Net Amount is Required';
 
     let detailTableDataValid = true;
     const newTableErrors = detailsTableData.map((row) => {
       const rowErrors = {};
       if (!row.partNo) {
-        rowErrors.partNo = 'Part No is required';
+        rowErrors.partNo = 'Part No is Required';
         detailTableDataValid = false;
       }
-      if (!row.partDescription) {
-        rowErrors.partDescription = 'Part Description is required';
-        detailTableDataValid = false;
-      }
+      // if (!row.partDescription) {
+      //   rowErrors.partDescription = 'Part Description is Required';
+      //   detailTableDataValid = false;
+      // }
       if (!formData.drawingNo) {
-        errors.drawingNo = 'Drawing No is required'; // Custom error message
+        errors.drawingNo = 'Drawing No is Required'; // Custom error message
         isValid = false;
       }
-      if (!row.revisionNo) {
-        rowErrors.revisionNo = 'revisionNo  is required';
-        detailTableDataValid = false;
-      }
+      // if (!row.revisionNo) {
+      //   rowErrors.revisionNo = 'Revision No  is Required';
+      //   detailTableDataValid = false;
+      // }
       if (!row.unit) {
-        rowErrors.unit = ' unit is required';
+        rowErrors.unit = ' Unit is Required';
         detailTableDataValid = false;
       }
       if (!row.unitPrice) {
-        rowErrors.unitPrice = 'unitPrice  is required';
+        rowErrors.unitPrice = 'Unit Price  is Required';
         detailTableDataValid = false;
       }
       if (!row.qtyOffered) {
-        rowErrors.qtyOffered = 'qtyOffered is required';
+        rowErrors.qtyOffered = 'Qty Offered is Required';
         detailTableDataValid = false;
       }
       if (!row.basicPrice) {
-        rowErrors.basicPrice = 'basicPrice is required';
+        rowErrors.basicPrice = 'Basic Price is Required';
         detailTableDataValid = false;
       }
       if (!row.discount) {
-        rowErrors.discount = 'discount is required';
+        rowErrors.discount = 'Discount is Required';
         detailTableDataValid = false;
       }
       if (!row.discountAmount) {
-        rowErrors.discountAmount = 'discountAmount is required';
+        rowErrors.discountAmount = 'DiscountAmount is Required';
         detailTableDataValid = false;
       }
       if (!row.quoteAmount) {
-        rowErrors.quoteAmount = 'quoteAmount is required';
+        rowErrors.quoteAmount = 'Quote Amount is Required';
         detailTableDataValid = false;
       }
       if (!row.deliveryDate) {
-        rowErrors.deliveryDate = 'deliveryDate is required';
+        rowErrors.deliveryDate = 'Delivery Date is Required';
         detailTableDataValid = false;
       }
 
@@ -688,9 +689,9 @@ const Quotation = () => {
                         format="DD-MM-YYYY"
                       />
                     </LocalizationProvider>
-                    {/* {fieldErrors.referenceDate && <p className="dateErrMsg">Ref Date is required</p>} */}
+                    {/* {fieldErrors.referenceDate && <p className="dateErrMsg">Ref Date is Required</p>} */}
                     {fieldErrors.referenceDate && (
-                      <p className="dateErrMsg">Ref Date is required</p>
+                      <p className="dateErrMsg">Ref Date is Required</p>
                     )}
                   </FormControl>
                 </div>
@@ -761,7 +762,7 @@ const Quotation = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="productionManager"
+                        label="Production Manager"
                         name="productionManager"
                         error={!!fieldErrors.productionManager}
                         helperText={fieldErrors.productionManager}
@@ -860,7 +861,7 @@ const Quotation = () => {
                                       <td className="border px-2 py-2">
                                         <select
                                           value={row.partNo}
-                                          style={{ width: '150px' }}
+                                          style={{ width: '200px' }}
                                           className={detailsTableErrors[index]?.partNo ? 'error form-control' : 'form-control'}
                                           onChange={(e) =>
                                             setDetailsTableData((prev) =>
@@ -894,7 +895,7 @@ const Quotation = () => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                partDescription: !value ? 'Sub Ledger Name is required' : ''
+                                                partDescription: !value ? 'Sub Ledger Name is Required' : ''
                                               };
                                               return newErrors;
                                             });
@@ -986,7 +987,7 @@ const Quotation = () => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                unitPrice: !value ? 'unitPrice is required' : ''
+                                                unitPrice: !value ? 'unitPrice is Required' : ''
                                               };
                                               return newErrors;
                                             });
@@ -1016,7 +1017,7 @@ const Quotation = () => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                qtyOffered: !value ? 'qtyOffered is required' : ''
+                                                qtyOffered: !value ? 'qtyOffered is Required' : ''
                                               };
                                               return newErrors;
                                             });
@@ -1043,12 +1044,13 @@ const Quotation = () => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                basicPrice: !value ? 'basicPrice is required' : ''
+                                                basicPrice: !value ? 'basicPrice is Required' : ''
                                               };
                                               return newErrors;
                                             });
                                           }}
                                           className={detailsTableErrors[index]?.basicPrice ? 'error form-control' : 'form-control'}
+                                          style={{ width: '150px' }}
                                         />
                                         {detailsTableErrors[index]?.basicPrice && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
@@ -1069,12 +1071,13 @@ const Quotation = () => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                discount: !value ? 'discount is required' : ''
+                                                discount: !value ? 'discount is Required' : ''
                                               };
                                               return newErrors;
                                             });
                                           }}
                                           className={detailsTableErrors[index]?.discount ? 'error form-control' : 'form-control'}
+                                          style={{ width: '150px' }}
                                         />
                                         {detailsTableErrors[index]?.discount && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
@@ -1095,12 +1098,13 @@ const Quotation = () => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                discountAmount: !value ? 'discountAmount is required' : ''
+                                                discountAmount: !value ? 'discountAmount is Required' : ''
                                               };
                                               return newErrors;
                                             });
                                           }}
                                           className={detailsTableErrors[index]?.discountAmount ? 'error form-control' : 'form-control'}
+                                          style={{ width: '150px' }}
                                         />
                                         {detailsTableErrors[index]?.discountAmount && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
@@ -1121,12 +1125,13 @@ const Quotation = () => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                quoteAmount: !value ? 'quoteAmount is required' : ''
+                                                quoteAmount: !value ? 'quoteAmount is Required' : ''
                                               };
                                               return newErrors;
                                             });
                                           }}
                                           className={detailsTableErrors[index]?.quoteAmount ? 'error form-control' : 'form-control'}
+                                          style={{ width: '150px' }}
                                         />
                                         {detailsTableErrors[index]?.quoteAmount && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
@@ -1151,13 +1156,14 @@ const Quotation = () => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                deliveryDate: !date ? 'Delivery Date is required' : ''
+                                                deliveryDate: !date ? 'Delivery Date is Required' : ''
                                               };
                                               return newErrors;
                                             });
                                           }}
                                           className={detailsTableErrors[index]?.deliveryDate ? 'error form-control' : 'form-control'}
-                                        // onKeyDown={(e) => handleKeyDown(e, row, tdsTableData)}
+                                          // onKeyDown={(e) => handleKeyDown(e, row, tdsTableData)}
+                                          style={{ width: '150px' }}
                                         />
                                         {detailsTableErrors[index]?.deliveryDate && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
@@ -1189,12 +1195,12 @@ const Quotation = () => {
                             value={formData.grossAmount}
                             onChange={handleInputChange}
                             helperText={
-                              <span style={{ color: 'red' }}>{fieldErrors.grossAmount ? 'Total Credit Amount is required' : ''}</span>
+                              <span style={{ color: 'red' }}>{fieldErrors.grossAmount ? 'Total Credit Amount is Required' : ''}</span>
                             }
                             inputProps={{ maxLength: 40 }}
                           />
                         </div>
-                        <div className="col-md-5">
+                        <div className="col-md-3">
                           <FormControl fullWidth variant="filled">
                             <TextField
                               id="netAmount"
@@ -1203,26 +1209,24 @@ const Quotation = () => {
                               name="netAmount"
                               value={formData.netAmount}
                               multiline
-                              minRows={2}
+                              // minRows={2}
                               inputProps={{ maxLength: 30 }}
-                              onClick={() => { }}
+                              onChange={handleInputChange}
                               error={!!fieldErrors.netAmount}
                               helperText={fieldErrors.netAmount}
                             />
                           </FormControl>
                         </div>
-                      </div>
-                      <div className='row mt-3'>
-                        <div className="col-md-8">
+                        <div className="col-md-3">
                           <FormControl fullWidth variant="filled">
                             <TextField
-                              id="amountInWords"
-                              label="amountInWords"
+                              id="Amount In Words"
+                              label="Amount In Words"
                               size="small"
                               name="amountInWords"
                               value={formData.amountInWords}
                               multiline
-                              minRows={2}
+                              // minRows={2}
                               inputProps={{ maxLength: 30 }}
                               onChange={handleInputChange}
                               error={!!fieldErrors.amountInWords}

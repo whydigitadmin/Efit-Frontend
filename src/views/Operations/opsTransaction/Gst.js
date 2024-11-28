@@ -115,7 +115,7 @@ const Gst = () => {
     if (value === '') {
       setFieldErrors((prevErrors) => ({
         ...prevErrors,
-        [name]: 'This field is required.',
+        [name]: 'This field is Required.',
       }));
     } else {
       setFieldErrors((prevErrors) => ({
@@ -149,19 +149,19 @@ const Gst = () => {
     const errors = {};
 
     if (!formData.gstSlab) {
-      errors.gstSlab = 'GST Slab is required';
+      errors.gstSlab = 'GST Slab is Required';
     }
     if (!formData.gstPercentage) {
-      errors.gstPercentage = 'GST Percentage is required';
+      errors.gstPercentage = 'GST Percentage is Required';
     }
     if (!formData.igstPercentage) {
-      errors.igstPercentage = 'IGST Percentage is required';
+      errors.igstPercentage = 'IGST Percentage is Required';
     }
     if (!formData.cgstPercentage) {
-      errors.cgstPercentage = 'CGST Percentage is required';
+      errors.cgstPercentage = 'CGST Percentage is Required';
     }
     if (!formData.sgstPercentage) {
-      errors.sgstPercentage = 'SGST Percentage is required';
+      errors.sgstPercentage = 'SGST Percentage is Required';
     }
 
 

@@ -93,7 +93,7 @@ const Designation = () => {
     // Validation for designation field
     if (name === 'designation') {
       if (value.trim() === '') {
-        newFieldErrors[name] = 'Designation is required';
+        newFieldErrors[name] = 'Designation is Required';
       } else {
         newFieldErrors[name] = ''; // Clear error if valid
       }
@@ -132,10 +132,10 @@ const Designation = () => {
     const errors = {};
 
     // if (!formData.designationId) {
-    //   errors.designationId = 'Department Id is required';
+    //   errors.designationId = 'Department Id is Required';
     // }
     if (!formData.designation) {
-      errors.designation = 'Designation is required';
+      errors.designation = 'Designation is Required';
     } 
 
 

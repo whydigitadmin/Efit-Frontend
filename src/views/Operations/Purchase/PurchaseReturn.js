@@ -38,7 +38,7 @@ const PurchaseReturn = () => {
   const [formData, setFormData] = useState({
     active: true,
     purchaseReturnDate: dayjs(),
-    purchasepReturnNo: '',
+    purchaseReturnNo: '',
     supplierName: '',
     supplierCode: '',
     purchaseInvoiceNo: '',
@@ -68,7 +68,7 @@ const PurchaseReturn = () => {
   const [fieldErrors, setFieldErrors] = useState({
     active: true,
     purchaseReturnDate: dayjs(),
-    purchasepReturnNo: '',
+    purchaseReturnNo: '',
     supplierName: '',
     supplierCode: '',
     purchaseInvoiceNo: '',
@@ -99,7 +99,7 @@ const PurchaseReturn = () => {
     { accessorKey: 'address', header: 'address', size: 140 },
     { accessorKey: 'supplierCode', header: 'Ex.Rate', size: 140 },
     { accessorKey: 'refNo', header: 'Ref No', size: 140 },
-    { accessorKey: 'purchasepReturnNo', header: 'Document Id', size: 140 }
+    { accessorKey: 'purchaseReturnNo', header: 'Document Id', size: 140 }
   ];
 
   const [purchaseReturnTable, setPurchaseReturnTable] = useState([
@@ -107,8 +107,8 @@ const PurchaseReturn = () => {
       id: 1,
       itemCode: '',
       itemName: '',
-      hsnSacCode: '', 
-      taxCode: '', 
+      hsnSacCode: '',
+      taxCode: '',
       primaryUnit: '',
       poRate: '',
       rejectQty: '',
@@ -117,8 +117,8 @@ const PurchaseReturn = () => {
       sgst: '',
       cgst: '',
       igst: '',
-      taxValue: '', 
-      landedValue:'',
+      taxValue: '',
+      landedValue: '',
     }
   ]);
   const [detailsTableErrors, setDetailsTableErrors] = useState([
@@ -126,8 +126,8 @@ const PurchaseReturn = () => {
       id: 1,
       itemCode: '',
       itemName: '',
-      hsnSacCode: '', 
-      taxCode: '', 
+      hsnSacCode: '',
+      taxCode: '',
       primaryUnit: '',
       poRate: '',
       rejectQty: '',
@@ -136,8 +136,8 @@ const PurchaseReturn = () => {
       sgst: '',
       cgst: '',
       igst: '',
-      taxValue: '', 
-      landedValue:'',
+      taxValue: '',
+      landedValue: '',
     }
   ]);
 
@@ -153,7 +153,7 @@ const PurchaseReturn = () => {
     };
 
     fetchData();
-    getGeneralJournalpurchasepReturnNo();
+    // getGeneralJournalpurchaseReturnNo();
     getAllGeneralJournalByOrgId();
     getAccountNameFromGroup();
   }, []);
@@ -169,21 +169,21 @@ const PurchaseReturn = () => {
     }));
   }, [purchaseReturnTable]);
 
-  const getGeneralJournalpurchasepReturnNo = async () => {
-    try {
-      const response = await apiCalls(
-        'get',
-        `/transaction/getGeneralJournalpurchasepReturnNo?branchCode=${branchCode}&branch=${branch}&finYear=${finYear}&orgId=${orgId}`
-      );
-      setFormData((prevData) => ({
-        ...prevData,
-        purchasepReturnNo: response.paramObjectsMap.generalJournalpurchasepReturnNo,
-        date: dayjs()
-      }));
-    } catch (error) {
-      console.error('Error fetching gate passes:', error);
-    }
-  };
+  // const getGeneralJournalpurchaseReturnNo = async () => {
+  //   try {
+  //     const response = await apiCalls(
+  //       'get',
+  //       `/transaction/getGeneralJournalpurchaseReturnNo?branchCode=${branchCode}&branch=${branch}&finYear=${finYear}&orgId=${orgId}`
+  //     );
+  //     setFormData((prevData) => ({
+  //       ...prevData,
+  //       purchaseReturnNo: response.paramObjectsMap.generalJournalpurchaseReturnNo,
+  //       date: dayjs()
+  //     }));
+  //   } catch (error) {
+  //     console.error('Error fetching gate passes:', error);
+  //   }
+  // };
 
   const getAllGeneralJournalByOrgId = async () => {
     try {
@@ -206,7 +206,7 @@ const PurchaseReturn = () => {
         setFormData({
           id: glVO.id || '',
           purchaseReturnDate: glVO.purchaseReturnDate ? dayjs(glVO.date, 'YYYY-MM-DD') : dayjs(),
-          purchasepReturnNo: glVO.purchasepReturnNo || '',
+          purchaseReturnNo: glVO.purchaseReturnNo || '',
           address: glVO.address || '',
           supplierCode: glVO.supplierCode || '',
           refNo: glVO.refNo || '',
@@ -315,23 +315,23 @@ const PurchaseReturn = () => {
 
   const handleClear = () => {
     setFormData({
+      purchaseReturnNo: '',
       purchaseReturnDate: dayjs(),
       supplierCode: '',
       orgId: orgId,
       invdcDate: null,
 
       gstNo: '',
-      totalAmountTax: 0,
-      amountInWords: 0,
+      totalAmountTax: '',
+      amountInWords: '',
     });
     getAllActiveCurrency(orgId);
     setFieldErrors({
-
+      purchaseReturnNo: '',
       date: null,
       supplierCode: '',
       orgId: orgId,
       invdcDate: '',
-
       gstNo: '',
     });
     setPurchaseReturnTable([
@@ -339,7 +339,7 @@ const PurchaseReturn = () => {
     ]);
     setDetailsTableErrors('');
     setEditId('');
-    getGeneralJournalpurchasepReturnNo();
+    // getGeneralJournalpurchaseReturnNo();
   };
 
 
@@ -352,8 +352,8 @@ const PurchaseReturn = () => {
       id: Date.now(),
       itemCode: '',
       itemName: '',
-      hsnSacCode: '', 
-      taxCode: '', 
+      hsnSacCode: '',
+      taxCode: '',
       primaryUnit: '',
       poRate: '',
       rejectQty: '',
@@ -362,8 +362,8 @@ const PurchaseReturn = () => {
       sgst: '',
       cgst: '',
       igst: '',
-      taxValue: '', 
-      landedValue:'',
+      taxValue: '',
+      landedValue: '',
     };
     setPurchaseReturnTable([...purchaseReturnTable, newRow]);
     setDetailsTableErrors([...detailsTableErrors, { itemCode: '', unit: '', taxCode: '', primaryUnit: '', }]);
@@ -371,28 +371,28 @@ const PurchaseReturn = () => {
 
   const isLastRowEmpty = (table) => {
     const lastRow = table[table.length - 1];
-    if (!lastRow) return false; 
+    if (!lastRow) return false;
 
     if (table === purchaseReturnTable) {
       return (
-        !lastRow.itemCode || 
-        !lastRow.itemName || 
-        !lastRow.hsnSacCode || 
-        !lastRow.taxCode || 
-        !lastRow.primaryUnit || 
-        !lastRow.poRate || 
-        !lastRow.rejectQty || 
-        !lastRow.unitPrice || 
-        !lastRow.amount || 
-        !lastRow.sgst || 
-        !lastRow.cgst || 
-        !lastRow.igst || 
-        !lastRow.taxValue || 
+        !lastRow.itemCode ||
+        !lastRow.itemName ||
+        !lastRow.hsnSacCode ||
+        !lastRow.taxCode ||
+        !lastRow.primaryUnit ||
+        !lastRow.poRate ||
+        !lastRow.rejectQty ||
+        !lastRow.unitPrice ||
+        !lastRow.amount ||
+        !lastRow.sgst ||
+        !lastRow.cgst ||
+        !lastRow.igst ||
+        !lastRow.taxValue ||
         !lastRow.landedValue
       );
     }
     return false;
-};
+  };
 
 
   const displayRowError = (table) => {
@@ -400,23 +400,23 @@ const PurchaseReturn = () => {
       setDetailsTableErrors((prevErrors) => {
         const newErrors = [...prevErrors];
         const lastRow = table[table.length - 1];
- 
+
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
-          itemCode: !lastRow.itemCode ? 'Item Code is Required' : '', 
-          itemName: !lastRow.itemName ? 'ItemName is Required' : '', 
-          hsnSacCode: !lastRow.hsnSacCode ? 'HSNSAC Code is Required' : '', 
-          taxCode: !lastRow.taxCode ? 'Tax Code is Required' : '', 
-          primaryUnit: !lastRow.primaryUnit ? 'Primary Unit is Required' : '', 
-          poRate: !lastRow.poRate ? 'Po Rate is Required' : '', 
-          rejectQty: !lastRow.rejectQty ? 'Reject Qty is Required' : '', 
-          unitPrice: !lastRow.unitPrice ? 'Unit Price is Required' : '', 
-          amount: !lastRow.amount ? 'Amount is Required' : '', 
-          sgst: !lastRow.sgst ? 'SGST is Required' : '', 
-          cgst: !lastRow.cgst ? 'CGST is Required' : '', 
-          igst: !lastRow.igst ? 'IGST is Required' : '', 
-          taxValue: !lastRow.taxValue ? 'Tax Value is Required' : '', 
-          landedValue: !lastRow.landedValue ? 'Landed Value is Required' : '', 
+          itemCode: !lastRow.itemCode ? 'Item Code is Required' : '',
+          // itemName: !lastRow.itemName ? 'ItemName is Required' : '', 
+          // hsnSacCode: !lastRow.hsnSacCode ? 'HSNSAC Code is Required' : '', 
+          // taxCode: !lastRow.taxCode ? 'Tax Code is Required' : '', 
+          // primaryUnit: !lastRow.primaryUnit ? 'Primary Unit is Required' : '', 
+          // poRate: !lastRow.poRate ? 'Po Rate is Required' : '', 
+          // rejectQty: !lastRow.rejectQty ? 'Reject Qty is Required' : '', 
+          // unitPrice: !lastRow.unitPrice ? 'Unit Price is Required' : '', 
+          // amount: !lastRow.amount ? 'Amount is Required' : '', 
+          sgst: !lastRow.sgst ? 'SGST is Required' : '',
+          cgst: !lastRow.cgst ? 'CGST is Required' : '',
+          igst: !lastRow.igst ? 'IGST is Required' : '',
+          // taxValue: !lastRow.taxValue ? 'Tax Value is Required' : '', 
+          landedValue: !lastRow.landedValue ? 'Landed Value is Required' : '',
         };
 
         return newErrors;
@@ -447,32 +447,33 @@ const PurchaseReturn = () => {
 
   const handleSave = async () => {
     const errors = {};
-    let isValid = true; 
-    if (!formData.purchaseReturnDate) errors.purchaseReturnDate = 'Purchase Return Date is Required'; 
-    if (!formData.purchasepReturnNo) errors.purchasepReturnNo = 'Purchasep ReturnNo is Required'; 
-    if (!formData.supplierName) errors.supplierName = 'SupplierName is Required'; 
-    if (!formData.supplierCode) errors.supplierCode = 'SupplierCode is Required'; 
-    if (!formData.purchaseInvoiceNo) errors.purchaseInvoiceNo = 'Purchase InvoiceNo is Required'; 
-    if (!formData.customerName) errors.customerName = 'Customer Name is Required'; 
-    if (!formData.purchaseInvoiceDate) errors.purchaseInvoiceDate = 'Purchase Invoice Date is Required'; 
-    if (!formData.grnTime) errors.grnTime = 'GRN Time is Required'; 
-    if (!formData.poNoPcNo) errors.poNoPcNo = 'PoNo PcNo is Required'; 
-    if (!formData.gstNo) errors.gstNo = 'GST NO is Required'; 
-    if (!formData.gstState) errors.gstState = 'GST State is Required'; 
-    if (!formData.address) errors.address = 'Address is Required'; 
-    if (!formData.gatePassNo) errors.gatePassNo = 'Gate PassNo is Required'; 
-    if (!formData.isReverseChrg) errors.isReverseChrg = 'Is Reverse Chrg is Required'; 
-    if (!formData.currency) errors.currency = 'Currency is Required'; 
-    if (!formData.exchangeRate) errors.exchangeRate = 'Exchange Rate is Required'; 
-    if (!formData.invDcNo) errors.invDcNo = 'InvDcNo is Required'; 
-    if (!formData.invdcDate) errors.invdcDate = 'InvdcDate is Required'; 
-    if (!formData.gstType) errors.gstType = 'GST Type is Required'; 
-    if (!formData.toLocation) errors.toLocation = 'To Location is Required'; 
-    if (!formData.totalAmountTax) errors.totalAmountTax = 'Total Amount Tax is Required'; 
-    if (!formData.netAmount) errors.netAmount = 'Net Amount is Required'; 
-    if (!formData.totalAmount) errors.totalAmount = 'Total Amount is Required'; 
-    if (!formData.remarks) errors.remarks = 'Remarks is Required'; 
-    if (!formData.amountInWords) errors.amountInWords = 'Amount InWords is Required'; 
+    let isValid = true;
+    if (!formData.purchaseReturnDate) errors.purchaseReturnDate = 'Purchase Return Date is Required';
+    if (!formData.purchaseReturnNo) errors.purchaseReturnNo = 'Purchase Return No is Required';
+    // if (!formData.supplierName) errors.sup = 'Supplier Name is Required'; 
+    if (!formData.supplierName) { errors.supplierName = 'Supplier Name is required'; isValid = false; }
+    if (!formData.supplierCode) errors.supplierCode = 'Supplier Code is Required';
+    if (!formData.purchaseInvoiceNo) errors.purchaseInvoiceNo = 'Purchase InvoiceNo is Required';
+    if (!formData.customerName) errors.customerName = 'Customer Name is Required';
+    // if (!formData.purchaseInvoiceDate) errors.purchaseInvoiceDate = 'Purchase Invoice Date is Required'; 
+    // if (!formData.grnTime) errors.grnTime = 'GRN Time is Required'; 
+    // if (!formData.poNoPcNo) errors.poNoPcNo = 'PoNo PcNo is Required'; 
+    // if (!formData.gstNo) errors.gstNo = 'GST NO is Required'; 
+    // if (!formData.gstState) errors.gstState = 'GST State is Required'; 
+    // if (!formData.address) errors.address = 'Address is Required'; 
+    // if (!formData.gatePassNo) errors.gatePassNo = 'Gate PassNo is Required'; 
+    // if (!formData.isReverseChrg) errors.isReverseChrg = 'Is Reverse Chrg is Required'; 
+    // if (!formData.currency) errors.currency = 'Currency is Required'; 
+    // if (!formData.exchangeRate) errors.exchangeRate = 'Exchange Rate is Required'; 
+    // if (!formData.invDcNo) errors.invDcNo = 'InvDcNo is Required'; 
+    // if (!formData.invdcDate) errors.invdcDate = 'InvdcDate is Required'; 
+    // if (!formData.gstType) errors.gstType = 'GST Type is Required'; 
+    if (!formData.toLocation) errors.toLocation = 'To Location is Required';
+    if (!formData.totalAmountTax) errors.totalAmountTax = 'Total Amount Tax is Required';
+    if (!formData.netAmount) errors.netAmount = 'Net Amount is Required';
+    if (!formData.totalAmount) errors.totalAmount = 'Total Amount is Required';
+    if (!formData.remarks) errors.remarks = 'Remarks is Required';
+    if (!formData.amountInWords) errors.amountInWords = 'Amount InWords is Required';
 
     let detailTableDataValid = true;
     const newTableErrors = purchaseReturnTable.map((row) => {
@@ -481,62 +482,62 @@ const PurchaseReturn = () => {
         rowErrors.itemCode = 'Part No is Required';
         detailTableDataValid = false;
       }
-      if (!row.itemName) {
-        rowErrors.itemName = 'Part Description is Required';
-        detailTableDataValid = false;
-      }
+      // if (!row.itemName) {
+      //   rowErrors.itemName = 'Part Description is Required';
+      //   detailTableDataValid = false;
+      // }
       if (!formData.hsnSacCode) {
-        errors.hsnSacCode = 'hsnSacCode No is Required';   
+        errors.hsnSacCode = 'HsnSac Code No is Required';
       }
-      if (!row.taxCode) {
-        rowErrors.taxCode = 'Tax Code  is Required';
-        detailTableDataValid = false;
-      }
-      if (!row.unit) {
-        rowErrors.unit = ' unit is Required';
-        detailTableDataValid = false;
-      }
-      if (!row.primaryUnit) {
-        rowErrors.primaryUnit = 'primaryUnit  is Required';
-        detailTableDataValid = false;
-      }
-      if (!row.poRate) {
-        rowErrors.poRate = 'poRate is Required';
-        detailTableDataValid = false;
-      }
-      if (!row.rejectQty) {
-        rowErrors.rejectQty = 'rejectQty is Required';
-        detailTableDataValid = false;
-      }
-      if (!row.unitPrice) {
-        rowErrors.unitPrice = 'UnitPrice is Required';
-        detailTableDataValid = false;
-      }
-      if (!row.amount) {
-        rowErrors.amount = 'amount is Required';
-        detailTableDataValid = false;
-      }
+      // if (!row.taxCode) {
+      //   rowErrors.taxCode = 'Tax Code  is Required';
+      //   detailTableDataValid = false;
+      // }
+      // if (!row.unit) {
+      //   rowErrors.unit = ' unit is Required';
+      //   detailTableDataValid = false;
+      // }
+      // if (!row.primaryUnit) {
+      //   rowErrors.primaryUnit = 'primaryUnit  is Required';
+      //   detailTableDataValid = false;
+      // }
+      // if (!row.poRate) {
+      //   rowErrors.poRate = 'poRate is Required';
+      //   detailTableDataValid = false;
+      // }
+      // if (!row.rejectQty) {
+      //   rowErrors.rejectQty = 'rejectQty is Required';
+      //   detailTableDataValid = false;
+      // }
+      // if (!row.unitPrice) {
+      //   rowErrors.unitPrice = 'UnitPrice is Required';
+      //   detailTableDataValid = false;
+      // }
+      // if (!row.amount) {
+      //   rowErrors.amount = 'amount is Required';
+      //   detailTableDataValid = false;
+      // }
       if (!row.sgst) {
-        rowErrors.sgst = 'sgst is Required';
+        rowErrors.sgst = 'SGST is Required';
         detailTableDataValid = false;
       }
       if (!row.cgst) {
-        rowErrors.cgst = 'cgst is Required';
+        rowErrors.cgst = 'CGST is Required';
         detailTableDataValid = false;
       }
       if (!row.igst) {
         rowErrors.igst = 'IGST is Required';
         detailTableDataValid = false;
       }
-      if (!row.taxValue) {
-        rowErrors.taxValue = 'Tac Value is Required';
-        detailTableDataValid = false;
-      }
+      // if (!row.taxValue) {
+      //   rowErrors.taxValue = 'Tac Value is Required';
+      //   detailTableDataValid = false;
+      // }
       if (!row.landedValue) {
         rowErrors.landedValue = 'Landed Value is Required';
         detailTableDataValid = false;
       }
-  
+
 
 
       return rowErrors;
@@ -612,14 +613,16 @@ const PurchaseReturn = () => {
                 <div className="col-md-3 mb-3">
                   <TextField
                     id="outlined-textarea-zip"
-                    label="Purchasep ReturnNo"
+                    label="Purchase Return No"
                     variant="outlined"
                     size="small"
                     fullWidth
-                    name="purchasepReturnNo"
-                    value={formData.purchasepReturnNo}
+                    name="purchaseReturnNo"
+                    value={formData.purchaseReturnNo}
                     onChange={handleInputChange}
                     inputProps={{ maxLength: 10 }}
+                    error={!!fieldErrors.purchaseReturnNo}
+                    helperText={fieldErrors.purchaseReturnNo}
                   />
                 </div>
                 <div className="col-md-3 mb-3">
@@ -657,10 +660,10 @@ const PurchaseReturn = () => {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Customer Name"
+                        label="Supplier Name"
                         name="supplierName"
-                        error={!!fieldErrors.supplierName}  // Shows error if supplierName has a value in fieldErrors
-                        helperText={fieldErrors.supplierName} // Displays the error message
+                        error={!!fieldErrors.supplierName}
+                        helperText={fieldErrors.supplierName}
                         InputProps={{
                           ...params.InputProps,
                           style: { height: 40 },
@@ -672,7 +675,7 @@ const PurchaseReturn = () => {
                 <div className="col-md-3 mb-3">
                   <TextField
                     id="outlined-textarea-zip"
-                    label="supplierCode"
+                    label="Supplier Code"
                     variant="outlined"
                     size="small"
                     fullWidth
@@ -771,7 +774,7 @@ const PurchaseReturn = () => {
                 <div className="col-md-3 mb-3">
                   <TextField
                     id="outlined-textarea-zip"
-                    label="PO No/PC No"
+                    label="PO No PC No"
                     variant="outlined"
                     size="small"
                     fullWidth
@@ -851,7 +854,7 @@ const PurchaseReturn = () => {
                   <FormControl fullWidth variant="filled">
                     <TextField
                       id="isReverseChrg"
-                      label="is Reverse Chrg"
+                      label="Is Reverse Chrg"
                       name="isReverseChrg"
                       size="small"
                       value={formData.isReverseChrg}
@@ -899,7 +902,7 @@ const PurchaseReturn = () => {
                   <FormControl fullWidth variant="filled">
                     <TextField
                       id="invDcNo"
-                      label="INV /DC-No"
+                      label="INV DC-No"
                       name="invDcNo"
                       size="small"
                       value={formData.invDcNo}
@@ -915,7 +918,7 @@ const PurchaseReturn = () => {
                   <FormControl fullWidth variant="filled" size="small">
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <DatePicker
-                        label="INV /DC-Date"
+                        label="INV DC-Date"
                         value={formData.invdcDate}
                         onChange={(date) => handleDateChange('invdcDate', date)}
                         slotProps={{
@@ -925,10 +928,10 @@ const PurchaseReturn = () => {
                         disabled
                       />
                     </LocalizationProvider>
-                    {/* {fieldErrors.invdcDate && <p className="dateErrMsg">Ref Date is Required</p>} */}
+                    {/* {fieldErrors.invdcDate && <p className="dateErrMsg">Ref Date is Required</p>}
                     {fieldErrors.invdcDate && (
                       <p className="dateErrMsg">Ref Date is Required</p>
-                    )}
+                    )} */}
                   </FormControl>
                 </div>
                 <div className="col-md-3 mb-3">
@@ -1013,7 +1016,7 @@ const PurchaseReturn = () => {
                                     <th className="table-header">Item Code</th>
                                     <th className="table-header">Item Name</th>
                                     <th className="table-header">HSN/SAC Code</th>
-                                    <th className="table-header">Tax Code</th> 
+                                    <th className="table-header">Tax Code</th>
                                     <th className="table-header">Primary Unit</th>
                                     <th className="table-header">PO Rate</th>
                                     <th className="table-header">Reject Qty</th>
@@ -1180,7 +1183,7 @@ const PurchaseReturn = () => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                primaryUnit: !value ? 'primaryUnit is Required' : ''
+                                                // primaryUnit: !value ? 'primaryUnit is Required' : ''
                                               };
                                               return newErrors;
                                             });
@@ -1245,6 +1248,7 @@ const PurchaseReturn = () => {
                                             });
                                           }}
                                           className={detailsTableErrors[index]?.rejectQty ? 'error form-control' : 'form-control'}
+                                          style={{width:'150px'}}
                                           disabled
                                         />
                                         {detailsTableErrors[index]?.rejectQty && (
@@ -1273,6 +1277,7 @@ const PurchaseReturn = () => {
                                           }}
                                           className={detailsTableErrors[index]?.unitPrice ? 'error form-control' : 'form-control'}
                                           disabled
+                                          style={{width:'150px'}}
                                         />
                                         {detailsTableErrors[index]?.unitPrice && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
@@ -1300,6 +1305,7 @@ const PurchaseReturn = () => {
                                           }}
                                           className={detailsTableErrors[index]?.amount ? 'error form-control' : 'form-control'}
                                           disabled
+                                          style={{width:'150px'}}
                                         />
                                         {detailsTableErrors[index]?.amount && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
@@ -1308,7 +1314,7 @@ const PurchaseReturn = () => {
                                         )}
                                       </td>
                                       <td className="border px-2 py-2">
-                                        <input
+                                        <input  
                                           type="text"
                                           value={row.sgst}
                                           onChange={(e) => {
@@ -1326,7 +1332,7 @@ const PurchaseReturn = () => {
                                             });
                                           }}
                                           className={detailsTableErrors[index]?.sgst ? 'error form-control' : 'form-control'}
-                                          style={{width:'100px'}}
+                                          style={{ width: '100px' }}
                                         />
                                         {detailsTableErrors[index]?.sgst && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
@@ -1353,7 +1359,7 @@ const PurchaseReturn = () => {
                                             });
                                           }}
                                           className={detailsTableErrors[index]?.cgst ? 'error form-control' : 'form-control'}
-                                          style={{width:'100px'}}
+                                          style={{ width: '100px' }}
                                         />
                                         {detailsTableErrors[index]?.cgst && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
@@ -1380,7 +1386,7 @@ const PurchaseReturn = () => {
                                             });
                                           }}
                                           className={detailsTableErrors[index]?.igst ? 'error form-control' : 'form-control'}
-                                          style={{width:'100px'}}
+                                          style={{ width: '100px' }}
                                         />
                                         {detailsTableErrors[index]?.igst && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
@@ -1407,7 +1413,7 @@ const PurchaseReturn = () => {
                                             });
                                           }}
                                           className={detailsTableErrors[index]?.taxValue ? 'error form-control' : 'form-control'}
-                                          style={{width:'100px'}}
+                                          style={{ width: '100px' }}
                                           disabled
                                         />
                                         {detailsTableErrors[index]?.taxValue && (
@@ -1435,7 +1441,7 @@ const PurchaseReturn = () => {
                                             });
                                           }}
                                           className={detailsTableErrors[index]?.landedValue ? 'error form-control' : 'form-control'}
-                                          style={{width:'100px'}} 
+                                          style={{ width: '150px' }}
                                         />
                                         {detailsTableErrors[index]?.landedValue && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
@@ -1443,7 +1449,7 @@ const PurchaseReturn = () => {
                                           </div>
                                         )}
                                       </td>
-                                    
+
                                     </tr>
                                   ))}
                                 </tbody>
@@ -1505,7 +1511,7 @@ const PurchaseReturn = () => {
                               value={formData.totalAmount}
                               onChange={handleInputChange}
                               helperText={
-                                <span style={{ color: 'red' }}>{fieldErrors.totalAmount ? 'totalAmount is Required' : ''}</span>
+                                <span style={{ color: 'red' }}>{fieldErrors.totalAmount ? 'Total Amount is Required' : ''}</span>
                               }
                               inputProps={{ maxLength: 40 }}
                             />
@@ -1525,7 +1531,7 @@ const PurchaseReturn = () => {
                               value={formData.remarks}
                               onChange={handleInputChange}
                               helperText={
-                                <span style={{ color: 'red' }}>{fieldErrors.remarks ? 'remarks is Required' : ''}</span>
+                                <span style={{ color: 'red' }}>{fieldErrors.remarks ? 'Remarks is Required' : ''}</span>
                               }
                               inputProps={{ maxLength: 40 }}
                             />

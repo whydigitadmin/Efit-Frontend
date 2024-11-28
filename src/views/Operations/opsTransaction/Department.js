@@ -97,7 +97,7 @@ const Department = () => {
     if (name === 'departmentCode' || name === 'departmentName') {
       // Example validation: Ensure the field is not empty
       if (value.trim() === '') {
-        newFieldErrors[name] = `${name.replace(/([A-Z])/g, ' $1').toUpperCase()} is required`;
+        newFieldErrors[name] = `${name.replace(/([A-Z])/g, ' $1').toUpperCase()} is Required`;
       } else {
         newFieldErrors[name] = ''; // Clear the error if valid
       }
@@ -137,13 +137,13 @@ const Department = () => {
     const errors = {};
 
     // if (!formData.departmentId) {
-    //   errors.departmentId = 'Department Id is required';
+    //   errors.departmentId = 'Department Id is Required';
     // }
-    if (!formData.departmentCode) {
-      errors.departmentCode = 'Department Code is required';
+    if (!formData.departmentCode) { 
+      errors.departmentCode = 'Department Code is Required';
     }
     if (!formData.departmentName) {
-      errors.departmentName = 'Department Name is required';
+      errors.departmentName = 'Department Name is Required';
     }
 
 
