@@ -668,7 +668,7 @@ const Enquiry = () => {
 
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.partCode}
                                         onChange={(e) => {
@@ -695,7 +695,7 @@ const Enquiry = () => {
                                     </td>
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.partDescription}
                                         onChange={(e) => {
@@ -722,7 +722,7 @@ const Enquiry = () => {
                                     </td>
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.drawingNo}
                                         onChange={(e) => {
@@ -749,7 +749,7 @@ const Enquiry = () => {
                                     </td>
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.revisionNo}
                                         onChange={(e) => {
@@ -776,7 +776,7 @@ const Enquiry = () => {
                                     </td>
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.unit}
                                         onChange={(e) => {
@@ -801,7 +801,7 @@ const Enquiry = () => {
                                     </td>
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.requireQty}
                                         onChange={(e) => {
@@ -829,6 +829,7 @@ const Enquiry = () => {
 
                                     <td className="border px-2 py-2">
                                       <input
+                                        style={{ width: '150px' }}
                                         type="date"
                                         value={row.deliveryDate}
                                         onChange={(e) => {
@@ -861,7 +862,7 @@ const Enquiry = () => {
 
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.remarks}
                                         onChange={(e) => {

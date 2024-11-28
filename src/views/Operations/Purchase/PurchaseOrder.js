@@ -963,7 +963,7 @@ const PurchaseOrder = () => {
 
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.item}
                                         onChange={(e) => {
@@ -990,7 +990,7 @@ const PurchaseOrder = () => {
                                     </td>
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.itemDescription}
                                         onChange={(e) => {
@@ -1019,7 +1019,7 @@ const PurchaseOrder = () => {
                                     </td>
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.uom}
                                         onChange={(e) => {
@@ -1046,7 +1046,7 @@ const PurchaseOrder = () => {
                                     </td>
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.taxType}
                                         onChange={(e) => {
@@ -1073,7 +1073,7 @@ const PurchaseOrder = () => {
                                     </td>
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.qty}
                                         onChange={(e) => {
@@ -1100,7 +1100,7 @@ const PurchaseOrder = () => {
                                     </td>
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.prevRate}
                                         onChange={(e) => {
@@ -1128,6 +1128,7 @@ const PurchaseOrder = () => {
 
                                     <td className="border px-2 py-2">
                                       <input
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.unitPrice}
                                         onChange={(e) => {
@@ -1160,7 +1161,7 @@ const PurchaseOrder = () => {
 
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.amount}
                                         onChange={(e) => {
@@ -1187,7 +1188,7 @@ const PurchaseOrder = () => {
                                     </td>
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.discount}
                                         onChange={(e) => {
@@ -1214,7 +1215,7 @@ const PurchaseOrder = () => {
                                     </td>
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.discountAmount}
                                         onChange={(e) => {
@@ -1241,7 +1242,7 @@ const PurchaseOrder = () => {
                                     </td>
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.sgstRate}
                                         onChange={(e) => {
@@ -1268,7 +1269,7 @@ const PurchaseOrder = () => {
                                     </td>
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.sgstAmount}
                                         onChange={(e) => {
@@ -1295,7 +1296,7 @@ const PurchaseOrder = () => {
                                     </td>
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.cgst}
                                         onChange={(e) => {
@@ -1322,7 +1323,7 @@ const PurchaseOrder = () => {
                                     </td>
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.cgstAmount}
                                         onChange={(e) => {
@@ -1349,7 +1350,7 @@ const PurchaseOrder = () => {
                                     </td>
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.igst}
                                         onChange={(e) => {
@@ -1376,7 +1377,7 @@ const PurchaseOrder = () => {
                                     </td>
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.igstAmount}
                                         onChange={(e) => {
@@ -1403,7 +1404,7 @@ const PurchaseOrder = () => {
                                     </td>
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.taxValue}
                                         onChange={(e) => {
@@ -1430,7 +1431,7 @@ const PurchaseOrder = () => {
                                     </td>
                                     <td className="border px-2 py-2">
                                       <input
-                                        // style={{ width: '150px' }}
+                                        style={{ width: '150px' }}
                                         type="text"
                                         value={row.landedValue}
                                         onChange={(e) => {
