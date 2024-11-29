@@ -37,86 +37,104 @@ const WorkJobOutOrder = () => {
   const [currencies, setCurrencies] = useState([]);
   const [formData, setFormData] = useState({
     active: true,
-    jwOrderDate: dayjs(),
     jwOrderNo: '',
+    jwOrderDate: dayjs(),
     dcNo: '',
     routeCardNo: '',
-    enquiryNo: '',
-    enquiryDate: dayjs(),
-    orgId: orgId,
-    referenceDate: null,
     poNo: '',
-    contractorName: '',
-    customerName: '',
     quotationNo: '',
-    currency: '',
+    customerName: '',
+    contractorName: '',
+    contractorCode: '',
+    destination: '',
+    dispatchedThrough: '',
+    durationOfProcess: '',
+    taxType: '',
+    orgId: orgId,
+    // Job Work Amount
+    termsOfPayment: '',
+    totalAmount: '',
+    amountInWords: '',
+    totalGrossAmt: '',
+    totalTax: '',
+    // Summary
+    narration: '',
 
-
-    grossAmount: "",
-    amountInWords: "",
-    netAmount: '',
   });
 
   const [fieldErrors, setFieldErrors] = useState({
-
     active: true,
-    date: dayjs(),
     jwOrderNo: '',
+    jwOrderDate: dayjs(),
     dcNo: '',
     routeCardNo: '',
-    enquiryNo: '',
-    enquiryDate: dayjs(),
-    orgId: orgId,
-    referenceDate: null,
     poNo: '',
-    contractorName: '',
-    customerName: '',
     quotationNo: '',
-    currency: '',
-
-
-    grossAmount: '',
+    customerName: '',
+    contractorName: '',
+    contractorCode: '',
+    destination: '',
+    dispatchedThrough: '',
+    durationOfProcess: '',
+    taxType: '',
+    orgId: orgId,
+    // Job Work Amount
+    termsOfPayment: '',
+    totalAmount: '',
     amountInWords: '',
+    totalGrossAmt: '',
+    totalTax: '',
+    // Summary
+    narration: '',
   });
 
   const listViewColumns = [
-    { accessorKey: 'Currency', header: 'Currency', size: 140 },
+    { accessorKey: 'Contractor Code', header: 'Contractor Code', size: 140 },
     { accessorKey: 'routeCardNo', header: 'Ex.Rate', size: 140 },
     { accessorKey: 'refNo', header: 'Ref No', size: 140 },
     { accessorKey: 'jwOrderNo', header: 'Document Id', size: 140 }
   ];
 
-  const [detailsTableData, setDetailsTableData] = useState([
+  const [workJobTableData, setWorkJobTableData] = useState([
     {
       id: 1,
-      partNo: '',
+      part: '',
       partDescription: '',
-      drawingNo: '',
-      revisionNo: '',
-      unit: '',
-      unitPrice: '',
-      qtyOffered: '',
-      basicPrice: '',
+      process: '',
+      dueOn: '',
+      quantityNos: '',
+      rate: '',
+      grossAmount: '',
+      taxCode: '',
       discount: '',
       discountAmount: '',
-      quoteAmount: '',
-      deliveryDate: '',
+      netAmount: '',
+      sgst: '',
+      cgst: '',
+      igst: '',
+      taxamt: '',
+      amount: '',
     }
   ]);
-  const [detailsTableErrors, setDetailsTableErrors] = useState([
+  const [workJobTableErrors, setworkJobTableErrors] = useState([
     {
-      partNo: '',
+      id: 1,
+      part: '',
       partDescription: '',
-      drawingNo: '',
-      revisionNo: '',
-      unit: '',
-      unitPrice: '',
-      qtyOffered: '',
-      basicPrice: '',
+      process: '',
+      dueOn: '',
+      quantityNos: '',
+      rate: '',
+      grossAmount: '',
+      taxCode: '',
       discount: '',
       discountAmount: '',
-      quoteAmount: '',
-      deliveryDate: '',
+      netAmount: '',
+      sgst: '',
+      cgst: '',
+      igst: '',
+      taxamt: '',
+      amount: '',
     }
   ]);
 
@@ -138,15 +156,14 @@ const WorkJobOutOrder = () => {
   }, []);
 
   useEffect(() => {
-    const totalDebit = detailsTableData.reduce((sum, row) => sum + Number(row.revisionNo || 0), 0);
-    const totalCredit = detailsTableData.reduce((sum, row) => sum + Number(row.unit || 0), 0);
+    const totalDebit = workJobTableData.reduce((sum, row) => sum + Number(row.revisionNo || 0), 0);
+    const totalCredit = workJobTableData.reduce((sum, row) => sum + Number(row.unit || 0), 0);
 
     setFormData((prev) => ({
       ...prev,
-      // amountInWords: totalDebit,
-      // grossAmount: totalCredit
+      // termsOfPayment: totalDebit, 
     }));
-  }, [detailsTableData]);
+  }, [workJobTableData]);
 
   const getGeneralJournaljwOrderNo = async () => {
     try {
@@ -186,24 +203,22 @@ const WorkJobOutOrder = () => {
           id: glVO.id || '',
           date: glVO.date ? dayjs(glVO.date, 'YYYY-MM-DD') : dayjs(),
           jwOrderNo: glVO.jwOrderNo || '',
-          currency: glVO.currency || '',
           routeCardNo: glVO.routeCardNo || '',
           refNo: glVO.refNo || '',
           referenceDate: glVO.referenceDate ? dayjs(glVO.referenceDate, 'YYYY-MM-DD') : dayjs(),
-          customerName: glVO.customerName || '',
+          contractorName: glVO.contractorName || '',
           orgId: glVO.orgId || '',
-          amountInWords: glVO.amountInWords || '',
-          grossAmount: glVO.grossAmount || ''
+          termsOfPayment: glVO.termsOfPayment || '',
           // active: glVO.active || false,
         });
-        setDetailsTableData(
+        setWorkJobTableData(
           glVO.particularsJournalVO.map((row) => ({
             id: row.id,
-            partNo: row.partNo,
+            part: row.part,
             unit: row.unit,
             revisionNo: row.revisionNo,
             unitPrice: row.unitPrice,
-            drawingNo: row.drawingNo,
+            part: row.part,
             partDescription: row.partDescription
           }))
         );
@@ -231,9 +246,9 @@ const WorkJobOutOrder = () => {
     const value = e.target.value;
 
     if (/^\d{0,20}$/.test(value)) {
-      setDetailsTableData((prev) => prev.map((r) => (r.id === row.id ? { ...r, revisionNo: value, unit: value ? '0' : '' } : r)));
+      setWorkJobTableData((prev) => prev.map((r) => (r.id === row.id ? { ...r, revisionNo: value, unit: value ? '0' : '' } : r)));
 
-      setDetailsTableErrors((prev) => {
+      setworkJobTableErrors((prev) => {
         const newErrors = [...prev];
         newErrors[index] = {
           ...newErrors[index],
@@ -248,9 +263,9 @@ const WorkJobOutOrder = () => {
     const value = e.target.value;
 
     if (/^\d{0,20}$/.test(value)) {
-      setDetailsTableData((prev) => prev.map((r) => (r.id === row.id ? { ...r, unit: value, revisionNo: value ? '0' : '' } : r)));
+      setWorkJobTableData((prev) => prev.map((r) => (r.id === row.id ? { ...r, unit: value, revisionNo: value ? '0' : '' } : r)));
 
-      setDetailsTableErrors((prev) => {
+      setworkJobTableErrors((prev) => {
         const newErrors = [...prev];
         newErrors[index] = {
           ...newErrors[index],
@@ -294,102 +309,168 @@ const WorkJobOutOrder = () => {
 
   const handleClear = () => {
     setFormData({
-      date: dayjs(),
       jwOrderNo: '',
+      jwOrderDate: dayjs(),
       dcNo: '',
       routeCardNo: '',
-      enquiryNo: '',
-      enquiryDate: dayjs(),
-      orgId: orgId,
-      referenceDate: null,
       poNo: '',
-      contractorName: '',
-      customerName: '',
       quotationNo: '',
-      currency: '',
+      customerName: '',
+      contractorName: '',
+      contractorCode: '',
+      destination: '',
+      dispatchedThrough: '',
+      durationOfProcess: '',
+      taxType: '',
+      orgId: orgId,
+      // Job Work Amount
+      termsOfPayment: '',
+      totalAmount: '',
+      amountInWords: '',
+      totalGrossAmt: '',
+      totalTax: '',
+      // Summary
+      narration: '',
     });
     getAllActiveCurrency(orgId);
     setFieldErrors({
-      date: dayjs(),
+      jwOrderNo: '',
+      jwOrderDate: dayjs(),
+      dcNo: '',
       routeCardNo: '',
-      orgId: orgId,
-      referenceDate: null,
-      netAmount: '',
+      poNo: '',
+      quotationNo: '',
       customerName: '',
-      grossAmount: '',
+      contractorName: '',
+      contractorCode: '',
+      destination: '',
+      dispatchedThrough: '',
+      durationOfProcess: '',
+      taxType: '',
+      orgId: orgId,
+      // Job Work Amount
+      termsOfPayment: '',
+      totalAmount: '',
       amountInWords: '',
+      totalGrossAmt: '',
+      totalTax: '',
+      // Summary
+      narration: '',
     });
-    setDetailsTableData([
-      { id: 1, partNo: '', unit: '', drawingNo: '', partDescription: '', revisionNo: '', unitPrice: '', }
+    setWorkJobTableData([
+      {
+        id: 1,
+        part: '',
+        partDescription: '',
+        process: '',
+        dueOn: '',
+        quantityNos: '',
+        rate: '',
+        grossAmount: '',
+        taxCode: '',
+        discount: '',
+        discountAmount: '',
+        netAmount: '',
+        sgst: '',
+        cgst: '',
+        igst: '',
+        taxamt: '',
+        amount: '',
+      }
     ]);
-    setDetailsTableErrors('');
+    setworkJobTableErrors('');
     setEditId('');
     getGeneralJournaljwOrderNo();
   };
 
 
   const handleAddRow = () => {
-    if (isLastRowEmpty(detailsTableData)) {
-      displayRowError(detailsTableData);
+    if (isLastRowEmpty(workJobTableData)) {
+      displayRowError(workJobTableData);
       return;
     }
     const newRow = {
       id: Date.now(),
-      partNo: '',
+      part: '',
       unit: '',
-      drawingNo: '',
       partDescription: '',
       revisionNo: '',
       unitPrice: '',
     };
-    setDetailsTableData([...detailsTableData, newRow]);
-    setDetailsTableErrors([...detailsTableErrors, { partNo: '', unit: '', revisionNo: '', unitPrice: '', }]);
+    setWorkJobTableData([...workJobTableData, newRow]);
+    setworkJobTableErrors([...workJobTableErrors, {
+      part: '',
+      partDescription: '',
+      process: '',
+      dueOn: '',
+      quantityNos: '',
+      rate: '',
+      grossAmount: '',
+      taxCode: '',
+      discount: '',
+      discountAmount: '',
+      netAmount: '',
+      sgst: '',
+      cgst: '',
+      igst: '',
+      taxamt: '',
+      amount: ''
+    }]);
   };
 
   const isLastRowEmpty = (table) => {
     const lastRow = table[table.length - 1];
     if (!lastRow) return false;
-    if (!lastRow) return false;
-    if (table === detailsTableData) {
+
+    if (table === workJobTableData) {
       return (
-        !lastRow.partNo ||
-        !lastRow.unit ||
-        !lastRow.unitPrice ||
-        // !lastRow.drawingNo ||
-        !lastRow.partDescription ||
-        !lastRow.revisionNo ||
-        !lastRow.qtyOffered ||
-        !lastRow.basicPrice ||
-        !lastRow.discount ||
-        !lastRow.discountAmount ||
-        !lastRow.quoteAmount ||
-        !lastRow.deliveryDate
+        !lastRow.part || !lastRow.part.trim() ||
+        !lastRow.partDescription || !lastRow.partDescription.trim() ||
+        !lastRow.process || !lastRow.process.trim() ||
+        !lastRow.dueOn || !lastRow.dueOn.trim() ||
+        !lastRow.quantityNos || !lastRow.quantityNos.trim() ||
+        !lastRow.rate || !lastRow.rate.trim() ||
+        !lastRow.grossAmount || !lastRow.grossAmount.trim() ||
+        !lastRow.taxCode || !lastRow.taxCode.trim() ||
+        !lastRow.discount || !lastRow.discount.trim() ||
+        !lastRow.discountAmount || !lastRow.discountAmount.trim() ||
+        !lastRow.netAmount || !lastRow.netAmount.trim() ||
+        !lastRow.sgst || !lastRow.sgst.trim() ||
+        !lastRow.cgst || !lastRow.cgst.trim() ||
+        !lastRow.igst || !lastRow.igst.trim() ||
+        !lastRow.taxamt || !lastRow.taxamt.trim() ||
+        !lastRow.amount || !lastRow.amount.trim()
       );
     }
+
     return false;
   };
 
   const displayRowError = (table) => {
-    if (table === detailsTableData) {
-      setDetailsTableErrors((prevErrors) => {
+    if (table === workJobTableData) {
+      setworkJobTableErrors((prevErrors) => {
         const newErrors = [...prevErrors];
         const lastRow = table[table.length - 1];
 
         // Add error messages for Required fields
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
-          partNo: !lastRow.partNo ? 'Part Number is Required' : '',
-          unit: !lastRow.unit ? 'Unit is Required' : '',
-          unitPrice: !lastRow.unitPrice ? 'Unit Price is Required' : '',
-          drawingNo: !lastRow.drawingNo ? 'Drawing Number is Required' : '',
-          // partDescription: !lastRow.partDescription ? 'Part Description is Required' : '',
-          // revisionNo: !lastRow.revisionNo ? 'Revision Number is Required' : '',
-          qtyOffered: !lastRow.qtyOffered ? 'Quantity Offered is Required' : '',
-          basicPrice: !lastRow.basicPrice ? 'Basic Price is Required' : '',
+          part: !lastRow.part ? 'Part is Required' : '',
+          // partDescription: !lastRow.partDescription ? 'PartDescription is Required' : '',
+          process: !lastRow.process ? 'Process is Required' : '',
+          dueOn: !lastRow.dueOn ? 'Dueon is Required' : '',
+          quantityNos: !lastRow.quantityNos ? 'Quantity Nos is Required' : '',
+          rate: !lastRow.rate ? 'rate is Required' : '',
+          grossAmount: !lastRow.grossAmount ? 'Gross Amount is Required' : '',
+          taxCode: !lastRow.taxCode ? 'Tax Code is Required' : '',
           discount: !lastRow.discount ? 'Discount is Required' : '',
           discountAmount: !lastRow.discountAmount ? 'Discount Amount is Required' : '',
-          quoteAmount: !lastRow.quoteAmount ? 'Quote Amount Amount is Required' : '',
-          deliveryDate: !lastRow.deliveryDate ? 'Delivery Date is Required' : ''
+          netAmount: !lastRow.netAmount ? 'Net Amount is Required' : '',
+          sgst: !lastRow.sgst ? 'SGST is Required' : '',
+          cgst: !lastRow.cgst ? 'CGST is Required' : '',
+          igst: !lastRow.igst ? 'IGST is Required' : '',
+          taxamt: !lastRow.taxamt ? 'Taxamt is Required' : '',
+          amount: !lastRow.amount ? 'Amount is Required' : '',
         };
 
         return newErrors;
@@ -421,53 +502,47 @@ const WorkJobOutOrder = () => {
   const handleSave = async () => {
     const errors = {};
     let isValid = true;
-    // if (!formData.jwOrderNo) errors.jwOrderNo = 'Quote Number is Required';
-    if (!formData.dcNo) errors.dcNo = 'DC No is Required';
-    if (!formData.routeCardNo) errors.routeCardNo = 'Route Card No is Required';
-    if (!formData.enquiryNo) errors.enquiryNo = 'Enquiry Number is Required';
-    if (!formData.referenceDate) errors.referenceDate = 'Reference Date is Required';
-    if (!formData.poNo) errors.poNo = 'Po No is Required';
+    if (!formData.jwOrderNo) errors.jwOrderNo = 'JW Order No is Required';
+    if (!formData.jwOrderDate) errors.jwOrderDate = 'JW Order Date No is Required';
+    if (!formData.dcNo) errors.dcNo = 'DC No No is Required';
+    if (!formData.routeCardNo) errors.routeCardNo = 'Route Card No No is Required';
+    if (!formData.poNo) errors.poNo = 'PO No is Required';
+    if (!formData.quotationNo) errors.quotationNo = 'Quotation No is Required';
+    if (!formData.customerName) errors.customerName = 'Customer Name No is Required';
     if (!formData.contractorName) errors.contractorName = 'Contractor Name is Required';
-    if (!formData.customerName) errors.customerName =   'Customer Name is Required';
-    if (!formData.quotationNo) errors.quotationNo = 'Production Manager is Required';
-    if (!formData.currency) errors.currency = 'Currency is Required';
-    if (!formData.grossAmount) errors.grossAmount = 'Gross Amount is Required';
-    if (!formData.amountInWords) errors.amountInWords = 'Amount in Words is Required';
-    if (!formData.netAmount) errors.netAmount = 'Net Amount is Required';
+    if (!formData.contractorCode) errors.contractorCode = 'Contractor Code No is Required';
+    // if (!formData.destination) errors.destination = 'destination No is Required';
+    if (!formData.dispatchedThrough) errors.dispatchedThrough = 'Dispatched Through is Required';
+    if (!formData.durationOfProcess) errors.durationOfProcess = 'Duration Of Process is Required';
+    if (!formData.taxType) errors.taxType = 'Tax Type is Required';
+    if (!formData.termsOfPayment) errors.termsOfPayment = 'Terms Of Payment is Required';
+    if (!formData.totalAmount) errors.totalAmount = 'Total Amount is Required';
+    if (!formData.amountInWords) errors.amountInWords = 'Amount In Words is Required';
+    if (!formData.totalGrossAmt) errors.totalGrossAmt = 'Total Gross Amt is Required';
+    if (!formData.totalTax) errors.totalTax = 'Total Tax is Required';
+    if (!formData.narration) errors.narration = 'Narration is Required';
 
     let detailTableDataValid = true;
-    const newTableErrors = detailsTableData.map((row) => {
+    const newTableErrors = workJobTableData.map((row) => {
       const rowErrors = {};
-      if (!row.partNo) {
-        rowErrors.partNo = 'Part No is Required';
-        detailTableDataValid = false;
-      }
-      // if (!row.partDescription) {
-      //   rowErrors.partDescription = 'Part Description is Required';
-      //   detailTableDataValid = false;
-      // }
-      if (!formData.drawingNo) {
-        errors.drawingNo = 'Drawing No is Required'; // Custom error message
+      if (!formData.part) {
+        errors.part = 'Part is Required';
         isValid = false;
       }
-      // if (!row.revisionNo) {
-      //   rowErrors.revisionNo = 'Revision No  is Required';
-      //   detailTableDataValid = false;
-      // }
-      if (!row.unit) {
-        rowErrors.unit = ' Unit is Required';
+      if (!row.process) {
+        rowErrors.process = ' Process is Required';
         detailTableDataValid = false;
       }
-      if (!row.unitPrice) {
-        rowErrors.unitPrice = 'Unit Price  is Required';
+      if (!row.rate) {
+        rowErrors.rate = 'Rate is Required';
         detailTableDataValid = false;
       }
-      if (!row.qtyOffered) {
-        rowErrors.qtyOffered = 'Qty Offered is Required';
+      if (!row.grossAmount) {
+        rowErrors.grossAmount = 'Gross Amount is Required';
         detailTableDataValid = false;
       }
-      if (!row.basicPrice) {
-        rowErrors.basicPrice = 'Basic Price is Required';
+      if (!row.taxCode) {
+        rowErrors.taxCode = 'Tax Code is Required';
         detailTableDataValid = false;
       }
       if (!row.discount) {
@@ -478,12 +553,28 @@ const WorkJobOutOrder = () => {
         rowErrors.discountAmount = 'DiscountAmount is Required';
         detailTableDataValid = false;
       }
-      if (!row.quoteAmount) {
-        rowErrors.quoteAmount = 'Quote Amount is Required';
+      if (!row.netAmount) {
+        rowErrors.netAmount = 'Net Amount is Required';
         detailTableDataValid = false;
       }
-      if (!row.deliveryDate) {
-        rowErrors.deliveryDate = 'Delivery Date is Required';
+      if (!row.sgst) {
+        rowErrors.sgst = 'SGST is Required';
+        detailTableDataValid = false;
+      }
+      if (!row.cgst) {
+        rowErrors.cgst = 'CGST is Required';
+        detailTableDataValid = false;
+      }
+      if (!row.igst) {
+        rowErrors.igst = 'IGST is Required';
+        detailTableDataValid = false;
+      }
+      if (!row.taxamt) {
+        rowErrors.taxamt = 'Taxamt is Required';
+        detailTableDataValid = false;
+      }
+      if (!row.amount) {
+        rowErrors.amount = 'Amount is Required';
         detailTableDataValid = false;
       }
 
@@ -492,16 +583,16 @@ const WorkJobOutOrder = () => {
     });
     setFieldErrors(errors);
 
-    setDetailsTableErrors(newTableErrors);
+    setworkJobTableErrors(newTableErrors);
 
     if (Object.keys(errors).length === 0 && detailTableDataValid) {
-      const GeneralJournalVO = detailsTableData.map((row) => ({
+      const GeneralJournalVO = workJobTableData.map((row) => ({
         ...(editId && { id: row.id }),
-        partNo: row.partNo,
+        part: row.part,
         unit: row.unit,
         revisionNo: row.revisionNo,
         unitPrice: row.unitPrice,
-        drawingNo: row.drawingNo,
+        part: row.part,
         partDescription: row.partDescription
       }));
       const saveFormData = {
@@ -510,16 +601,14 @@ const WorkJobOutOrder = () => {
         branch: branch,
         branchCode: branchCode,
         createdBy: loginUserName,
-        currency: formData.currency,
         routeCardNo: formData.routeCardNo,
         finYear: finYear,
         orgId: orgId,
         particularsJournalDTO: GeneralJournalVO,
         referenceDate: dayjs(formData.referenceDate).format('YYYY-MM-DD'),
         refNo: formData.refNo,
-        customerName: formData.customerName,
-        grossAmount: formData.grossAmount,
-        amountInWords: formData.amountInWords,
+        contractorName: formData.contractorName,
+        termsOfPayment: formData.termsOfPayment,
       };
       console.log('DATA TO SAVE IS:', saveFormData);
       try {
@@ -633,8 +722,6 @@ const WorkJobOutOrder = () => {
                     inputProps={{ maxLength: 10 }}
                   />
                 </div>
-               
-           
                 <div className="col-md-3 mb-3">
                   <FormControl fullWidth variant="filled">
                     <TextField
@@ -654,7 +741,8 @@ const WorkJobOutOrder = () => {
                       helperText={fieldErrors.poNo}
                     />
                   </FormControl>
-                </div> 
+                </div>
+
                 <div className="col-md-3 mb-3">
                   <Autocomplete
                     disablePortal
@@ -677,7 +765,7 @@ const WorkJobOutOrder = () => {
                         label="Quotation No"
                         name="quotationNo"
                         error={!!fieldErrors.quotationNo}
-                        helperText={fieldErrors.quotationNo}  
+                        helperText={fieldErrors.quotationNo}
                         InputProps={{
                           ...params.InputProps,
                           style: { height: 40 },
@@ -686,14 +774,31 @@ const WorkJobOutOrder = () => {
                     )}
                   />
                 </div>
+
+
+                <div className="col-md-3 mb-3">
+                  <TextField
+                    id="outlined-textarea-zip"
+                    label="Customer Name"
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    name="customerName"
+                    value={formData.customerName}
+                    onChange={handleInputChange}
+                    disabled
+                    inputProps={{ maxLength: 10 }}
+                  />
+                </div>
+
                 <div className="col-md-3 mb-3">
                   <FormControl fullWidth variant="filled">
                     <TextField
-                      id="customerName"
-                      label="Customer Name"
+                      id="contractorName"
+                      label="Contractor Name"
                       size="small"
-                      name="customerName"
-                      value={formData.customerName}
+                      name="contractorName"
+                      value={formData.contractorName}
                       onChange={handleInputChange}
                       disabled
                       inputProps={{ maxLength: 10 }}
@@ -703,38 +808,79 @@ const WorkJobOutOrder = () => {
                 <div className="col-md-3 mb-3">
                   <TextField
                     id="outlined-textarea-zip"
-                    label="Contractor Name"
+                    label="Contractor Code"
                     variant="outlined"
                     size="small"
                     fullWidth
-                    name="contractorName"
-                    value={formData.contractorName}
+                    name="contractorCode"
+                    value={formData.contractorCode}
                     onChange={handleInputChange}
-                    inputProps={{ maxLength: 30 }}
-                    error={!!fieldErrors.contractorName}
-                    helperText={fieldErrors.contractorName}
+                    disabled
+                    inputProps={{ maxLength: 10 }}
                   />
                 </div>
                 <div className="col-md-3 mb-3">
-                  <FormControl fullWidth variant="filled">
-                    <TextField
-                      id="currency"
-                      label="Currency"
-                      // label={
-                      //   <span>
-                      //     Drawing Id <span className="asterisk">*</span>
-                      //   </span>
-                      // }
-                      name="currency"
-                      size="small"
-                      value={formData.currency}
-                      onChange={handleInputChange}
-                      inputProps={{ maxLength: 30 }}
-                      error={!!fieldErrors.currency}
-                      helperText={fieldErrors.currency}
-                    />
-                  </FormControl>
+                  <TextField
+                    id="outlined-textarea-zip"
+                    label="Destination"
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    name="destination"
+                    value={formData.destination}
+                    onChange={handleInputChange}
+                    disabled
+                    inputProps={{ maxLength: 10 }}
+                    error={!!fieldErrors.destination}
+                    helperText={fieldErrors.destination}
+                  />
                 </div>
+                <div className="col-md-3 mb-3">
+                  <TextField
+                    id="outlined-textarea-zip"
+                    label="Dispatched Through"
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    name="dispatchedThrough"
+                    value={formData.dispatchedThrough}
+                    onChange={handleInputChange}
+                    inputProps={{ maxLength: 10 }}
+                    error={!!fieldErrors.dispatchedThrough}
+                    helperText={fieldErrors.dispatchedThrough}
+                  />
+                </div>
+                <div className="col-md-3 mb-3">
+                  <TextField
+                    id="outlined-textarea-zip"
+                    label="Duration of Process"
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    name="durationOfProcess"
+                    value={formData.durationOfProcess}
+                    onChange={handleInputChange}
+                    inputProps={{ maxLength: 10 }}
+                    error={!!fieldErrors.durationOfProcess}
+                    helperText={fieldErrors.durationOfProcess}
+                  />
+                </div>
+                <div className="col-md-3 mb-3">
+                  <TextField
+                    id="outlined-textarea-zip"
+                    label="Tax Type"
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    name="taxType"
+                    value={formData.taxType}
+                    onChange={handleInputChange}
+                    inputProps={{ maxLength: 10 }}
+                    error={!!fieldErrors.taxType}
+                    helperText={fieldErrors.taxType}
+                  />
+                </div>
+
               </div>
               <div className="row mt-2">
                 <Box sx={{ width: '100%' }}>
@@ -745,8 +891,9 @@ const WorkJobOutOrder = () => {
                     indicatorColor="secondary"
                     aria-label="secondary tabs example"
                   >
-                    <Tab value={0} label="Quote details" />
-                    <Tab value={1} label="Summary" />
+                    <Tab value={0} label="Job Work Out Order" />
+                    <Tab value={1} label="Job Work Amount" />
+                    <Tab value={2} label="Summary" />
                   </Tabs>
                 </Box>
                 <Box sx={{ padding: 2 }}>
@@ -764,22 +911,26 @@ const WorkJobOutOrder = () => {
                                   <tr style={{ backgroundColor: '#673AB7' }}>
                                     <th className="table-header">Action</th>
                                     <th className="table-header">S.No</th>
-                                    <th className="table-header">Part No</th>
-                                    <th className="table-header">Part Description</th>
-                                    <th className="table-header">Drawing No</th>
-                                    <th className="table-header">Revision No</th>
-                                    <th className="table-header">Unit</th>
-                                    <th className="table-header">Unit Price</th>
-                                    <th className="table-header">Qty Offered</th>
-                                    <th className="table-header">Basic Price</th>
+                                    <th className="table-header">Part</th>
+                                    <th className="table-header">Part Desc</th>
+                                    <th className="table-header">Process</th>
+                                    <th className="table-header">Due on</th>
+                                    <th className="table-header">Quantity Nos</th>
+                                    <th className="table-header">Rate</th>
+                                    <th className="table-header">Gross Amount</th>
+                                    <th className="table-header">Tax Code</th>
                                     <th className="table-header">Discount %</th>
                                     <th className="table-header">Discount Amount</th>
-                                    <th className="table-header">Quote Amount</th>
-                                    <th className="table-header">Delivery Date</th>
+                                    <th className="table-header">Net Amount</th>
+                                    <th className="table-header">SGST</th>
+                                    <th className="table-header">CGST</th>
+                                    <th className="table-header">IGST</th>
+                                    <th className="table-header">Taxamt</th>
+                                    <th className="table-header">Amount</th>
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {detailsTableData.map((row, index) => (
+                                  {workJobTableData.map((row, index) => (
                                     <tr key={row.id}>
                                       <td className="border px-2 py-2 text-center">
                                         <ActionButton
@@ -788,10 +939,10 @@ const WorkJobOutOrder = () => {
                                           onClick={() =>
                                             handleDeleteRow(
                                               row.id,
-                                              detailsTableData,
-                                              setDetailsTableData,
-                                              detailsTableErrors,
-                                              setDetailsTableErrors
+                                              workJobTableData,
+                                              setWorkJobTableData,
+                                              workJobTableErrors,
+                                              setworkJobTableErrors
                                             )
                                           }
                                         />
@@ -800,69 +951,17 @@ const WorkJobOutOrder = () => {
                                         <div className="pt-2">{index + 1}</div>
                                       </td>
                                       <td className="border px-2 py-2">
-                                        <select
-                                          value={row.partNo}
-                                          style={{ width: '200px' }}
-                                          className={detailsTableErrors[index]?.partNo ? 'error form-control' : 'form-control'}
-                                          onChange={(e) =>
-                                            setDetailsTableData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, partNo: e.target.value } : r))
-                                            )
-                                          }
-                                        >
-                                          <option value="">-- Select --</option>
-                                          {accountNames.map((item) => (
-                                            <option key={item.id} value={item.accountName}>
-                                              {item.accountName}
-                                            </option>
-                                          ))}
-                                        </select>
-                                        {detailsTableErrors[index]?.partNo && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors[index].partNo}
-                                          </div>
-                                        )}
-                                      </td>
-                                      <td className="border px-2 py-2">
-                                        <input
-                                          type="text"
-                                          value={row.partDescription}
-                                          onChange={(e) => {
-                                            const value = e.target.value;
-                                            setDetailsTableData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, partDescription: value } : r))
-                                            );
-                                            setDetailsTableErrors((prev) => {
-                                              const newErrors = [...prev];
-                                              newErrors[index] = {
-                                                ...newErrors[index],
-                                                partDescription: !value ? 'Sub Ledger Name is Required' : ''
-                                              };
-                                              return newErrors;
-                                            });
-                                          }}
-                                          className={detailsTableErrors[index]?.partDescription ? 'error form-control' : 'form-control'}
-                                          style={{ width: '150px' }}
-                                          disabled
-                                        />
-                                        {detailsTableErrors[index]?.partDescription && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors[index].partDescription}
-                                          </div>
-                                        )}
-                                      </td>
-                                      <td>
                                         <Autocomplete
                                           disablePortal
                                           options={partyList.map((option, index) => ({ ...option, key: index }))}
                                           getOptionLabel={(option) => option.partyname || ''}
                                           sx={{ width: '100%' }}
                                           size="small"
-                                          value={formData.drawingNo ? partyList.find((c) => c.partyname === formData.drawingNo) : null}
+                                          value={formData.part ? partyList.find((c) => c.partyname === formData.part) : null}
                                           onChange={(event, newValue) => {
                                             handleInputChange({
                                               target: {
-                                                name: 'drawingNo',
+                                                name: 'part',
                                                 value: newValue ? newValue.partyname : '', // Adjusted to 'partyname'
                                               },
                                             });
@@ -870,10 +969,10 @@ const WorkJobOutOrder = () => {
                                           renderInput={(params) => (
                                             <TextField
                                               {...params}
-                                              label="Drawing No"
-                                              name="drawingNo"
-                                              error={!!fieldErrors.drawingNo}  // Shows red border if there's an error
-                                              helperText={fieldErrors.drawingNo}  // Shows the error message
+                                              label="Part"
+                                              name="part"
+                                              error={!!fieldErrors.part}  // Shows red border if there's an error
+                                              helperText={fieldErrors.part}  // Shows the error message
                                               InputProps={{
                                                 ...params.InputProps,
                                                 style: { height: 40, width: 200 },
@@ -882,120 +981,195 @@ const WorkJobOutOrder = () => {
                                           )}
                                         />
                                       </td>
-
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
-                                          value={row.revisionNo}
-                                          onChange={(e) => handleDebitChange(e, row, index)}
-                                          maxLength="20"
-                                          className={detailsTableErrors[index]?.revisionNo ? 'error form-control' : 'form-control'}
+                                          value={row.partDescription}
+                                          onChange={(e) => {
+                                            const value = e.target.value;
+                                            setWorkJobTableData((prev) =>
+                                              prev.map((r) => (r.id === row.id ? { ...r, partDescription: value } : r))
+                                            );
+                                            setworkJobTableErrors((prev) => {
+                                              const newErrors = [...prev];
+                                              newErrors[index] = {
+                                                ...newErrors[index],
+                                                partDescription: !value ? 'Sub Ledger Name is Required' : ''
+                                              };
+                                              return newErrors;
+                                            });
+                                          }}
+                                          className={workJobTableErrors[index]?.partDescription ? 'error form-control' : 'form-control'}
                                           style={{ width: '150px' }}
                                           disabled
                                         />
-                                        {detailsTableErrors[index]?.revisionNo && (
+                                        {workJobTableErrors[index]?.partDescription && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors[index].revisionNo}
+                                            {workJobTableErrors[index].partDescription}
                                           </div>
                                         )}
                                       </td>
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
-                                          value={row.unit}
-                                          onChange={(e) => handleCreditChange(e, row, index)}
-                                          maxLength="20"
-                                          className={detailsTableErrors[index]?.unit ? 'error form-control' : 'form-control'}
-                                          style={{ width: '150px' }}
-                                        />
-                                        {detailsTableErrors[index]?.unit && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors[index].unit}
-                                          </div>
-                                        )}
-                                      </td>
-
-                                      <td className="border px-2 py-2">
-                                        <input
-                                          type="text"
-                                          value={row.unitPrice}
+                                          value={row.process}
                                           onChange={(e) => {
                                             const value = e.target.value;
-                                            setDetailsTableData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, unitPrice: value } : r))
+                                            setWorkJobTableData((prev) =>
+                                              prev.map((r) => (r.id === row.id ? { ...r, process: value } : r))
                                             );
-                                            setDetailsTableErrors((prev) => {
+                                            setworkJobTableErrors((prev) => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                unitPrice: !value ? 'unitPrice is Required' : ''
+                                                process: !value ? 'Sub Ledger Name is Required' : ''
                                               };
                                               return newErrors;
                                             });
                                           }}
-                                          className={detailsTableErrors[index]?.unitPrice ? 'error form-control' : 'form-control'}
+                                          className={workJobTableErrors[index]?.process ? 'error form-control' : 'form-control'}
                                           style={{ width: '150px' }}
                                         />
-                                        {detailsTableErrors[index]?.unitPrice && (
+                                        {workJobTableErrors[index]?.process && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors[index].unitPrice}
-                                          </div>
-                                        )}
-                                      </td>
-
-                                      {/*  */}
-
-                                      <td className="border px-2 py-2">
-                                        <input
-                                          type="text"
-                                          value={row.qtyOffered}
-                                          onChange={(e) => {
-                                            const value = e.target.value;
-                                            setDetailsTableData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, qtyOffered: value } : r))
-                                            );
-                                            setDetailsTableErrors((prev) => {
-                                              const newErrors = [...prev];
-                                              newErrors[index] = {
-                                                ...newErrors[index],
-                                                qtyOffered: !value ? 'qtyOffered is Required' : ''
-                                              };
-                                              return newErrors;
-                                            });
-                                          }}
-                                          className={detailsTableErrors[index]?.qtyOffered ? 'error form-control' : 'form-control'}
-                                          style={{ width: '150px' }}
-                                        />
-                                        {detailsTableErrors[index]?.qtyOffered && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors[index].qtyOffered}
+                                            {workJobTableErrors[index].process}
                                           </div>
                                         )}
                                       </td>
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
-                                          value={row.basicPrice}
+                                          value={row.dueOn}
                                           onChange={(e) => {
                                             const value = e.target.value;
-                                            setDetailsTableData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, basicPrice: value } : r))
+                                            setWorkJobTableData((prev) =>
+                                              prev.map((r) => (r.id === row.id ? { ...r, dueOn: value } : r))
                                             );
-                                            setDetailsTableErrors((prev) => {
+                                            setworkJobTableErrors((prev) => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                basicPrice: !value ? 'basicPrice is Required' : ''
+                                                dueOn: !value ? 'Sub Ledger Name is Required' : ''
                                               };
                                               return newErrors;
                                             });
                                           }}
-                                          className={detailsTableErrors[index]?.basicPrice ? 'error form-control' : 'form-control'}
+                                          className={workJobTableErrors[index]?.dueOn ? 'error form-control' : 'form-control'}
+                                          style={{ width: '150px' }}
+                                          disabled
+                                        />
+                                        {workJobTableErrors[index]?.dueOn && (
+                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                            {workJobTableErrors[index].dueOn}
+                                          </div>
+                                        )}
+                                      </td>
+                                      <td className="border px-2 py-2">
+                                        <input
+                                          type="text"
+                                          value={row.quantityNos}
+                                          onChange={(e) => {
+                                            const value = e.target.value;
+                                            setWorkJobTableData((prev) =>
+                                              prev.map((r) => (r.id === row.id ? { ...r, quantityNos: value } : r))
+                                            );
+                                            setworkJobTableErrors((prev) => {
+                                              const newErrors = [...prev];
+                                              newErrors[index] = {
+                                                ...newErrors[index],
+                                                quantityNos: !value ? 'Sub Ledger Name is Required' : ''
+                                              };
+                                              return newErrors;
+                                            });
+                                          }}
+                                          className={workJobTableErrors[index]?.quantityNos ? 'error form-control' : 'form-control'}
+                                          style={{ width: '150px' }}
+                                          disabled
+                                        />
+                                        {workJobTableErrors[index]?.quantityNos && (
+                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                            {workJobTableErrors[index].quantityNos}
+                                          </div>
+                                        )}
+                                      </td>
+                                      <td className="border px-2 py-2">
+                                        <input
+                                          type="text"
+                                          value={row.rate}
+                                          onChange={(e) => {
+                                            const value = e.target.value;
+                                            setWorkJobTableData((prev) =>
+                                              prev.map((r) => (r.id === row.id ? { ...r, rate: value } : r))
+                                            );
+                                            setworkJobTableErrors((prev) => {
+                                              const newErrors = [...prev];
+                                              newErrors[index] = {
+                                                ...newErrors[index],
+                                                rate: !value ? 'Sub Ledger Name is Required' : ''
+                                              };
+                                              return newErrors;
+                                            });
+                                          }}
+                                          className={workJobTableErrors[index]?.rate ? 'error form-control' : 'form-control'}
                                           style={{ width: '150px' }}
                                         />
-                                        {detailsTableErrors[index]?.basicPrice && (
+                                        {workJobTableErrors[index]?.rate && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors[index].basicPrice}
+                                            {workJobTableErrors[index].rate}
+                                          </div>
+                                        )}
+                                      </td>
+                                      <td className="border px-2 py-2">
+                                        <input
+                                          type="text"
+                                          value={row.grossAmount}
+                                          onChange={(e) => {
+                                            const value = e.target.value;
+                                            setWorkJobTableData((prev) =>
+                                              prev.map((r) => (r.id === row.id ? { ...r, grossAmount: value } : r))
+                                            );
+                                            setworkJobTableErrors((prev) => {
+                                              const newErrors = [...prev];
+                                              newErrors[index] = {
+                                                ...newErrors[index],
+                                                grossAmount: !value ? 'Sub Ledger Name is Required' : ''
+                                              };
+                                              return newErrors;
+                                            });
+                                          }}
+                                          className={workJobTableErrors[index]?.grossAmount ? 'error form-control' : 'form-control'}
+                                          style={{ width: '150px' }}
+                                        />
+                                        {workJobTableErrors[index]?.grossAmount && (
+                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                            {workJobTableErrors[index].grossAmount}
+                                          </div>
+                                        )}
+                                      </td>
+                                      <td className="border px-2 py-2">
+                                        <input
+                                          type="text"
+                                          value={row.taxCode}
+                                          onChange={(e) => {
+                                            const value = e.target.value;
+                                            setWorkJobTableData((prev) =>
+                                              prev.map((r) => (r.id === row.id ? { ...r, taxCode: value } : r))
+                                            );
+                                            setworkJobTableErrors((prev) => {
+                                              const newErrors = [...prev];
+                                              newErrors[index] = {
+                                                ...newErrors[index],
+                                                taxCode: !value ? 'Sub Ledger Name is Required' : ''
+                                              };
+                                              return newErrors;
+                                            });
+                                          }}
+                                          className={workJobTableErrors[index]?.taxCode ? 'error form-control' : 'form-control'}
+                                          style={{ width: '150px' }}
+                                        />
+                                        {workJobTableErrors[index]?.taxCode && (
+                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                            {workJobTableErrors[index].taxCode}
                                           </div>
                                         )}
                                       </td>
@@ -1005,24 +1179,24 @@ const WorkJobOutOrder = () => {
                                           value={row.discount}
                                           onChange={(e) => {
                                             const value = e.target.value;
-                                            setDetailsTableData((prev) =>
+                                            setWorkJobTableData((prev) =>
                                               prev.map((r) => (r.id === row.id ? { ...r, discount: value } : r))
                                             );
-                                            setDetailsTableErrors((prev) => {
+                                            setworkJobTableErrors((prev) => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                discount: !value ? 'discount is Required' : ''
+                                                discount: !value ? 'Sub Ledger Name is Required' : ''
                                               };
                                               return newErrors;
                                             });
                                           }}
-                                          className={detailsTableErrors[index]?.discount ? 'error form-control' : 'form-control'}
+                                          className={workJobTableErrors[index]?.discount ? 'error form-control' : 'form-control'}
                                           style={{ width: '150px' }}
                                         />
-                                        {detailsTableErrors[index]?.discount && (
+                                        {workJobTableErrors[index]?.discount && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors[index].discount}
+                                            {workJobTableErrors[index].discount}
                                           </div>
                                         )}
                                       </td>
@@ -1032,86 +1206,190 @@ const WorkJobOutOrder = () => {
                                           value={row.discountAmount}
                                           onChange={(e) => {
                                             const value = e.target.value;
-                                            setDetailsTableData((prev) =>
+                                            setWorkJobTableData((prev) =>
                                               prev.map((r) => (r.id === row.id ? { ...r, discountAmount: value } : r))
                                             );
-                                            setDetailsTableErrors((prev) => {
+                                            setworkJobTableErrors((prev) => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                discountAmount: !value ? 'discountAmount is Required' : ''
+                                                discountAmount: !value ? 'Sub Ledger Name is Required' : ''
                                               };
                                               return newErrors;
                                             });
                                           }}
-                                          className={detailsTableErrors[index]?.discountAmount ? 'error form-control' : 'form-control'}
+                                          className={workJobTableErrors[index]?.discountAmount ? 'error form-control' : 'form-control'}
                                           style={{ width: '150px' }}
                                         />
-                                        {detailsTableErrors[index]?.discountAmount && (
+                                        {workJobTableErrors[index]?.discountAmount && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors[index].discountAmount}
+                                            {workJobTableErrors[index].discountAmount}
                                           </div>
                                         )}
                                       </td>
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
-                                          value={row.quoteAmount}
+                                          value={row.netAmount}
                                           onChange={(e) => {
                                             const value = e.target.value;
-                                            setDetailsTableData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, quoteAmount: value } : r))
+                                            setWorkJobTableData((prev) =>
+                                              prev.map((r) => (r.id === row.id ? { ...r, netAmount: value } : r))
                                             );
-                                            setDetailsTableErrors((prev) => {
+                                            setworkJobTableErrors((prev) => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                quoteAmount: !value ? 'quoteAmount is Required' : ''
+                                                netAmount: !value ? 'Sub Ledger Name is Required' : ''
                                               };
                                               return newErrors;
                                             });
                                           }}
-                                          className={detailsTableErrors[index]?.quoteAmount ? 'error form-control' : 'form-control'}
+                                          className={workJobTableErrors[index]?.netAmount ? 'error form-control' : 'form-control'}
                                           style={{ width: '150px' }}
                                         />
-                                        {detailsTableErrors[index]?.quoteAmount && (
+                                        {workJobTableErrors[index]?.netAmount && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors[index].quoteAmount}
+                                            {workJobTableErrors[index].netAmount}
                                           </div>
                                         )}
                                       </td>
                                       <td className="border px-2 py-2">
                                         <input
-                                          type="date"
-                                          value={row.deliveryDate}
+                                          type="text"
+                                          value={row.sgst}
                                           onChange={(e) => {
-                                            const date = e.target.value;
-
-                                            setDetailsTableData((prev) =>
-                                              prev.map((r) =>
-                                                r.id === row.id ? { ...r, deliveryDate: date, endDate: date > r.endDate ? '' : r.endDate } : r
-                                              )
+                                            const value = e.target.value;
+                                            setWorkJobTableData((prev) =>
+                                              prev.map((r) => (r.id === row.id ? { ...r, sgst: value } : r))
                                             );
-
-                                            setDetailsTableErrors((prev) => {
+                                            setworkJobTableErrors((prev) => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                deliveryDate: !date ? 'Delivery Date is Required' : ''
+                                                sgst: !value ? 'Sub Ledger Name is Required' : ''
                                               };
                                               return newErrors;
                                             });
                                           }}
-                                          className={detailsTableErrors[index]?.deliveryDate ? 'error form-control' : 'form-control'}
-                                          // onKeyDown={(e) => handleKeyDown(e, row, tdsTableData)}
+                                          className={workJobTableErrors[index]?.sgst ? 'error form-control' : 'form-control'}
                                           style={{ width: '150px' }}
                                         />
-                                        {detailsTableErrors[index]?.deliveryDate && (
+                                        {workJobTableErrors[index]?.sgst && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors[index].deliveryDate}
+                                            {workJobTableErrors[index].sgst}
                                           </div>
                                         )}
                                       </td>
+                                      <td className="border px-2 py-2">
+                                        <input
+                                          type="text"
+                                          value={row.cgst}
+                                          onChange={(e) => {
+                                            const value = e.target.value;
+                                            setWorkJobTableData((prev) =>
+                                              prev.map((r) => (r.id === row.id ? { ...r, cgst: value } : r))
+                                            );
+                                            setworkJobTableErrors((prev) => {
+                                              const newErrors = [...prev];
+                                              newErrors[index] = {
+                                                ...newErrors[index],
+                                                cgst: !value ? 'Sub Ledger Name is Required' : ''
+                                              };
+                                              return newErrors;
+                                            });
+                                          }}
+                                          className={workJobTableErrors[index]?.cgst ? 'error form-control' : 'form-control'}
+                                          style={{ width: '150px' }}
+                                        />
+                                        {workJobTableErrors[index]?.cgst && (
+                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                            {workJobTableErrors[index].cgst}
+                                          </div>
+                                        )}
+                                      </td>
+                                      <td className="border px-2 py-2">
+                                        <input
+                                          type="text"
+                                          value={row.igst}
+                                          onChange={(e) => {
+                                            const value = e.target.value;
+                                            setWorkJobTableData((prev) =>
+                                              prev.map((r) => (r.id === row.id ? { ...r, igst: value } : r))
+                                            );
+                                            setworkJobTableErrors((prev) => {
+                                              const newErrors = [...prev];
+                                              newErrors[index] = {
+                                                ...newErrors[index],
+                                                igst: !value ? 'Sub Ledger Name is Required' : ''
+                                              };
+                                              return newErrors;
+                                            });
+                                          }}
+                                          className={workJobTableErrors[index]?.igst ? 'error form-control' : 'form-control'}
+                                          style={{ width: '150px' }}
+                                        />
+                                        {workJobTableErrors[index]?.igst && (
+                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                            {workJobTableErrors[index].igst}
+                                          </div>
+                                        )}
+                                      </td>
+                                      <td className="border px-2 py-2">
+                                        <input
+                                          type="text"
+                                          value={row.taxamt}
+                                          onChange={(e) => {
+                                            const value = e.target.value;
+                                            setWorkJobTableData((prev) =>
+                                              prev.map((r) => (r.id === row.id ? { ...r, taxamt: value } : r))
+                                            );
+                                            setworkJobTableErrors((prev) => {
+                                              const newErrors = [...prev];
+                                              newErrors[index] = {
+                                                ...newErrors[index],
+                                                taxamt: !value ? 'Sub Ledger Name is Required' : ''
+                                              };
+                                              return newErrors;
+                                            });
+                                          }}
+                                          className={workJobTableErrors[index]?.taxamt ? 'error form-control' : 'form-control'}
+                                          style={{ width: '150px' }}
+                                        />
+                                        {workJobTableErrors[index]?.taxamt && (
+                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                            {workJobTableErrors[index].taxamt}
+                                          </div>
+                                        )}
+                                      </td>
+                                      <td className="border px-2 py-2">
+                                        <input
+                                          type="text"
+                                          value={row.amount}
+                                          onChange={(e) => {
+                                            const value = e.target.value;
+                                            setWorkJobTableData((prev) =>
+                                              prev.map((r) => (r.id === row.id ? { ...r, amount: value } : r))
+                                            );
+                                            setworkJobTableErrors((prev) => {
+                                              const newErrors = [...prev];
+                                              newErrors[index] = {
+                                                ...newErrors[index],
+                                                amount: !value ? 'Sub Ledger Name is Required' : ''
+                                              };
+                                              return newErrors;
+                                            });
+                                          }}
+                                          className={workJobTableErrors[index]?.amount ? 'error form-control' : 'form-control'}
+                                          style={{ width: '150px' }}
+                                        />
+                                        {workJobTableErrors[index]?.amount && (
+                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                            {workJobTableErrors[index].amount}
+                                          </div>
+                                        )}
+                                      </td>
+
                                     </tr>
                                   ))}
                                 </tbody>
@@ -1125,44 +1403,45 @@ const WorkJobOutOrder = () => {
                   {value === 1 && (
                     <>
                       <div className="row mt-2">
-                        <div className="col-md-3 mb-3">
-                          <TextField
-                            id="outlined-textarea-zip"
-                            label="Gross Amount"
-                            variant="outlined"
-                            size="small"
-                            fullWidth
-                            name="grossAmount"
-                            value={formData.grossAmount}
-                            onChange={handleInputChange}
-                            helperText={
-                              <span style={{ color: 'red' }}>{fieldErrors.grossAmount ? 'Total Credit Amount is Required' : ''}</span>
-                            }
-                            inputProps={{ maxLength: 40 }}
-                          />
-                        </div>
                         <div className="col-md-3">
                           <FormControl fullWidth variant="filled">
                             <TextField
-                              id="netAmount"
-                              label="Net Amount"
+                              id="termsOfPayment"
+                              label="Terms of Payment"
                               size="small"
-                              name="netAmount"
-                              value={formData.netAmount}
+                              name="termsOfPayment"
+                              value={formData.termsOfPayment}
                               multiline
                               // minRows={2}
                               inputProps={{ maxLength: 30 }}
                               onChange={handleInputChange}
-                              error={!!fieldErrors.netAmount}
-                              helperText={fieldErrors.netAmount}
+                              error={!!fieldErrors.termsOfPayment}
+                              helperText={fieldErrors.termsOfPayment}
                             />
                           </FormControl>
                         </div>
                         <div className="col-md-3">
                           <FormControl fullWidth variant="filled">
                             <TextField
-                              id="Amount In Words"
-                              label="Amount In Words"
+                              id="totalAmount"
+                              label="Total Amount"
+                              size="small"
+                              name="totalAmount"
+                              value={formData.totalAmount}
+                              multiline
+                              // minRows={2}
+                              inputProps={{ maxLength: 30 }}
+                              onChange={handleInputChange}
+                              error={!!fieldErrors.totalAmount}
+                              helperText={fieldErrors.totalAmount}
+                            />
+                          </FormControl>
+                        </div>
+                        <div className="col-md-3">
+                          <FormControl fullWidth variant="filled">
+                            <TextField
+                              id="amountInWords"
+                              label="Amount in Words"
                               size="small"
                               name="amountInWords"
                               value={formData.amountInWords}
@@ -1172,6 +1451,64 @@ const WorkJobOutOrder = () => {
                               onChange={handleInputChange}
                               error={!!fieldErrors.amountInWords}
                               helperText={fieldErrors.amountInWords}
+                            />
+                          </FormControl>
+                        </div>
+                        <div className="col-md-3">
+                          <FormControl fullWidth variant="filled">
+                            <TextField
+                              id="totalGrossAmt"
+                              label="Total Gross Amt"
+                              size="small"
+                              name="totalGrossAmt"
+                              value={formData.totalGrossAmt}
+                              multiline
+                              // minRows={2}
+                              inputProps={{ maxLength: 30 }}
+                              onChange={handleInputChange}
+                              error={!!fieldErrors.totalGrossAmt}
+                              helperText={fieldErrors.totalGrossAmt}
+                            />
+                          </FormControl>
+                        </div>
+
+                        <div className="col-md-3 mt-3">
+                          <FormControl fullWidth variant="filled">
+                            <TextField
+                              id="totalTax"
+                              label="Total Tax"
+                              size="small"
+                              name="totalTax"
+                              value={formData.totalTax}
+                              multiline
+                              // minRows={2}
+                              inputProps={{ maxLength: 30 }}
+                              onChange={handleInputChange}
+                              error={!!fieldErrors.totalTax}
+                              helperText={fieldErrors.totalTax}
+                            />
+                          </FormControl>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  {value === 2 && (
+                    <>
+                      <div className="row mt-2">
+                        <div className="col-md-3">
+                          <FormControl fullWidth variant="filled">
+                            <TextField
+                              id="narration"
+                              label="Narration"
+                              size="small"
+                              name="narration"
+                              value={formData.narration}
+                              multiline
+                              // minRows={2}
+                              inputProps={{ maxLength: 30 }}
+                              onChange={handleInputChange}
+                              error={!!fieldErrors.narration}
+                              helperText={fieldErrors.narration}
                             />
                           </FormControl>
                         </div>
