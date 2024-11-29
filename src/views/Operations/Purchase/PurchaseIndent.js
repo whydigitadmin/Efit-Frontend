@@ -480,7 +480,8 @@ const PurchaseIndent = () => {
                     name="indentNo"
                     value={formData.indentNo}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.indentNo ? 'Indent No is required' : ''}</span>}
+                    error={!!fieldErrors.indentNo}
+                    helperText={fieldErrors.indentNo}
                     inputProps={{ maxLength: 10 }}
                   />
                 </div>
@@ -573,7 +574,8 @@ const PurchaseIndent = () => {
                     name="fgPart"
                     value={formData.fgPart}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.fgPart ? 'FG Part is required' : ''}</span>}
+                    error={!!fieldErrors.fgPart}
+                    helperText={fieldErrors.fgPart}
                     inputProps={{ maxLength: 40 }}
                   />
                 </div>
@@ -587,7 +589,8 @@ const PurchaseIndent = () => {
                     fullWidth
                     value={formData.fgPartDesc}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.fgPartDesc ? 'FG Part Desc is required' : ''}</span>}
+                    error={!!fieldErrors.fgPartDesc}
+                    helperText={fieldErrors.fgPartDesc}
                     inputProps={{ maxLength: 15 }}
                   />
                 </div>
@@ -601,7 +604,8 @@ const PurchaseIndent = () => {
                     fullWidth
                     value={formData.fgQty}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.fgQty ? 'FG Qty is required' : ''}</span>}
+                    error={!!fieldErrors.fgQty}
+                    helperText={fieldErrors.fgQty}
                     inputProps={{ maxLength: 15 }}
                   />
                 </div>
@@ -615,7 +619,8 @@ const PurchaseIndent = () => {
                     fullWidth
                     value={formData.requestedBy}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.requestedBy ? 'Requested By is required' : ''}</span>}
+                    error={!!fieldErrors.requestedBy}
+                    helperText={fieldErrors.requestedBy}
                     inputProps={{ maxLength: 15 }}
                   />
                 </div>
@@ -629,7 +634,8 @@ const PurchaseIndent = () => {
                     fullWidth
                     value={formData.customerPONo}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.customerPONo ? 'Customer PO No is required' : ''}</span>}
+                    error={!!fieldErrors.customerPONo}
+                    helperText={fieldErrors.customerPONo}
                     inputProps={{ maxLength: 15 }}
                   />
                 </div>
@@ -673,36 +679,22 @@ const PurchaseIndent = () => {
                           )}
                         </div>
                         <div className="row mt-2">
-                          <div className="col-lg-11">
+                          <div className="col-lg-12">
                             <div className="table-responsive">
                               <table className="table table-bordered ">
                                 <thead>
+
                                   <tr style={{ backgroundColor: '#673AB7' }}>
-                                    <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
-                                      Action
-                                    </th>
-                                    <th className="px-2 py-2 text-white text-center" style={{ width: '50px' }}>
-                                      S.No
-                                    </th>
-                                    <th className="px-4 py-2 text-white text-center" style={{ width: '700px' }} >
-                                      Item
-                                    </th>
-                                    <th className="px-2 py-2 text-white text-center" style={{ width: '400px' }}>
-                                      Item Description
-                                    </th>
-                                    <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
-                                      UOM
-                                    </th>
-                                    <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
-                                      Required Qty
-                                    </th>
-                                    <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
-                                      Avl. Stock
-                                    </th>
-                                    <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
-                                      Indent QTY
-                                    </th>
+                                    <th className="table-header">Action</th>
+                                    <th className="table-header">S.No</th>
+                                    <th className="table-header">Item</th>
+                                    <th className="table-header">Item Description</th>
+                                    <th className="table-header">UOM</th>
+                                    <th className="table-header">Required Qty</th>
+                                    <th className="table-header">Avl. Stock</th>
+                                    <th className="table-header">Indent QTY</th>
                                   </tr>
+
                                 </thead>
                                 <tbody>
                                   {indentDocumentsData.map((row, index) => (
@@ -728,6 +720,7 @@ const PurchaseIndent = () => {
                                       <td className="border px-2 py-2">
                                         <select
                                           value={row.item}
+                                          style={{ width: '150px' }}
                                           onChange={(e) => handleIndentChange(row, index, e)}
                                           className={indentDocumentsErrors[index]?.role ? 'error form-control' : 'form-control'}
                                         >
@@ -747,6 +740,8 @@ const PurchaseIndent = () => {
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
+                                          style={{ width: '150px' }}
+                                          disabled
                                           value={row.description}
                                           onChange={(e) => {
                                             const value = e.target.value;
@@ -770,9 +765,12 @@ const PurchaseIndent = () => {
                                           </div>
                                         )}
                                       </td>
+
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
+                                          disabled
+                                          style={{ width: '150px' }}
                                           value={row.uom}
                                           onChange={(e) => {
                                             const value = e.target.value;
@@ -796,23 +794,28 @@ const PurchaseIndent = () => {
                                           </div>
                                         )}
                                       </td>
+
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
+                                          style={{ width: '150px' }}
                                           value={row.qty}
                                           onChange={(e) => {
                                             const value = e.target.value;
-                                            setIndentDocumentsData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, qty: value } : r))
-                                            );
-                                            setIndentDocumentsErrors((prev) => {
-                                              const newErrors = [...prev];
-                                              newErrors[index] = {
-                                                ...newErrors[index],
-                                                qty: !value ? 'Qty is required' : ''
-                                              };
-                                              return newErrors;
-                                            });
+
+                                            if (/^\d*$/.test(value)) {
+                                              setIndentDocumentsData((prev) =>
+                                                prev.map((r) => (r.id === row.id ? { ...r, qty: value } : r))
+                                              );
+                                              setIndentDocumentsErrors((prev) => {
+                                                const newErrors = [...prev];
+                                                newErrors[index] = {
+                                                  ...newErrors[index],
+                                                  qty: !value ? 'Qty is required' : '',
+                                                };
+                                                return newErrors;
+                                              });
+                                            }
                                           }}
                                           className={indentDocumentsErrors[index]?.qty ? 'error form-control' : 'form-control'}
                                         />
@@ -822,23 +825,30 @@ const PurchaseIndent = () => {
                                           </div>
                                         )}
                                       </td>
+
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
+                                          disabled
+                                          style={{ width: '150px' }}
                                           value={row.avlStock}
                                           onChange={(e) => {
                                             const value = e.target.value;
-                                            setIndentDocumentsData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, avlStock: value } : r))
-                                            );
-                                            setIndentDocumentsErrors((prev) => {
-                                              const newErrors = [...prev];
-                                              newErrors[index] = {
-                                                ...newErrors[index],
-                                                avlStock: !value ? 'Avl Stock is required' : ''
-                                              };
-                                              return newErrors;
-                                            });
+
+                                            // Allow only numeric values or an empty string
+                                            if (/^\d*$/.test(value)) {
+                                              setIndentDocumentsData((prev) =>
+                                                prev.map((r) => (r.id === row.id ? { ...r, avlStock: value } : r))
+                                              );
+                                              setIndentDocumentsErrors((prev) => {
+                                                const newErrors = [...prev];
+                                                newErrors[index] = {
+                                                  ...newErrors[index],
+                                                  avlStock: !value ? 'Avl Stock is required' : '', // Show error if value is empty
+                                                };
+                                                return newErrors;
+                                              });
+                                            }
                                           }}
                                           className={indentDocumentsErrors[index]?.avlStock ? 'error form-control' : 'form-control'}
                                         />
@@ -848,23 +858,28 @@ const PurchaseIndent = () => {
                                           </div>
                                         )}
                                       </td>
+
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
+                                          style={{ width: '150px' }}
                                           value={row.indentQty}
                                           onChange={(e) => {
                                             const value = e.target.value;
-                                            setIndentDocumentsData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, indentQty: value } : r))
-                                            );
-                                            setIndentDocumentsErrors((prev) => {
-                                              const newErrors = [...prev];
-                                              newErrors[index] = {
-                                                ...newErrors[index],
-                                                indentQty: !value ? 'Indent Qty is required' : ''
-                                              };
-                                              return newErrors;
-                                            });
+
+                                            if (/^\d*$/.test(value)) {
+                                              setIndentDocumentsData((prev) =>
+                                                prev.map((r) => (r.id === row.id ? { ...r, indentQty: value } : r))
+                                              );
+                                              setIndentDocumentsErrors((prev) => {
+                                                const newErrors = [...prev];
+                                                newErrors[index] = {
+                                                  ...newErrors[index],
+                                                  indentQty: !value ? 'Indent Qty is required' : ''
+                                                };
+                                                return newErrors;
+                                              });
+                                            }
                                           }}
                                           className={indentDocumentsErrors[index]?.indentQty ? 'error form-control' : 'form-control'}
                                         />
@@ -874,6 +889,7 @@ const PurchaseIndent = () => {
                                           </div>
                                         )}
                                       </td>
+
                                     </tr>
                                   ))}
                                 </tbody>

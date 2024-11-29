@@ -492,7 +492,6 @@ const Putaway = () => {
                     name="putawayId"
                     value={formData.putawayId}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.putawayId ? 'Putaway ID is required' : ''}</span>}
                     inputProps={{ maxLength: 10 }}
                   />
                 </div>
@@ -540,7 +539,8 @@ const Putaway = () => {
                     name="grnDate"
                     value={formData.grnDate}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.grnDate ? 'GRN Date is required' : ''}</span>}
+                    error={!!fieldErrors.grnDate}
+                    helperText={fieldErrors.grnDate}
                     inputProps={{ maxLength: 40 }}
                   />
                 </div>
@@ -555,7 +555,8 @@ const Putaway = () => {
                     name="supplier"
                     value={formData.supplier}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.supplier ? 'Supplier is required' : ''}</span>}
+                    error={!!fieldErrors.supplier}
+                    helperText={fieldErrors.supplier}
                     inputProps={{ maxLength: 40 }}
                   />
                 </div>
@@ -570,7 +571,8 @@ const Putaway = () => {
                     name="vehicleNo"
                     value={formData.vehicleNo}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.vehicleNo ? 'Vehicle No is required' : ''}</span>}
+                    error={!!fieldErrors.vehicleNo}
+                    helperText={fieldErrors.vehicleNo }
                     inputProps={{ maxLength: 40 }}
                   />
                 </div>
@@ -630,7 +632,8 @@ const Putaway = () => {
                     name="dcInvNo"
                     value={formData.dcInvNo}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.dcInvNo ? 'DC/INV-No is required' : ''}</span>}
+                    error={!!fieldErrors.dcInvNo}
+                    helperText={fieldErrors.dcInvNo}
                     inputProps={{ maxLength: 40 }}
                   />
                 </div>
@@ -730,6 +733,7 @@ const Putaway = () => {
                                       <td className="border px-2 py-2">
                                         <select
                                           value={row.item}
+                                          style={{ width: '150px' }}
                                           onChange={(e) => handleIndentChange(row, index, e)}
                                           className={putawayErrors[index]?.role ? 'error form-control' : 'form-control'}
                                         >
@@ -750,6 +754,7 @@ const Putaway = () => {
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
+                                          style={{ width: '150px' }}
                                           value={row.description}
                                           onChange={(e) => {
                                             const value = e.target.value;
@@ -777,6 +782,7 @@ const Putaway = () => {
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
+                                          style={{ width: '150px' }}
                                           value={row.unit}
                                           onChange={(e) => {
                                             const value = e.target.value;
@@ -804,6 +810,7 @@ const Putaway = () => {
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
+                                          style={{ width: '150px' }}
                                           value={row.recQty}
                                           onChange={(e) => {
                                             const value = e.target.value;
@@ -835,6 +842,7 @@ const Putaway = () => {
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
+                                          style={{ width: '150px' }}
                                           value={row.putawayQty}
                                           onChange={(e) => {
                                             const value = e.target.value;
@@ -865,6 +873,7 @@ const Putaway = () => {
                                       <td className="border px-2 py-2">
                                         <select
                                           value={row.rackNo}
+                                          style={{ width: '150px' }}
                                           onChange={(e) => handleIndentChange(row, index, e)}
                                           className={putawayErrors[index]?.role ? 'error form-control' : 'form-control'}
                                         >

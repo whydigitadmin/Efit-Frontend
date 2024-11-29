@@ -614,7 +614,8 @@ const PickList = () => {
                     name="workOrderNo"
                     value={formData.workOrderNo}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.workOrderNo ? 'Work Order No is required' : ''}</span>}
+                    error={!!fieldErrors.workOrderNo}
+                    helperText={fieldErrors.workOrderNo}
                     inputProps={{ maxLength: 40 }}
                   />
                 </div>
@@ -790,7 +791,8 @@ const PickList = () => {
                     name="fgPartName"
                     value={formData.fgPartName}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.fgPartName ? 'FG Part Name is required' : ''}</span>}
+                    error={!!fieldErrors.fgPartName}
+                    helperText={fieldErrors.fgPartName}
                     inputProps={{ maxLength: 40 }}
                   />
                 </div>
@@ -843,7 +845,7 @@ const PickList = () => {
                                     <th className="table-header">S.No</th>
                                     <th className="table-header">Item</th>
                                     <th className="table-header">Item Name</th>
-                                    <th className="table-header" style={{ width: '400px' }}>Unit</th>
+                                    <th className="table-header">Unit</th>
                                     <th className="table-header">Rack No</th>
                                     <th className="table-header">Rack Quantity</th>
                                     <th className="table-header">Issued Quantity</th>
@@ -873,41 +875,31 @@ const PickList = () => {
                                         <div className="pt-2">{index + 1}</div>
                                       </td>
 
-                                      <td>
-                                        <Autocomplete
-                                          disablePortal
-                                          options={partyList.map((option, index) => ({ ...option, key: index }))}
-                                          getOptionLabel={(option) => option.partyname || ''}
-                                          sx={{ width: '100%' }}
-                                          size="small"
-                                          value={formData.item ? partyList.find((c) => c.partyname === formData.item) : null}
-                                          onChange={(event, newValue) => {
-                                            handleInputChange({
-                                              target: {
-                                                name: 'item',
-                                                value: newValue ? newValue.partyname : '', // Adjusted to 'partyname'
-                                              },
-                                            });
-                                          }}
-                                          renderInput={(params) => (
-                                            <TextField
-                                              {...params}
-                                              label="Item"
-                                              name="item"
-                                              error={!!fieldErrors.item}  // Shows red border if there's an error
-                                              helperText={fieldErrors.item}  // Shows the error message
-                                              InputProps={{
-                                                ...params.InputProps,
-                                                style: { height: 40, width: 200 },
-                                              }}
-                                            />
-                                          )}
-                                        />
+                                      <td className="border px-2 py-2">
+                                        <select
+                                          value={row.item}
+                                          style={{ width: '150px' }}
+                                          onChange={(e) => handleIndentChange(row, index, e)}
+                                          className={pickListErrors[index]?.role ? 'error form-control' : 'form-control'}
+                                        >
+                                          <option value="">Select Option</option>
+                                          {/* {getAvailableRoles(row.id).map((role) => (
+                                            <option key={role.id} value={role.role}>
+                                              {role.role}
+                                            </option>
+                                          ))} */}
+                                        </select>
+                                        {pickListErrors[index]?.item && (
+                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                            {pickListErrors[index].item}
+                                          </div>
+                                        )}
                                       </td>
 
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
+                                          style={{ width: '150px' }}
                                           value={row.itemName}
                                           onChange={(e) => {
                                             const value = e.target.value;
@@ -935,6 +927,7 @@ const PickList = () => {
                                       <td className="border px-2 py-2">
                                         <input
                                           disabled
+                                          style={{ width: '150px' }}
                                           type="text"
                                           value={row.unit}
                                           onChange={(e) => {
@@ -963,6 +956,7 @@ const PickList = () => {
                                       <td className="border px-2 py-2">
                                         <select
                                           value={row.rackNo}
+                                          style={{ width: '150px' }}
                                           onChange={(e) => handleIndentChange(row, index, e)}
                                           className={pickListErrors[index]?.role ? 'error form-control' : 'form-control'}
                                         >
@@ -983,6 +977,7 @@ const PickList = () => {
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
+                                          style={{ width: '150px' }}
                                           value={row.rackQuantity}
                                           onChange={(e) => {
                                             const value = e.target.value;
@@ -1014,6 +1009,7 @@ const PickList = () => {
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
+                                          style={{ width: '150px' }}
                                           value={row.issuedQuantity}
                                           onChange={(e) => {
                                             const value = e.target.value;
@@ -1045,6 +1041,7 @@ const PickList = () => {
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
+                                          style={{ width: '150px' }}
                                           value={row.pickedQty}
                                           onChange={(e) => {
                                             const value = e.target.value;
@@ -1075,6 +1072,7 @@ const PickList = () => {
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
+                                          style={{ width: '150px' }}
                                           value={row.remainingQty}
                                           onChange={(e) => {
                                             const value = e.target.value;

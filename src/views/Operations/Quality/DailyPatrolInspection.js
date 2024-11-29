@@ -4,7 +4,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import { Autocomplete, FormControl, FormHelperText, InputLabel, MenuItem, Select } from '@mui/material';
+import { Autocomplete, FormControl } from '@mui/material';
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
@@ -35,7 +35,6 @@ const DailyPatrolInspection = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [partyList, setPartyList] = useState([]);
   const [listView, setListView] = useState(false);
-  const [lstView, setLstView] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -52,6 +51,10 @@ const DailyPatrolInspection = () => {
     jobOrderNo: '',
     documentFormatNo: '',
     scIssueNo: '',
+    remarks: '',
+    inspectionBy: '',
+    incharge: '',
+    narration: '',
     orgId: orgId
   });
 
@@ -69,6 +72,10 @@ const DailyPatrolInspection = () => {
     jobOrderNo: '',
     documentFormatNo: '',
     scIssueNo: '',
+    remarks: '',
+    inspectionBy: '',
+    incharge: '',
+    narration: '',
     orgId: orgId
   });
 
@@ -235,9 +242,6 @@ const DailyPatrolInspection = () => {
   const handleSave = async () => {
     const errors = {};
 
-    if (!formData.dpiNo) {
-      errors.dpiNo = 'DPI No is required';
-    }
     if (!formData.dpiDate) {
       errors.dpiDate = 'DPI Date is required';
     }
@@ -247,9 +251,6 @@ const DailyPatrolInspection = () => {
     if (!formData.partNo) {
       errors.partNo = 'Part No is required';
     }
-    if (!formData.partName) {
-      errors.partName = 'Part Name is required';
-    }
     if (!formData.drgNo) {
       errors.drgNo = 'DRG No is required';
     }
@@ -258,9 +259,6 @@ const DailyPatrolInspection = () => {
     }
     if (!formData.machineNo) {
       errors.machineNo = 'Machine No is required';
-    }
-    if (!formData.machineName) {
-      errors.machineName = 'Machine Name is required';
     }
     if (!formData.time) {
       errors.time = 'Time is required';
@@ -273,6 +271,18 @@ const DailyPatrolInspection = () => {
     }
     if (!formData.scIssueNo) {
       errors.scIssueNo = 'SC Issue No is required';
+    }
+    if (!formData.remarks) {
+      errors.remarks = 'Remarks is required';
+    }
+    if (!formData.inspectionBy) {
+      errors.inspectionBy = 'Inspection By is required';
+    }
+    if (!formData.incharge) {
+      errors.incharge = 'Incharge is required';
+    }
+    if (!formData.narration) {
+      errors.narration = 'Narration is required';
     }
 
     setFieldErrors(errors);
@@ -640,7 +650,7 @@ const DailyPatrolInspection = () => {
                       handleInputChange({
                         target: {
                           name: 'routeCardNo',
-                          value: newValue ? newValue.partyname : '', // Adjusted to 'partyname'
+                          value: newValue ? newValue.partyname : '',
                         },
                       });
                     }}
@@ -649,8 +659,8 @@ const DailyPatrolInspection = () => {
                         {...params}
                         label="Route Card No"
                         name="routeCardNo"
-                        error={!!fieldErrors.routeCardNo}  // Shows error if supplierName has a value in fieldErrors
-                        helperText={fieldErrors.routeCardNo} // Displays the error message
+                        error={!!fieldErrors.routeCardNo}
+                        helperText={fieldErrors.routeCardNo}
                         InputProps={{
                           ...params.InputProps,
                           style: { height: 40 },
@@ -670,7 +680,8 @@ const DailyPatrolInspection = () => {
                     name="partNo"
                     value={formData.partNo}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.partNo ? 'Part No is required' : ''}</span>}
+                    error={!!fieldErrors.partNo}
+                    helperText={fieldErrors.partNo} 
                     inputProps={{ maxLength: 40 }}
                   />
                 </div>
@@ -681,11 +692,11 @@ const DailyPatrolInspection = () => {
                     label="Part Name"
                     variant="outlined"
                     size="small"
+                    disabled
                     fullWidth
                     name="partName"
                     value={formData.partName}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.partName ? 'Part Name is required' : ''}</span>}
                     inputProps={{ maxLength: 40 }}
                   />
                 </div>
@@ -700,7 +711,8 @@ const DailyPatrolInspection = () => {
                     name="drgNo"
                     value={formData.drgNo}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.drgNo ? 'Sub Contractor Name is required' : ''}</span>}
+                    error={!!fieldErrors.drgNo}
+                    helperText={fieldErrors.drgNo}
                     inputProps={{ maxLength: 40 }}
                   />
                 </div>
@@ -717,7 +729,7 @@ const DailyPatrolInspection = () => {
                       handleInputChange({
                         target: {
                           name: 'shift',
-                          value: newValue ? newValue.partyname : '', // Adjusted to 'partyname'
+                          value: newValue ? newValue.partyname : '',
                         },
                       });
                     }}
@@ -726,8 +738,8 @@ const DailyPatrolInspection = () => {
                         {...params}
                         label="Shift"
                         name="shift"
-                        error={!!fieldErrors.shift}  // Shows error if supplierName has a value in fieldErrors
-                        helperText={fieldErrors.shift} // Displays the error message
+                        error={!!fieldErrors.shift}
+                        helperText={fieldErrors.shift}
                         InputProps={{
                           ...params.InputProps,
                           style: { height: 40 },
@@ -749,7 +761,7 @@ const DailyPatrolInspection = () => {
                       handleInputChange({
                         target: {
                           name: 'machineNo',
-                          value: newValue ? newValue.partyname : '', // Adjusted to 'partyname'
+                          value: newValue ? newValue.partyname : '',
                         },
                       });
                     }}
@@ -758,8 +770,8 @@ const DailyPatrolInspection = () => {
                         {...params}
                         label="Machine No"
                         name="machineNo"
-                        error={!!fieldErrors.machineNo}  // Shows error if supplierName has a value in fieldErrors
-                        helperText={fieldErrors.shimachineNoft} // Displays the error message
+                        error={!!fieldErrors.machineNo}
+                        helperText={fieldErrors.machineNo}
                         InputProps={{
                           ...params.InputProps,
                           style: { height: 40 },
@@ -775,6 +787,7 @@ const DailyPatrolInspection = () => {
                     label="Machine Name"
                     variant="outlined"
                     size="small"
+                    disabled
                     fullWidth
                     name="machineName"
                     value={formData.machineName}
@@ -794,7 +807,8 @@ const DailyPatrolInspection = () => {
                     name="time"
                     value={formData.time}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.time ? 'Time is required' : ''}</span>}
+                    error={!!fieldErrors.time}
+                    helperText={fieldErrors.time}
                     inputProps={{ maxLength: 40 }}
                   />
                 </div>
@@ -811,7 +825,7 @@ const DailyPatrolInspection = () => {
                       handleInputChange({
                         target: {
                           name: 'jobOrderNo',
-                          value: newValue ? newValue.partyname : '', // Adjusted to 'partyname'
+                          value: newValue ? newValue.partyname : '',
                         },
                       });
                     }}
@@ -820,8 +834,8 @@ const DailyPatrolInspection = () => {
                         {...params}
                         label="Job Order no"
                         name="jobOrderNo"
-                        error={!!fieldErrors.jobOrderNo}  // Shows error if supplierName has a value in fieldErrors
-                        helperText={fieldErrors.jobOrderNo} // Displays the error message
+                        error={!!fieldErrors.jobOrderNo}
+                        helperText={fieldErrors.jobOrderNo}
                         InputProps={{
                           ...params.InputProps,
                           style: { height: 40 },
@@ -841,7 +855,8 @@ const DailyPatrolInspection = () => {
                     name="documentFormatNo"
                     value={formData.documentFormatNo}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.documentFormatNo ? 'Document Format No is required' : ''}</span>}
+                    error={!!fieldErrors.documentFormatNo}
+                    helperText={fieldErrors.documentFormatNo}
                     inputProps={{ maxLength: 40 }}
                   />
                 </div>
@@ -1031,7 +1046,6 @@ const DailyPatrolInspection = () => {
                                           onChange={(e) => {
                                             const value = e.target.value;
 
-                                            // Allow only numbers or an empty string for validation
                                             if (/^\d*$/.test(value)) {
                                               setPatrolInspectionData((prev) =>
                                                 prev.map((r) => (r.id === row.id ? { ...r, lsl: value } : r))
@@ -1474,48 +1488,19 @@ const DailyPatrolInspection = () => {
                         <div className="row d-flex">
 
                           <div className="col-md-3 mb-3">
-                            <FormControl fullWidth variant="filled">
-                              <TextField
-                                id="remarks"
-                                label={
-                                  <span>
-                                    Remarks <span className="asterisk"></span>
-                                  </span>
-                                }
-                                name="remarks"
-                                size="small"
-                                value={formData.remarks || ''} // Ensure value is a string to prevent uncontrolled component issues
-                                onChange={(e) => {
-                                  const value = e.target.value;
-
-                                  // Update formData directly
-                                  setFormData((prev) => ({
-                                    ...prev,
-                                    remarks: value,
-                                  }));
-
-                                  // Update documents data if necessary
-                                  setInspectionFinalData((prev) =>
-                                    prev.map((r) =>
-                                      r.id === formData.id ? { ...r, row: value } : r
-                                    )
-                                  );
-
-                                  // Update field errors
-                                  setQuotationTaxErrors((prev) => {
-                                    const newErrors = [...prev];
-                                    newErrors[index] = {
-                                      ...newErrors[index],
-                                      row: !value ? 'Gross Amount is required' : '',
-                                    };
-                                    return newErrors;
-                                  });
-                                }}
-                                inputProps={{ maxLength: 30 }}
-                                error={!!fieldErrors.remarks}
-                                helperText={fieldErrors.remarks}
-                              />
-                            </FormControl>
+                            <TextField
+                              id="outlined-textarea-zip"
+                              label="Remarks"
+                              variant="outlined"
+                              size="small"
+                              fullWidth
+                              name="remarks"
+                              value={formData.remarks}
+                              onChange={handleInputChange}
+                              inputProps={{ maxLength: 10 }}
+                              error={!!fieldErrors.remarks}
+                              helperText={fieldErrors.remarks}
+                            />
                           </div>
 
                           <div className="col-md-3 mb-3">
@@ -1530,7 +1515,7 @@ const DailyPatrolInspection = () => {
                                 handleInputChange({
                                   target: {
                                     name: 'inspectionBy',
-                                    value: newValue ? newValue.partyname : '', // Adjusted to 'partyname'
+                                    value: newValue ? newValue.partyname : '',
                                   },
                                 });
                               }}
@@ -1539,8 +1524,8 @@ const DailyPatrolInspection = () => {
                                   {...params}
                                   label="Inspection By"
                                   name="inspectionBy"
-                                  error={!!fieldErrors.inspectionBy}  // Shows error if supplierName has a value in fieldErrors
-                                  helperText={fieldErrors.inspectionBy} // Displays the error message
+                                  error={!!fieldErrors.inspectionBy}
+                                  helperText={fieldErrors.inspectionBy}
                                   InputProps={{
                                     ...params.InputProps,
                                     style: { height: 40 },
@@ -1549,6 +1534,7 @@ const DailyPatrolInspection = () => {
                               )}
                             />
                           </div>
+
                           <div className="col-md-3 mb-3">
                             <Autocomplete
                               disablePortal
@@ -1561,7 +1547,7 @@ const DailyPatrolInspection = () => {
                                 handleInputChange({
                                   target: {
                                     name: 'incharge',
-                                    value: newValue ? newValue.partyname : '', // Adjusted to 'partyname'
+                                    value: newValue ? newValue.partyname : '',
                                   },
                                 });
                               }}
@@ -1570,8 +1556,8 @@ const DailyPatrolInspection = () => {
                                   {...params}
                                   label="Incharge"
                                   name="incharge"
-                                  error={!!fieldErrors.incharge}  // Shows error if supplierName has a value in fieldErrors
-                                  helperText={fieldErrors.incharge} // Displays the error message
+                                  error={!!fieldErrors.incharge}
+                                  helperText={fieldErrors.incharge}
                                   InputProps={{
                                     ...params.InputProps,
                                     style: { height: 40 },

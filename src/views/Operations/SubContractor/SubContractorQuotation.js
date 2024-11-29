@@ -4,7 +4,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import { Autocomplete, FormControl, FormHelperText, InputLabel, MenuItem, Select } from '@mui/material';
+import { Autocomplete, FormControl } from '@mui/material';
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
@@ -35,7 +35,6 @@ const SubContractorQuotation = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [partyList, setPartyList] = useState([]);
   const [listView, setListView] = useState(false);
-  const [lstView, setLstView] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -50,6 +49,10 @@ const SubContractorQuotation = () => {
     contactPerson: '',
     contactNo: '',
     scIssueNo: '',
+    grossAmount: '',
+    netAmount: '',
+    amountInWords: '',
+    narration: '',
     orgId: orgId
   });
 
@@ -65,6 +68,10 @@ const SubContractorQuotation = () => {
     contactPerson: '',
     contactNo: '',
     scIssueNo: '',
+    grossAmount: '',
+    netAmount: '',
+    amountInWords: '',
+    narration: '',
     orgId: orgId
   });
 
@@ -215,26 +222,8 @@ const SubContractorQuotation = () => {
   const handleSave = async () => {
     const errors = {};
 
-    if (!formData.scQuotationDate) {
-      errors.scQuotationDate = 'SC Quotation Date is required';
-    }
     if (!formData.enquiryNo) {
       errors.enquiryNo = 'Enquiry No is required';
-    }
-    if (!formData.enquiryDate) {
-      errors.enquiryDate = 'Enquiry Date is required';
-    }
-    if (!formData.subContractorId) {
-      errors.subContractorId = 'Sub Contractor Id is required';
-    }
-    if (!formData.subContractorName) {
-      errors.subContractorName = 'Sub Contractor Name is required';
-    }
-    if (!formData.validTill) {
-      errors.validTill = 'validTill is required';
-    }
-    if (!formData.taxCode) {
-      errors.taxCode = 'Tax Code is required';
     }
     if (!formData.routeCardNo) {
       errors.routeCardNo = 'Route Card No is required';
@@ -242,17 +231,25 @@ const SubContractorQuotation = () => {
     if (!formData.contactPerson) {
       errors.contactPerson = 'Contact Person is required';
     }
-    if (!formData.contactNo) {
-      errors.contactNo = 'Contact No is required';
-    }
     if (!formData.scIssueNo) {
       errors.scIssueNo = 'SC Issue No is required';
+    }
+    if (!formData.grossAmount) {
+      errors.grossAmount = 'Gross Amount is required';
+    }
+    if (!formData.netAmount) {
+      errors.netAmount = 'Net Amount is required';
+    }
+    if (!formData.amountInWords) {
+      errors.amountInWords = 'Amount in Words is required';
+    }
+    if (!formData.narration) {
+      errors.narration = 'Narration is required';
     }
 
     setFieldErrors(errors);
 
     let scQuotationDataValid = true;
-    let quotationTaxDataValid = true;
     if (!scQuotationData || !Array.isArray(scQuotationData) || scQuotationData.length === 0) {
       scQuotationDataValid = false;
       setScQuotationErrors([{ general: 'PurchaseIndent is required' }]);
@@ -303,6 +300,19 @@ const SubContractorQuotation = () => {
           rowErrors.deliveryDate = 'Delivery Date is required';
           scQuotationDataValid = false;
         }
+
+        return rowErrors;
+      });
+      setScQuotationErrors(newTableErrors);
+    }
+
+    let quotationTaxDataValid = true;
+    if (!quotationTaxData || !Array.isArray(quotationTaxData) || quotationTaxData.length === 0) {
+      quotationTaxDataValid = false;
+      setQuotationTaxErrors([{ general: 'PurchaseIndent is required' }]);
+    } else {
+      const newTableErrors = quotationTaxData.map((row, index) => {
+        const rowErrors = {};
         if (!row.grossAmount) {
           rowErrors.grossAmount = 'Gross Amount is required';
           quotationTaxDataValid = false;
@@ -322,7 +332,7 @@ const SubContractorQuotation = () => {
 
         return rowErrors;
       });
-      setScQuotationErrors(newTableErrors);
+      setQuotationTaxErrors(newTableErrors);
     }
     setFieldErrors(errors);
 
@@ -581,7 +591,7 @@ const SubContractorQuotation = () => {
                       handleInputChange({
                         target: {
                           name: 'enquiryNo',
-                          value: newValue ? newValue.partyname : '', // Adjusted to 'partyname'
+                          value: newValue ? newValue.partyname : '',
                         },
                       });
                     }}
@@ -590,8 +600,8 @@ const SubContractorQuotation = () => {
                         {...params}
                         label="Enquiry No"
                         name="enquiryNo"
-                        error={!!fieldErrors.enquiryNo}  // Shows error if supplierName has a value in fieldErrors
-                        helperText={fieldErrors.enquiryNo} // Displays the error message
+                        error={!!fieldErrors.enquiryNo}
+                        helperText={fieldErrors.enquiryNo}
                         InputProps={{
                           ...params.InputProps,
                           style: { height: 40 },
@@ -630,7 +640,6 @@ const SubContractorQuotation = () => {
                     name="subContractorId"
                     value={formData.subContractorId}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.subContractorId ? 'Sub Contractor Id is required' : ''}</span>}
                     inputProps={{ maxLength: 40 }}
                   />
                 </div>
@@ -646,7 +655,6 @@ const SubContractorQuotation = () => {
                     name="subContractorName"
                     value={formData.subContractorName}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.subContractorName ? 'Sub Contractor Name is required' : ''}</span>}
                     inputProps={{ maxLength: 40 }}
                   />
                 </div>
@@ -695,7 +703,8 @@ const SubContractorQuotation = () => {
                     name="routeCardNo"
                     value={formData.routeCardNo}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.routeCardNo ? 'Route Card No is required' : ''}</span>}
+                    error={!!fieldErrors.routeCardNo}
+                    helperText={fieldErrors.routeCardNo}
                     inputProps={{ maxLength: 40 }}
                   />
                 </div>
@@ -712,7 +721,7 @@ const SubContractorQuotation = () => {
                       handleInputChange({
                         target: {
                           name: 'contactPerson',
-                          value: newValue ? newValue.partyname : '', // Adjusted to 'partyname'
+                          value: newValue ? newValue.partyname : '',
                         },
                       });
                     }}
@@ -721,8 +730,8 @@ const SubContractorQuotation = () => {
                         {...params}
                         label="Contact Person"
                         name="contactPerson"
-                        error={!!fieldErrors.contactPerson}  // Shows error if supplierName has a value in fieldErrors
-                        helperText={fieldErrors.contactPerson} // Displays the error message
+                        error={!!fieldErrors.contactPerson}
+                        helperText={fieldErrors.contactPerson}
                         InputProps={{
                           ...params.InputProps,
                           style: { height: 40 },
@@ -743,7 +752,6 @@ const SubContractorQuotation = () => {
                     name="contactNo"
                     value={formData.contactNo}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.contactNo ? 'Contact No is required' : ''}</span>}
                     inputProps={{ maxLength: 40 }}
                   />
                 </div>
@@ -758,7 +766,8 @@ const SubContractorQuotation = () => {
                     name="scIssueNo"
                     value={formData.scIssueNo}
                     onChange={handleInputChange}
-                    helperText={<span style={{ color: 'red' }}>{fieldErrors.scIssueNo ? 'Work Order No is required' : ''}</span>}
+                    error={!!fieldErrors.scIssueNo}
+                    helperText={fieldErrors.scIssueNo}
                     inputProps={{ maxLength: 40 }}
                   />
                 </div>
@@ -898,7 +907,6 @@ const SubContractorQuotation = () => {
 
                                       <td className="border px-2 py-2">
                                         <input
-                                          disabled
                                           style={{ width: '150px' }}
                                           type="text"
                                           value={row.process}
@@ -957,12 +965,12 @@ const SubContractorQuotation = () => {
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
+                                          min="0"
                                           style={{ width: '150px' }}
                                           value={row.rate}
                                           onChange={(e) => {
                                             const value = e.target.value;
 
-                                            // Allow only numbers or an empty string for validation
                                             if (/^\d*$/.test(value)) {
                                               setScQuotationData((prev) =>
                                                 prev.map((r) => (r.id === row.id ? { ...r, rate: value } : r))
@@ -971,7 +979,7 @@ const SubContractorQuotation = () => {
                                                 const newErrors = [...prev];
                                                 newErrors[index] = {
                                                   ...newErrors[index],
-                                                  rate: !value ? 'Rate is required' : ''
+                                                  rate: !value ? 'Rate is required' : '',
                                                 };
                                                 return newErrors;
                                               });
@@ -986,6 +994,7 @@ const SubContractorQuotation = () => {
                                         )}
                                       </td>
 
+
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
@@ -994,7 +1003,6 @@ const SubContractorQuotation = () => {
                                           onChange={(e) => {
                                             const value = e.target.value;
 
-                                            // Allow only numeric values or an empty string
                                             if (/^\d*$/.test(value)) {
                                               setScQuotationData((prev) =>
                                                 prev.map((r) => (r.id === row.id ? { ...r, amount: value } : r))
@@ -1003,7 +1011,7 @@ const SubContractorQuotation = () => {
                                                 const newErrors = [...prev];
                                                 newErrors[index] = {
                                                   ...newErrors[index],
-                                                  amount: !value ? 'Putaway Qty is required' : ''
+                                                  amount: !value ? 'Amount is required' : ''
                                                 };
                                                 return newErrors;
                                               });
@@ -1191,183 +1199,64 @@ const SubContractorQuotation = () => {
                         <div className="row d-flex">
 
                           <div className="col-md-3 mb-3">
-                            <FormControl fullWidth variant="filled">
-                              <TextField
-                                id="grossAmount"
-                                label={
-                                  <span>
-                                    Gross Amount <span className="asterisk"></span>
-                                  </span>
-                                }
-                                name="grossAmount"
-                                size="small"
-                                value={formData.grossAmount || ''} // Ensure value is a string to prevent uncontrolled component issues
-                                onChange={(e) => {
-                                  const value = e.target.value;
-
-                                  // Update formData directly
-                                  setFormData((prev) => ({
-                                    ...prev,
-                                    grossAmount: value,
-                                  }));
-
-                                  // Update documents data if necessary
-                                  setQuotationTaxData((prev) =>
-                                    prev.map((r) =>
-                                      r.id === formData.id ? { ...r, row: value } : r
-                                    )
-                                  );
-
-                                  // Update field errors
-                                  setQuotationTaxErrors((prev) => {
-                                    const newErrors = [...prev];
-                                    newErrors[index] = {
-                                      ...newErrors[index],
-                                      row: !value ? 'Gross Amount is required' : '',
-                                    };
-                                    return newErrors;
-                                  });
-                                }}
-                                inputProps={{ maxLength: 30 }}
-                                error={!!fieldErrors.grossAmount}
-                                helperText={fieldErrors.grossAmount}
-                              />
-                            </FormControl>
+                            <TextField
+                              id="outlined-textarea-zip"
+                              label="Gross Amount"
+                              variant="outlined"
+                              size="small"
+                              fullWidth
+                              name="grossAmount"
+                              value={formData.grossAmount}
+                              onChange={handleInputChange}
+                              inputProps={{ maxLength: 10 }}
+                              error={!!fieldErrors.grossAmount}
+                              helperText={fieldErrors.grossAmount}
+                            />
                           </div>
-
                           <div className="col-md-3 mb-3">
-                            <FormControl fullWidth variant="filled">
-                              <TextField
-                                id="netAmount"
-                                label={
-                                  <span>
-                                    Net Amount <span className="asterisk"></span>
-                                  </span>
-                                }
-                                name="netAmount"
-                                size="small"
-                                value={formData.netAmount || ''} // Ensure value is a string to prevent uncontrolled component issues
-                                onChange={(e) => {
-                                  const value = e.target.value;
-
-                                  // Update formData directly
-                                  setFormData((prev) => ({
-                                    ...prev,
-                                    netAmount: value,
-                                  }));
-
-                                  // Update documents data if necessary
-                                  setQuotationTaxData((prev) =>
-                                    prev.map((r) =>
-                                      r.id === formData.id ? { ...r, row: value } : r
-                                    )
-                                  );
-
-                                  // Update field errors
-                                  setQuotationTaxErrors((prev) => {
-                                    const newErrors = [...prev];
-                                    newErrors[index] = {
-                                      ...newErrors[index],
-                                      row: !value ? 'netAmount is required' : '',
-                                    };
-                                    return newErrors;
-                                  });
-                                }}
-                                inputProps={{ maxLength: 30 }}
-                                error={!!fieldErrors.netAmount}
-                                helperText={fieldErrors.netAmount}
-                              />
-                            </FormControl>
+                            <TextField
+                              id="outlined-textarea-zip"
+                              label="Net Amount"
+                              variant="outlined"
+                              size="small"
+                              fullWidth
+                              name="netAmount"
+                              value={formData.netAmount}
+                              onChange={handleInputChange}
+                              inputProps={{ maxLength: 10 }}
+                              error={!!fieldErrors.netAmount}
+                              helperText={fieldErrors.netAmount}
+                            />
                           </div>
-
                           <div className="col-md-3 mb-3">
-                            <FormControl fullWidth variant="filled">
-                              <TextField
-                                id="amountInWords"
-                                label={
-                                  <span>
-                                    Amount In Words <span className="asterisk"></span>
-                                  </span>
-                                }
-                                name="amountInWords"
-                                size="small"
-                                value={formData.amountInWords || ''} // Ensure value is a string to prevent uncontrolled component issues
-                                onChange={(e) => {
-                                  const value = e.target.value;
-
-                                  // Update formData directly
-                                  setFormData((prev) => ({
-                                    ...prev,
-                                    amountInWords: value,
-                                  }));
-
-                                  // Update documents data if necessary
-                                  setQuotationTaxData((prev) =>
-                                    prev.map((r) =>
-                                      r.id === formData.id ? { ...r, row: value } : r
-                                    )
-                                  );
-
-                                  // Update field errors
-                                  setQuotationTaxErrors((prev) => {
-                                    const newErrors = [...prev];
-                                    newErrors[index] = {
-                                      ...newErrors[index],
-                                      row: !value ? 'amountInWords is required' : '',
-                                    };
-                                    return newErrors;
-                                  });
-                                }}
-                                inputProps={{ maxLength: 30 }}
-                                error={!!fieldErrors.amountInWords}
-                                helperText={fieldErrors.amountInWords}
-                              />
-                            </FormControl>
+                            <TextField
+                              id="outlined-textarea-zip"
+                              label="Amount in Words"
+                              variant="outlined"
+                              size="small"
+                              fullWidth
+                              name="amountInWords"
+                              value={formData.amountInWords}
+                              onChange={handleInputChange}
+                              inputProps={{ maxLength: 10 }}
+                              error={!!fieldErrors.amountInWords}
+                              helperText={fieldErrors.amountInWords}
+                            />
                           </div>
-
                           <div className="col-md-3 mb-3">
-                            <FormControl fullWidth variant="filled">
-                              <TextField
-                                id="narration"
-                                label={
-                                  <span>
-                                    Narration <span className="asterisk"></span>
-                                  </span>
-                                }
-                                name="narration"
-                                size="small"
-                                value={formData.narration || ''} // Ensure value is a string to prevent uncontrolled component issues
-                                onChange={(e) => {
-                                  const value = e.target.value;
-
-                                  // Update formData directly
-                                  setFormData((prev) => ({
-                                    ...prev,
-                                    narration: value,
-                                  }));
-
-                                  // Update documents data if necessary
-                                  setQuotationTaxData((prev) =>
-                                    prev.map((r) =>
-                                      r.id === formData.id ? { ...r, row: value } : r
-                                    )
-                                  );
-
-                                  // Update field errors
-                                  setQuotationTaxErrors((prev) => {
-                                    const newErrors = [...prev];
-                                    newErrors[index] = {
-                                      ...newErrors[index],
-                                      row: !value ? 'narration is required' : '',
-                                    };
-                                    return newErrors;
-                                  });
-                                }}
-                                inputProps={{ maxLength: 30 }}
-                                error={!!fieldErrors.narration}
-                                helperText={fieldErrors.narration}
-                              />
-                            </FormControl>
+                            <TextField
+                              id="outlined-textarea-zip"
+                              label="Narration"
+                              variant="outlined"
+                              size="small"
+                              fullWidth
+                              name="narration"
+                              value={formData.narration}
+                              onChange={handleInputChange}
+                              inputProps={{ maxLength: 10 }}
+                              error={!!fieldErrors.narration}
+                              helperText={fieldErrors.narration}
+                            />
                           </div>
 
                         </div>
