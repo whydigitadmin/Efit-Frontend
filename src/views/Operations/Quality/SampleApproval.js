@@ -44,12 +44,13 @@ const SampleApproval = () => {
     partNo: '',
     drgNo: '',
     partName: '',
+    Operation:'',
     contractorName: '',
     contractorCode: '',
-    destination: '',
+    cycleTime: '',
     dispatchedThrough: '',
-    durationOfProcess: '',
-    taxType: '',
+    shiftTime: '',
+    sampleQuantity: '',
     orgId: orgId,
     // Job Work Amount
     termsOfPayment: '',
@@ -72,10 +73,10 @@ const SampleApproval = () => {
     partName: '',
     contractorName: '',
     contractorCode: '',
-    destination: '',
+    cycleTime: '',
     dispatchedThrough: '',
-    durationOfProcess: '',
-    taxType: '',
+    shiftTime: '',
+    sampleQuantity: '',
     orgId: orgId,
     // Job Work Amount
     termsOfPayment: '',
@@ -314,10 +315,10 @@ const SampleApproval = () => {
       partName: '',
       contractorName: '',
       contractorCode: '',
-      destination: '',
+      cycleTime: '',
       dispatchedThrough: '',
-      durationOfProcess: '',
-      taxType: '',
+      shiftTime: '',
+      sampleQuantity: '',
       orgId: orgId,
       // Job Work Amount
       termsOfPayment: '',
@@ -338,10 +339,10 @@ const SampleApproval = () => {
       partName: '',
       contractorName: '',
       contractorCode: '',
-      destination: '',
+      cycleTime: '',
       dispatchedThrough: '',
-      durationOfProcess: '',
-      taxType: '',
+      shiftTime: '',
+      sampleQuantity: '',
       orgId: orgId,
       // Job Work Amount
       termsOfPayment: '',
@@ -505,10 +506,10 @@ const SampleApproval = () => {
     if (!formData.partName) errors.partName = 'Customer Name No is Required';
     if (!formData.contractorName) errors.contractorName = 'Contractor Name is Required';
     if (!formData.contractorCode) errors.contractorCode = 'Contractor Code No is Required';
-    // if (!formData.destination) errors.destination = 'destination No is Required';
+    // if (!formData.cycleTime) errors.cycleTime = 'cycleTime No is Required';
     if (!formData.dispatchedThrough) errors.dispatchedThrough = 'Dispatched Through is Required';
-    if (!formData.durationOfProcess) errors.durationOfProcess = 'Duration Of Process is Required';
-    if (!formData.taxType) errors.taxType = 'Tax Type is Required';
+    if (!formData.shiftTime) errors.shiftTime = 'Duration Of Process is Required';
+    if (!formData.sampleQuantity) errors.sampleQuantity = 'Tax Type is Required';
     if (!formData.termsOfPayment) errors.termsOfPayment = 'Terms Of Payment is Required';
     if (!formData.totalAmount) errors.totalAmount = 'Total Amount is Required';
     if (!formData.amountInWords) errors.amountInWords = 'Amount In Words is Required';
@@ -784,81 +785,228 @@ const SampleApproval = () => {
                 </div>  
                 
                 <div className="col-md-3 mb-3">
+                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.Operation}>
+                  <InputLabel id="Operation">Operation</InputLabel>
+                  <Select
+                    labelId="Operation"
+                    id="Operation"
+                    label="Material Group"
+                    onChange={handleInputChange}
+                    name="Operation"
+                    value={formData.Operation}
+                  >
+                    <MenuItem value="Head Office">Head Office</MenuItem>
+                    <MenuItem value="Branch">Branch</MenuItem>
+                  </Select>
+                  {fieldErrors.Operation && <FormHelperText>{fieldErrors.Operation}</FormHelperText>}
+                </FormControl>
+              </div>
+                <div className="col-md-3 mb-3">
                   <TextField
                     id="outlined-textarea-zip"
-                    label="Contractor Code"
+                    label="Cycle Time"
                     variant="outlined"
                     size="small"
                     fullWidth
-                    name="contractorCode"
-                    value={formData.contractorCode}
+                    name="cycleTime"
+                    value={formData.cycleTime}
                     onChange={handleInputChange}
                     disabled
                     inputProps={{ maxLength: 10 }}
+                    error={!!fieldErrors.cycleTime}
+                    helperText={fieldErrors.cycleTime}
+                  />
+                </div>
+              
+                <div className="col-md-3 mb-3">
+                  <Autocomplete
+                    disablePortal
+                    options={partyList.map((option, index) => ({ ...option, key: index }))}
+                    getOptionLabel={(option) => option.partyname || ''}
+                    sx={{ width: '100%' }}
+                    size="small"
+                    value={formData.machineNo ? partyList.find((c) => c.partyname === formData.machineNo) : null}
+                    onChange={(event, newValue) => {
+                      handleInputChange({
+                        target: {
+                          name: 'machineNo',
+                          value: newValue ? newValue.partyname : '', // Adjusted to 'partyname'
+                        },
+                      });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Machine No"
+                        name="machineNo"
+                        error={!!fieldErrors.machineNo}  // Shows error if routeCardNo has a value in fieldErrors
+                        helperText={fieldErrors.machineNo} // Displays the error message
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 },
+                        }}
+                      />
+                    )}
                   />
                 </div>
                 <div className="col-md-3 mb-3">
                   <TextField
                     id="outlined-textarea-zip"
-                    label="Destination"
+                    label="Machine Name"
                     variant="outlined"
                     size="small"
                     fullWidth
-                    name="destination"
-                    value={formData.destination}
+                    name="machineName"
+                    value={formData.machineName}
                     onChange={handleInputChange}
                     disabled
                     inputProps={{ maxLength: 10 }}
-                    error={!!fieldErrors.destination}
-                    helperText={fieldErrors.destination}
+                    error={!!fieldErrors.machineName}
+                    helperText={fieldErrors.machineName}
                   />
                 </div>
                 <div className="col-md-3 mb-3">
-                  <TextField
-                    id="outlined-textarea-zip"
-                    label="Dispatched Through"
-                    variant="outlined"
+                  <Autocomplete
+                    disablePortal
+                    options={partyList.map((option, index) => ({ ...option, key: index }))}
+                    getOptionLabel={(option) => option.partyname || ''}
+                    sx={{ width: '100%' }}
                     size="small"
-                    fullWidth
-                    name="dispatchedThrough"
-                    value={formData.dispatchedThrough}
-                    onChange={handleInputChange}
-                    inputProps={{ maxLength: 10 }}
-                    error={!!fieldErrors.dispatchedThrough}
-                    helperText={fieldErrors.dispatchedThrough}
+                    value={formData.drgNo ? partyList.find((c) => c.partyname === formData.drgNo) : null}
+                    onChange={(event, newValue) => {
+                      handleInputChange({
+                        target: {
+                          name: 'drgNo',
+                          value: newValue ? newValue.partyname : '', // Adjusted to 'partyname'
+                        },
+                      });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Job Order No"
+                        name="jobOrderNo"
+                        error={!!fieldErrors.jobOrderNo}
+                        helperText={fieldErrors.jobOrderNo}
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 },
+                        }}
+                      />
+                    )}
                   />
-                </div>
+                </div>  
                 <div className="col-md-3 mb-3">
-                  <TextField
-                    id="outlined-textarea-zip"
-                    label="Duration of Process"
-                    variant="outlined"
+                  <Autocomplete
+                    disablePortal
+                    options={partyList.map((option, index) => ({ ...option, key: index }))}
+                    getOptionLabel={(option) => option.partyname || ''}
+                    sx={{ width: '100%' }}
                     size="small"
-                    fullWidth
-                    name="durationOfProcess"
-                    value={formData.durationOfProcess}
-                    onChange={handleInputChange}
-                    inputProps={{ maxLength: 10 }}
-                    error={!!fieldErrors.durationOfProcess}
-                    helperText={fieldErrors.durationOfProcess}
+                    value={formData.shift ? partyList.find((c) => c.partyname === formData.shift) : null}
+                    onChange={(event, newValue) => {
+                      handleInputChange({
+                        target: {
+                          name: 'shift',
+                          value: newValue ? newValue.partyname : '', // Adjusted to 'partyname'
+                        },
+                      });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Shift"
+                        name="shift"
+                        error={!!fieldErrors.shift}
+                        helperText={fieldErrors.shift}
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 },
+                        }}
+                      />
+                    )}
                   />
-                </div>
-                <div className="col-md-3 mb-3">
-                  <TextField
-                    id="outlined-textarea-zip"
-                    label="Tax Type"
-                    variant="outlined"
-                    size="small"
-                    fullWidth
-                    name="taxType"
-                    value={formData.taxType}
-                    onChange={handleInputChange}
-                    inputProps={{ maxLength: 10 }}
-                    error={!!fieldErrors.taxType}
-                    helperText={fieldErrors.taxType}
-                  />
-                </div>
+                </div>  
 
+                <div className="col-md-3 mb-3">
+                  <FormControl fullWidth variant="filled" size="small">
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <DatePicker
+                        label="Shift Date"
+                        value={formData.shiftDate}
+                        onChange={(date) => handleDateChange('shiftDate', date)}
+                        disabled
+                        slotProps={{
+                          textField: { size: 'small', clearable: true }
+                        }}
+                        format="DD-MM-YYYY"
+                      />
+                    </LocalizationProvider>
+                  </FormControl>
+                </div>
+                
+                <div className="col-md-3 mb-3">
+                  <TextField
+                    id="outlined-textarea-zip"
+                    label="Shift Time"
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    name="shiftTime"
+                    value={formData.shiftTime}
+                    onChange={handleInputChange}
+                    inputProps={{ maxLength: 10 }}
+                    error={!!fieldErrors.shiftTime}
+                    helperText={fieldErrors.shiftTime}
+
+                  />
+                </div>
+                <div className="col-md-3 mb-3">
+                  <TextField
+                    id="outlined-textarea-zip"
+                    label="Sample Quantity"
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    name="sampleQuantity"
+                    value={formData.sampleQuantity}
+                    onChange={handleInputChange}
+                    inputProps={{ maxLength: 10 }}
+                    error={!!fieldErrors.sampleQuantity}
+                    helperText={fieldErrors.sampleQuantity}
+                  />
+                </div>
+                <div className="col-md-3 mb-3">
+                  <Autocomplete
+                    disablePortal
+                    options={partyList.map((option, index) => ({ ...option, key: index }))}
+                    getOptionLabel={(option) => option.partyname || ''}
+                    sx={{ width: '100%' }}
+                    size="small"
+                    value={formData.docFormatNo ? partyList.find((c) => c.partyname === formData.docFormatNo) : null}
+                    onChange={(event, newValue) => {
+                      handleInputChange({
+                        target: {
+                          name: 'docFormatNo',
+                          value: newValue ? newValue.partyname : '', // Adjusted to 'partyname'
+                        },
+                      });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Doc Format No"
+                        name="docFormatNo"
+                        error={!!fieldErrors.docFormatNo}
+                        helperText={fieldErrors.docFormatNo}
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 },
+                        }}
+                      />
+                    )}
+                  />
+                </div>  
               </div>
               <div className="row mt-2">
                 <Box sx={{ width: '100%' }}>
@@ -869,9 +1017,8 @@ const SampleApproval = () => {
                     indicatorColor="secondary"
                     aria-label="secondary tabs example"
                   >
-                    <Tab value={0} label="Job Work Out Order" />
-                    <Tab value={1} label="Job Work Amount" />
-                    <Tab value={2} label="Summary" />
+                    <Tab value={0} label="Sample Approval Detail" />
+                    <Tab value={1} label="Summary" /> 
                   </Tabs>
                 </Box>
                 <Box sx={{ padding: 2 }}>
@@ -889,22 +1036,22 @@ const SampleApproval = () => {
                                   <tr style={{ backgroundColor: '#673AB7' }}>
                                     <th className="table-header">Action</th>
                                     <th className="table-header">S.No</th>
-                                    <th className="table-header">Part</th>
-                                    <th className="table-header">Part Desc</th>
-                                    <th className="table-header">Process</th>
-                                    <th className="table-header">Due on</th>
-                                    <th className="table-header">Quantity Nos</th>
-                                    <th className="table-header">Rate</th>
-                                    <th className="table-header">Gross Amount</th>
-                                    <th className="table-header">Tax Code</th>
-                                    <th className="table-header">Discount %</th>
-                                    <th className="table-header">Discount Amount</th>
-                                    <th className="table-header">Net Amount</th>
-                                    <th className="table-header">SGST</th>
-                                    <th className="table-header">CGST</th>
-                                    <th className="table-header">IGST</th>
-                                    <th className="table-header">Taxamt</th>
-                                    <th className="table-header">Amount</th>
+                                    <th className="table-header">Characteristics</th>
+                                    <th className="table-header">Method of Inspection</th>
+                                    <th className="table-header">Specification</th>
+                                    <th className="table-header">LSL</th>
+                                    <th className="table-header">USL</th>
+                                    <th className="table-header">Sample 1</th>
+                                    <th className="table-header">Sample 2</th>
+                                    <th className="table-header">Sample 3</th>
+                                    <th className="table-header">Sample 4</th>
+                                    <th className="table-header">Sample 5</th>
+                                    <th className="table-header">operater 1</th>
+                                    <th className="table-header">operater 2</th>
+                                    <th className="table-header">operater 3</th>
+                                    <th className="table-header">operater 4</th>
+                                    <th className="table-header">operater 5</th>
+                                    <th className="table-header">Status</th>
                                   </tr>
                                 </thead>
                                 <tbody>
@@ -929,35 +1076,31 @@ const SampleApproval = () => {
                                         <div className="pt-2">{index + 1}</div>
                                       </td>
                                       <td className="border px-2 py-2">
-                                        <Autocomplete
-                                          disablePortal
-                                          options={partyList.map((option, index) => ({ ...option, key: index }))}
-                                          getOptionLabel={(option) => option.partyname || ''}
-                                          sx={{ width: '100%' }}
-                                          size="small"
-                                          value={formData.part ? partyList.find((c) => c.partyname === formData.part) : null}
-                                          onChange={(event, newValue) => {
-                                            handleInputChange({
-                                              target: {
-                                                name: 'part',
-                                                value: newValue ? newValue.partyname : '', // Adjusted to 'partyname'
-                                              },
+                                      <input
+                                          type="text"
+                                          value={row.Characteristics}
+                                          onChange={(e) => {
+                                            const value = e.target.value;
+                                            setWorkJobTableData((prev) =>
+                                              prev.map((r) => (r.id === row.id ? { ...r, Characteristics: value } : r))
+                                            );
+                                            setworkJobTableErrors((prev) => {
+                                              const newErrors = [...prev];
+                                              newErrors[index] = {
+                                                ...newErrors[index],
+                                                Characteristics: !value ? 'Sub Ledger Name is Required' : ''
+                                              };
+                                              return newErrors;
                                             });
                                           }}
-                                          renderInput={(params) => (
-                                            <TextField
-                                              {...params}
-                                              label="Part"
-                                              name="part"
-                                              error={!!fieldErrors.part}  // Shows red border if there's an error
-                                              helperText={fieldErrors.part}  // Shows the error message
-                                              InputProps={{
-                                                ...params.InputProps,
-                                                style: { height: 40, width: 200 },
-                                              }}
-                                            />
-                                          )}
+                                          className={workJobTableErrors[index]?.Characteristics ? 'error form-control' : 'form-control'}
+                                          style={{ width: '150px' }}
                                         />
+                                        {workJobTableErrors[index]?.Characteristics && (
+                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                            {workJobTableErrors[index].Characteristics}
+                                          </div>
+                                        )}
                                       </td>
                                       <td className="border px-2 py-2">
                                         <input
@@ -1469,30 +1612,7 @@ const SampleApproval = () => {
                         </div>
                       </div>
                     </>
-                  )}
-                  {value === 2 && (
-                    <>
-                      <div className="row mt-2">
-                        <div className="col-md-3">
-                          <FormControl fullWidth variant="filled">
-                            <TextField
-                              id="narration"
-                              label="Narration"
-                              size="small"
-                              name="narration"
-                              value={formData.narration}
-                              multiline
-                              // minRows={2}
-                              inputProps={{ maxLength: 30 }}
-                              onChange={handleInputChange}
-                              error={!!fieldErrors.narration}
-                              helperText={fieldErrors.narration}
-                            />
-                          </FormControl>
-                        </div>
-                      </div>
-                    </>
-                  )}
+                  )} 
                 </Box>
               </div>
             </>
