@@ -287,8 +287,7 @@ const WorkJobOutOrder = () => {
       setFormData({ ...formData, [name]: value.toUpperCase() });
 
       setFieldErrors({ ...fieldErrors, [name]: '' });
-
-      // Preserve the cursor position for text-based inputs
+ 
       if (type === 'text' || type === 'textarea') {
         setTimeout(() => {
           const inputElement = document.getElementsByName(name)[0];
