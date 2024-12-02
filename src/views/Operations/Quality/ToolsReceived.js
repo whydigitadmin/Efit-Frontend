@@ -414,22 +414,14 @@ const ToolsReceived = () => {
         // Add error messages for Required fields
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
-          instrumentId: !lastRow.part ? 'instrumentId is Required' : '',
-          instrumentName: !lastRow.instrumentName ? 'instrumentName is Required' : '',
-          calibrateDate: !lastRow.calibrateDate ? 'calibrateDate is Required' : '',
-          dueDate: !lastRow.dueDate ? 'dueDate is Required' : '',
-          frequencyForCalibration: !lastRow.frequencyForCalibration ? 'Quantity Nos is Required' : '',
-          issuedQty: !lastRow.issuedQty ? 'issuedQty is Required' : '',
-          status: !lastRow.status ? 'Gross Amount is Required' : '',
-          calibrationCertificate: !lastRow.calibrationCertificate ? 'Tax Code is Required' : '',
-          sample4: !lastRow.sample4 ? 'sample4 is Required' : '',
-          sample5: !lastRow.sample5 ? 'Sample 5 is Required' : '',
-          operater1: !lastRow.operater1 ? 'Net Amount is Required' : '',
-          operater2: !lastRow.operater2 ? 'operater2 is Required' : '',
-          operater3: !lastRow.operater3 ? 'operater3 is Required' : '',
-          operater4: !lastRow.operater4 ? 'operater4 is Required' : '',
-          operater5: !lastRow.operater5 ? 'operater5 is Required' : '',
-          amount: !lastRow.amount ? 'Amount is Required' : '',
+          instrumentId: !lastRow.part ? 'Instrument Id is Required' : '',
+          // instrumentName: !lastRow.instrumentName ? 'instrumentName is Required' : '',
+          // calibrateDate: !lastRow.calibrateDate ? 'Calibrate Date is Required' : '',
+          // dueDate: !lastRow.dueDate ? 'Due Date is Required' : '',
+          frequencyForCalibration: !lastRow.frequencyForCalibration ? 'Frequency For Calibration is Required' : '',
+          issuedQty: !lastRow.issuedQty ? 'Issued Qty is Required' : '',
+          status: !lastRow.status ? 'Status is Required' : '',
+          calibrationCertificate: !lastRow.calibrationCertificate ? 'Calibration Certificate is Required' : '', 
         };
 
         return newErrors;
@@ -473,46 +465,21 @@ const ToolsReceived = () => {
   const handleSave = async () => {
     const errors = {};
     let isValid = true;
-    if (!formData.issueNo) errors.issueNo = 'Route Card No is Required';
-    if (!formData.issueDate) errors.issueDate = 'Part No is Required';
-    if (!formData.receivedFrom) errors.receivedFrom = 'Part Name is Required';
-    if (!formData.drgNo) errors.drgNo = 'Drg No is Required';
-    if (!formData.operation) errors.operation = 'Operation is Required';
-    // if (!formData.cycleTime) errors.cycleTime = 'cycleTime is Required';
-    if (!formData.machineNo) errors.machineNo = 'MachineNo is Required';
-    // if (!formData.machineName) errors.machineName = 'machineName is Required';
-    if (!formData.jobOrderNo) errors.jobOrderNo = 'JobOrderNo is Required';
-    if (!formData.shift) errors.shift = 'Shift is Required';
-    if (!formData.shiftDate) errors.shiftDate = 'Shift Date is Required';
-    if (!formData.shiftTime) errors.shiftTime = 'Shift Time is Required';
-    if (!formData.sampleQuantity) errors.sampleQuantity = 'Sample Quantity is Required';
-    if (!formData.docFormatNo) errors.docFormatNo = 'Doc Format No is Required';
-    if (!formData.operatorName) errors.operatorName = 'Operator Name is Required';
-    if (!formData.shiftIncharge) errors.shiftIncharge = 'Shift Incharge is Required';
-    if (!formData.narration) errors.narration = 'Narration is Required';
-    if (!formData.remarks) errors.remarks = 'General Remarks is Required';
-    if (!formData.receivedBy) errors.receivedBy = 'Quality Name is Required';
+    if (!formData.issueNo) errors.issueNo = 'Issue No is Required';
+    // if (!formData.issueDate) errors.issueDate = 'Part No is Required';
+    
 
     let detailTableDataValid = true;
     const newTableErrors = workJobTableData.map((row) => {
       const rowErrors = {};
       if (!row.instrumentId) { rowErrors.instrumentId = 'instrumentId is Required'; detailTableDataValid = false; }
-      if (!row.instrumentName) { rowErrors.instrumentName = 'Method Of Inspection is Required'; detailTableDataValid = false; }
-      if (!row.calibrateDate) { rowErrors.calibrateDate = 'calibrateDate is Required'; detailTableDataValid = false; }
-      if (!row.dueDate) { rowErrors.dueDate = 'dueDate is Required'; detailTableDataValid = false; }
-      if (!row.frequencyForCalibration) { rowErrors.frequencyForCalibration = 'frequencyForCalibration is Required'; detailTableDataValid = false; }
-      if (!row.issuedQty) { rowErrors.issuedQty = 'Sample 1 is Required'; detailTableDataValid = false; }
-      if (!row.status) { rowErrors.status = 'Sample 2 is Required'; detailTableDataValid = false; }
-      if (!row.calibrationCertificate) { rowErrors.calibrationCertificate = 'Sample 3 is Required'; detailTableDataValid = false; }
-      if (!row.sample4) { rowErrors.sample4 = 'Sample 4 is Required'; detailTableDataValid = false; }
-      if (!row.sample5) { rowErrors.sample5 = 'Sample 5 is Required'; detailTableDataValid = false; }
-      if (!row.operater1) { rowErrors.operater1 = 'Operater1 is Required'; detailTableDataValid = false; }
-      if (!row.operater2) { rowErrors.operater2 = 'Operater2 is Required'; detailTableDataValid = false; }
-      if (!row.operater3) { rowErrors.operater3 = 'Operater3 is Required'; detailTableDataValid = false; }
-      if (!row.operater4) { rowErrors.operater4 = 'Operater4 is Required'; detailTableDataValid = false; }
-      if (!row.operater5) { rowErrors.operater5 = 'Operater5 is Required'; detailTableDataValid = false; }
+      // if (!row.instrumentName) { rowErrors.instrumentName = 'Instrument Name'; detailTableDataValid = false; }
+      // if (!row.calibrateDate) { rowErrors.calibrateDate = 'Calibrate Date is Required'; detailTableDataValid = false; }
+      // if (!row.dueDate) { rowErrors.dueDate = 'Due Date is Required'; detailTableDataValid = false; }
+      if (!row.frequencyForCalibration) { rowErrors.frequencyForCalibration = 'Frequency For Calibration is Required'; detailTableDataValid = false; }
+      if (!row.issuedQty) { rowErrors.issuedQty = 'Issued Qty is Required'; detailTableDataValid = false; }
       if (!row.status) { rowErrors.status = 'Status is Required'; detailTableDataValid = false; }
-
+      if (!row.calibrationCertificate) { rowErrors.calibrationCertificate = 'CalibrationCertificate is Required'; detailTableDataValid = false; }
 
       return rowErrors;
     });
