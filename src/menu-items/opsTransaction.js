@@ -76,6 +76,12 @@ const opsTransaction = {
           url: '/Operations/opsTransaction/ShiftMaster'
         },
         {
+          id: 'rackMaster',
+          title: 'Rack Master',
+          type: 'item',
+          url: '/Operations/opsTransaction/RackMaster'
+        },
+        {
           id: 'stockLocation',
           title: 'Stock Location',
           type: 'item',
