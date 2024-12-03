@@ -19,8 +19,10 @@ const Department = () => {
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [editId, setEditId] = useState('');
+  const [docId, setDocId] = useState('');
+
   const [formData, setFormData] = useState({
-    departmentId: '',
+    docId: '',
     departmentCode: '',
     departmentName: '',
     active: true
@@ -28,31 +30,31 @@ const Department = () => {
 
   const [fieldErrors, setFieldErrors] = useState({
 
-    departmentId: '',
+    docId: '',
     departmentCode: '',
     departmentName: '',
-    active: ''
+    active: true,
   });
   const [listView, setListView] = useState(false);
   const listViewColumns = [
-    { accessorKey: 'departmentId', header: ' Department Id', size: 140 },
+    { accessorKey: 'docId', header: ' Department ID', size: 140 },
     { accessorKey: 'departmentCode', header: 'Department Code', size: 140 },
     { accessorKey: 'departmentName', header: 'Department Name', size: 140 },
-    // { accessorKey: 'active', header: 'Active', size: 140 }
+    { accessorKey: 'active', header: 'Active', size: 140 }
   ];
 
   const [listViewData, setListViewData] = useState([]);
 
   useEffect(() => {
-    getAllCompanies();
+    getAllDepartmentByOrgId();
   }, []);
-  const getAllCompanies = async () => {
+  const getAllDepartmentByOrgId = async () => {
     try {
-      const response = await apiCalls('get', `commonmaster/company`);
+      const response = await apiCalls('get', `/efitmaster/getAllDepartmentByOrgId?orgId=${orgId}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
-        setListViewData(response.paramObjectsMap.companyVO);
+        setListViewData(response.paramObjectsMap.departmentVO);
       } else {
         console.error('API Error:', response);
       }
@@ -60,24 +62,27 @@ const Department = () => {
       console.error('Error fetching data:', error);
     }
   };
-  const getCompanyById = async (row) => {
+
+  // 
+
+  const getDepartmentById = async (row) => {
     console.log('THE SELECTED COMPANY ID IS:', row.original.id);
     setEditId(row.original.id);
     try {
-      const response = await apiCalls('get', `commonmaster/company/${row.original.id}`);
+      const response = await apiCalls('get', `efitmaster/getDepartmentById?id=${row.original.id}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
         setListView(false);
-        const particularCompany = response.paramObjectsMap.companyVO[0];
-        console.log('THE PARTICULAR COMPANY DETAILS ARE:', particularCompany);
+        const department = response.paramObjectsMap.departmentVO[0];
+        console.log('THE PARTICULAR COMPANY DETAILS ARE:', department);
 
         setFormData({
-          gstSlab: particularCompany.gstSlab,
-          gstPercentage: particularCompany.gstPercentage,
-          departmentId: particularCompany.employeeName,
-          departmentCode: particularCompany.departmentCode,
-          active: particularCompany.active === 'Active' ? true : false
+          docId: department.docId,
+          departmentName: department.departmentName,
+          departmentCode: department.departmentCode,
+          active: department.active === 'Active',
+          createdBy: loginUserName,
         });
       } else {
         console.error('API Error:', response);
@@ -87,12 +92,31 @@ const Department = () => {
     }
   };
 
+
+
+  useEffect(() => {
+    getDepartmentDocId();
+  }, []);
+
+
+  const getDepartmentDocId = async () => {
+    try {
+      const response = await apiCalls('get', `/efitmaster/getDepartmentDocId?orgId=${orgId}`);
+      setFormData((prevData) => ({
+        ...prevData,
+        docId: response.paramObjectsMap.departmentDocId,
+      }));
+    } catch (error) {
+      console.error('Error fetching departmentDocId:', error);
+    }
+  };
+
   const handleInputChange = (event) => {
     const { name, value, type, checked } = event.target;
-  
+
     // Create a copy of the current fieldErrors state
     const newFieldErrors = { ...fieldErrors };
-  
+
     // Perform validation for text fields
     if (name === 'departmentCode' || name === 'departmentName') {
       // Example validation: Ensure the field is not empty
@@ -102,44 +126,40 @@ const Department = () => {
         newFieldErrors[name] = ''; // Clear the error if valid
       }
     }
-  
+
     // Perform validation for checkbox (if needed)
     if (name === 'active') {
       // No specific validation for the checkbox in this case
     }
-  
+
     // Update the state with the new value and errors
     setFormData((prevState) => ({
       ...prevState,
       [name]: type === 'checkbox' ? checked : value,
     }));
-  
+
     // Set the new field errors
     setFieldErrors(newFieldErrors);
   };
-  
+
   const handleClear = () => {
     setFormData({
-      departmentId: '',
       departmentCode: '',
       departmentName: '',
-      active: true
+      active: true,
+      // docId:'',
     });
     setFieldErrors({
-      departmentId: '',
       departmentCode: '',
-      departmentName: ''
+      departmentName: '',
     });
+    getDepartmentDocId();
     setEditId('');
   };
 
   const handleSave = async () => {
     const errors = {};
-
-    // if (!formData.departmentId) {
-    //   errors.departmentId = 'Department Id is Required';
-    // }
-    if (!formData.departmentCode) { 
+    if (!formData.departmentCode) {
       errors.departmentCode = 'Department Code is Required';
     }
     if (!formData.departmentName) {
@@ -153,31 +173,28 @@ const Department = () => {
       const saveData = {
         ...(editId && { id: editId }),
         active: formData.active,
-        orgId: orgId
-
+        orgId: orgId,
+        createdBy: loginUserName,
+        departmentCode: formData.departmentCode,
+        departmentName: formData.departmentName,
       };
       console.log('DATA TO SAVE IS:', saveData);
 
       try {
-        const method = editId ? 'put' : 'post';
-        const url = editId ? 'commonmaster/updateCompany' : 'commonmaster/company';
-
-        const response = await apiCalls(method, url, saveData);
+        const response = await apiCalls('put', 'efitmaster/createUpdateDepartment', saveData);
         if (response.status === true) {
           console.log('Response:', response);
-          showToast('success', editId ? ' Company Updated Successfully' : 'Company created successfully');
-
+          showToast('success', editId ? 'Department values updated successfully' : 'Department values created successfully');
+          getAllDepartmentByOrgId(); //re 
           handleClear();
-          getAllCompanies();
           setIsLoading(false);
         } else {
-          showToast('error', response.paramObjectsMap.errorMessage || 'Company creation failed');
+          showToast('error', response.paramObjectsMap.errorMessage || 'Department value creation failed');
           setIsLoading(false);
         }
       } catch (error) {
         console.error('Error:', error);
-        showToast('error', 'Company creation failed');
-
+        showToast('error', 'Department value creation failed');
         setIsLoading(false);
       }
     } else {
@@ -207,22 +224,21 @@ const Department = () => {
               columns={listViewColumns}
               // editCallback={editEmployee}
               blockEdit={true} // DISAPLE THE MODAL IF TRUE
-              toEdit={getCompanyById}
+              toEdit={getDepartmentById}
             />
           </div>
         ) : (
           <>
             <div className="row">
               <div className="col-md-3 mb-3">
-                <TextField id="DepartmentId"
+                <TextField
+                  id="DepartmentId"
                   label="Department Id"
                   variant="outlined"
                   size="small"
                   fullWidth
                   name="departmentId"
-                  value={formData.departmentId}
-                  error={!!fieldErrors.departmentId}
-                  helperText={fieldErrors.departmentId}
+                  value={formData.docId}
                   disabled
                 />
               </div>

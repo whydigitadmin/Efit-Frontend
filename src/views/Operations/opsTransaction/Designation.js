@@ -22,34 +22,33 @@ const Designation = () => {
   const [formData, setFormData] = useState({
     designationId: '',
     designation: '',
-    active: true
+    active: true,
   });
 
   const [fieldErrors, setFieldErrors] = useState({
     designationId: '',
     designation: '',
-    active: ''
+    active: true,
   });
   const [listView, setListView] = useState(false);
   const listViewColumns = [
-    { accessorKey: 'designationId', header: ' Department Id', size: 140 },
-    { accessorKey: 'designation', header: 'Department Code', size: 140 },
-    { accessorKey: 'departmentName', header: 'Department Name', size: 140 },
-    // { accessorKey: 'active', header: 'Active', size: 140 }
+    { accessorKey: 'designationId', header: 'Designation Id', size: 140 },
+    { accessorKey: 'designation', header: 'Designation', size: 140 },
+    { accessorKey: 'active', header: 'Active', size: 140 }
   ];
 
   const [listViewData, setListViewData] = useState([]);
 
   useEffect(() => {
-    getAllCompanies();
+    getDesignationByOrgId();
   }, []);
-  const getAllCompanies = async () => {
+  const getDesignationByOrgId = async () => {
     try {
-      const response = await apiCalls('get', `commonmaster/company`);
+      const response = await apiCalls('get', `/efitmaster/getDesignationByOrgId?orgId=${orgId}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
-        setListViewData(response.paramObjectsMap.companyVO);
+        setListViewData(response.paramObjectsMap.designationVO);
       } else {
         console.error('API Error:', response);
       }
@@ -57,24 +56,26 @@ const Designation = () => {
       console.error('Error fetching data:', error);
     }
   };
-  const getCompanyById = async (row) => {
+
+  const getDesignationById = async (row) => {
     console.log('THE SELECTED COMPANY ID IS:', row.original.id);
     setEditId(row.original.id);
+
     try {
-      const response = await apiCalls('get', `commonmaster/company/${row.original.id}`);
+      const response = await apiCalls('get', `efitmaster/getDesignationById?id=${row.original.id}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
         setListView(false);
-        const particularCompany = response.paramObjectsMap.companyVO[0];
-        console.log('THE PARTICULAR COMPANY DETAILS ARE:', particularCompany);
+
+        const designa = response.paramObjectsMap.designationVO[0];
+        console.log('THE PARTICULAR DESIGNATION DETAILS ARE:', designa);
 
         setFormData({
-          gstSlab: particularCompany.gstSlab,
-          gstPercentage: particularCompany.gstPercentage,
-          designationId: particularCompany.employeeName,
-          designation: particularCompany.designation,
-          active: particularCompany.active === 'Active' ? true : false
+          designation: designa.designation,
+          active: designa.active === 'Active', 
+          createdon: designa.commonDate ? designa.commonDate.createdon : '',
+          modifiedon: designa.commonDate ? designa.commonDate.modifiedon : ''
         });
       } else {
         console.error('API Error:', response);
@@ -87,43 +88,36 @@ const Designation = () => {
   const handleInputChange = (event) => {
     const { name, value, type, checked } = event.target;
 
-    // Create a copy of the current fieldErrors state
     const newFieldErrors = { ...fieldErrors };
 
-    // Validation for designation field
     if (name === 'designation') {
       if (value.trim() === '') {
         newFieldErrors[name] = 'Designation is Required';
       } else {
-        newFieldErrors[name] = ''; // Clear error if valid
+        newFieldErrors[name] = '';
       }
-    } 
-    if (name === 'active') { 
+    }
+    if (name === 'active') {
+      // No specific validation for the checkbox in this case
     }
 
-    // Update the formData state
     setFormData((prevState) => ({
       ...prevState,
       [name]: type === 'checkbox' ? checked : value,
     }));
 
-    // Update the fieldErrors state
     setFieldErrors(newFieldErrors);
   };
-  
-
-
-
 
   const handleClear = () => {
     setFormData({
       designationId: '',
-      designation: '', 
-      active: true
+      designation: '',
+      active: true,
     });
     setFieldErrors({
       designationId: '',
-      designation: '', 
+      designation: '',
     });
     setEditId('');
   };
@@ -131,12 +125,9 @@ const Designation = () => {
   const handleSave = async () => {
     const errors = {};
 
-    // if (!formData.designationId) {
-    //   errors.designationId = 'Department Id is Required';
-    // }
     if (!formData.designation) {
       errors.designation = 'Designation is Required';
-    } 
+    }
 
 
     if (Object.keys(errors).length === 0) {
@@ -145,31 +136,28 @@ const Designation = () => {
       const saveData = {
         ...(editId && { id: editId }),
         active: formData.active,
-        orgId: orgId
-
+        orgId: orgId,
+        createdBy: loginUserName,
+        designation: formData.designation,
+        docid: formData.designationId,
       };
       console.log('DATA TO SAVE IS:', saveData);
 
       try {
-        const method = editId ? 'put' : 'post';
-        const url = editId ? 'commonmaster/updateCompany' : 'commonmaster/company';
-
-        const response = await apiCalls(method, url, saveData);
+        const response = await apiCalls('put', '/efitmaster/updateCreateDesignation', saveData);
         if (response.status === true) {
           console.log('Response:', response);
-          showToast('success', editId ? ' Company Updated Successfully' : 'Company created successfully');
-
+          showToast('success', editId ? 'Designation values updated successfully' : 'Designation values created successfully');
+          getDesignationByOrgId();
           handleClear();
-          getAllCompanies();
           setIsLoading(false);
         } else {
-          showToast('error', response.paramObjectsMap.errorMessage || 'Company creation failed');
+          showToast('error', response.paramObjectsMap.errorMessage || 'Designation value creation failed');
           setIsLoading(false);
         }
       } catch (error) {
         console.error('Error:', error);
-        showToast('error', 'Company creation failed');
-
+        showToast('error', 'Designation value creation failed');
         setIsLoading(false);
       }
     } else {
@@ -199,7 +187,7 @@ const Designation = () => {
               columns={listViewColumns}
               // editCallback={editEmployee}
               blockEdit={true} // DISAPLE THE MODAL IF TRUE
-              toEdit={getCompanyById}
+              toEdit={getDesignationById}
             />
           </div>
         ) : (

@@ -213,18 +213,18 @@ const SalesInvoiceExport = () => {
     }
     const newRow = {
       id: Date.now(),
-      price: '',
+      terms: '',
       description: ''
     };
     setTermsandConditionsTable([...termsandConditionsTable, newRow]);
-    setTermsandConditionsTableErrors([...termsandConditionsTableErrors, { price: '', description: '' }]);
+    setTermsandConditionsTableErrors([...termsandConditionsTableErrors, { terms: '', description: '' }]);
   };
   const isLastRowEmptyPrice = (table) => {
     const lastRow = table[table.length - 1];
     if (!lastRow) return false;
 
     if (table === termsandConditionsTable) {
-      return !lastRow.price || !lastRow.description;
+      return !lastRow.terms || !lastRow.description;
     }
     return false;
   };
@@ -235,8 +235,8 @@ const SalesInvoiceExport = () => {
         const newErrors = [...prevErrors];
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
-          price: !table[table.length - 1].price ? 'Price is required' : '',
-          description: !table[table.length - 1].description ? 'Price Effective From is required' : ''
+          terms: !table[table.length - 1].terms ? 'Terms is required' : '',
+          description: !table[table.length - 1].description ? 'description From is required' : ''
         };
         return newErrors;
       });
@@ -290,7 +290,7 @@ const SalesInvoiceExport = () => {
     setTermsandConditionsTable([
       {
         id: 1,
-        price: '',
+        terms: '',
         description: ''
       }
     ]);
@@ -407,50 +407,7 @@ const SalesInvoiceExport = () => {
     }
   };
 
-  // const getAllListOfValuesByOrgId = async () => {
-  //   try {
-  //     const result = await apiCalls('get', `/master/getListOfValuesByOrgId?orgId=${orgId}`);
-  //     setData(result.paramObjectsMap.listOfValuesVO || []);
-  //     showForm(true);
-  //     console.log('Test', result);
-  //   } catch (err) {
-  //     console.log('error', err);
-  //   }
-  // };
-
-  // const getListOfValueById = async (row) => {
-  //   console.log('first', row);
-  //   setShowForm(true);
-  //   try {
-  //     const result = await apiCalls('get', `/master/getListOfValuesById?id=${row.original.id}`);
-
-  //     if (result) {
-  //       const listValueVO = result.paramObjectsMap.listOfValuesVO[0];
-  //       setEditId(row.original.id);
-
-  //       setFormData({
-  //         listCode: listValueVO.listCode || '',
-  //         listDescription: listValueVO.listDescription || '',
-  //         active: listValueVO.active || false,
-  //         id: listValueVO.id || 0
-  //       });
-  //       setLocalDetailTableData(
-  //         listValueVO.listOfValues1VO.map((cl) => ({
-  //           id: cl.id,
-  //           valueCode: cl.valueCode,
-  //           valueDesc: cl.valueDescription,
-  //           active: cl.active
-  //         }))
-  //       );
-
-  //       console.log('DataToEdit', listValueVO);
-  //     } else {
-  //       // Handle erro
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching data:', error);
-  //   }
-  // };
+  
 
   const handleList = () => {
     setShowForm(!showForm);
@@ -1103,7 +1060,7 @@ const SalesInvoiceExport = () => {
                                         value={row.terms}
                                         onChange={(e) => {
                                           const value = e.target.value;
-                                          setTermsandConditionsTable((prev) => prev.map((r) => (r.id === row.id ? { ...r, price: value } : r)));
+                                          setTermsandConditionsTable((prev) => prev.map((r) => (r.id === row.id ? { ...r, terms: value } : r)));
                                           setTermsandConditionsTableErrors((prev) => {
                                             const newErrors = [...prev];
                                             newErrors[index] = {

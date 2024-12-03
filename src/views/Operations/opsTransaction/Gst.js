@@ -39,26 +39,26 @@ const Gst = () => {
   });
   const [listView, setListView] = useState(false);
   const listViewColumns = [
-    { accessorKey: 'gstSlab', header: 'GST Slab', size: 140 }, 
-    { accessorKey: 'gstSlab', header: 'GST Percentage', size: 140 }, 
-    { accessorKey: 'gstSlab', header: 'IGST Percentage', size: 140 }, 
-    { accessorKey: 'gstSlab', header: 'CGST Percentage', size: 140 }, 
-    { accessorKey: 'gstSlab', header: 'SGST Percentage', size: 140 },  
-    // { accessorKey: 'active', header: 'Active', size: 140 }
+    { accessorKey: 'gstSlab', header: 'GST Slab', size: 140 },
+    { accessorKey: 'gstPercentage', header: 'GST Percentage', size: 140 },
+    { accessorKey: 'igstPercentage', header: 'IGST Percentage', size: 140 },
+    { accessorKey: 'cgstPercentage', header: 'CGST Percentage', size: 140 },
+    { accessorKey: 'sgstPercentage', header: 'SGST Percentage', size: 140 },
+    { accessorKey: 'active', header: 'Active', size: 140 }
   ];
 
   const [listViewData, setListViewData] = useState([]);
 
   useEffect(() => {
-    getAllCompanies();
+    getAllGstByOrgId();
   }, []);
-  const getAllCompanies = async () => {
+  const getAllGstByOrgId = async () => {
     try {
-      const response = await apiCalls('get', `commonmaster/company`);
+      const response = await apiCalls('get', `/efitmaster/getAllGstByOrgId?orgId=${orgId}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
-        setListViewData(response.paramObjectsMap.companyVO);
+        setListViewData(response.paramObjectsMap.gstVO);
       } else {
         console.error('API Error:', response);
       }
@@ -66,24 +66,26 @@ const Gst = () => {
       console.error('Error fetching data:', error);
     }
   };
-  const getCompanyById = async (row) => {
+  // 
+  const getGstById = async (row) => {
     console.log('THE SELECTED COMPANY ID IS:', row.original.id);
     setEditId(row.original.id);
     try {
-      const response = await apiCalls('get', `commonmaster/company/${row.original.id}`);
+      const response = await apiCalls('get', `/efitmaster/getGstById?id=${row.original.id}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
         setListView(false);
-        const particularCompany = response.paramObjectsMap.companyVO[0];
-        console.log('THE PARTICULAR COMPANY DETAILS ARE:', particularCompany);
+        const Gst = response.paramObjectsMap.gstVO[0];
+        console.log('THE PARTICULAR COMPANY DETAILS ARE:', Gst);
 
         setFormData({
-          gstSlab: particularCompany.gstSlab,
-          gstPercentage: particularCompany.gstPercentage,
-          igstPercentage: particularCompany.employeeName,
-          cgstPercentage: particularCompany.cgstPercentage,
-          active: particularCompany.active === 'Active' ? true : false
+          gstSlab: Gst.gstSlab,
+          gstPercentage: parseInt(Gst.gstPercentage),
+          igstPercentage: parseInt(Gst.igstPercentage),
+          cgstPercentage: parseInt(Gst.cgstPercentage),
+          sgstPercentage: parseInt(Gst.sgstPercentage),
+          active: Gst.active === 'Active',
         });
       } else {
         console.error('API Error:', response);
@@ -95,9 +97,9 @@ const Gst = () => {
 
   const handleInputChange = (event) => {
     const { name, value, type, checked } = event.target;
- 
-    if (name !== 'active' && isNaN(value)) {
-      return;  
+
+    if (name !== 'active' && name !== 'gstSlab' && isNaN(value)) {
+      return;
     }
 
     if (type === 'checkbox') {
@@ -111,7 +113,7 @@ const Gst = () => {
         [name]: value,
       }));
     }
- 
+
     if (value === '') {
       setFieldErrors((prevErrors) => ({
         ...prevErrors,
@@ -125,7 +127,7 @@ const Gst = () => {
     }
   };
 
- 
+
   const handleClear = () => {
     setFormData({
       gstSlab: '',
@@ -171,25 +173,25 @@ const Gst = () => {
       const saveData = {
         ...(editId && { id: editId }),
         active: formData.active,
-        orgId: orgId
-
+        createdBy: loginUserName,
+        orgId: parseInt(orgId),
+        gstSlab: formData.gstSlab,
+        cgstPercentage: parseInt(formData.cgstPercentage),
+        gstPercentage: parseInt(formData.gstPercentage),
+        igstPercentage: parseInt(formData.igstPercentage),
+        sgstPercentage: parseInt(formData.sgstPercentage),
       };
       console.log('DATA TO SAVE IS:', saveData);
 
       try {
-        const method = editId ? 'put' : 'post';
-        const url = editId ? 'commonmaster/updateCompany' : 'commonmaster/company';
-
-        const response = await apiCalls(method, url, saveData);
+        const response = await apiCalls('put', `/efitmaster/createUpdateGst`, saveData);
         if (response.status === true) {
-          console.log('Response:', response);
-          showToast('success', editId ? ' Company Updated Successfully' : 'Company created successfully');
-
+          showToast('success', editId ? 'GST Updated Successfully' : 'GST created successfully');
+          getAllGstByOrgId();
           handleClear();
-          getAllCompanies();
           setIsLoading(false);
         } else {
-          showToast('error', response.paramObjectsMap.errorMessage || 'Company creation failed');
+          showToast('error', response.paramObjectsMap.errorMessage || 'GST creation failed');
           setIsLoading(false);
         }
       } catch (error) {
@@ -225,7 +227,7 @@ const Gst = () => {
               columns={listViewColumns}
               // editCallback={editEmployee}
               blockEdit={true} // DISAPLE THE MODAL IF TRUE
-              toEdit={getCompanyById}
+              toEdit={getGstById}
             />
           </div>
         ) : (

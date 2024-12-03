@@ -25,6 +25,7 @@ import InputLabel from '@mui/material/InputLabel';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import dayjs from 'dayjs';
 import CommonBulkUpload from 'utils/CommonBulkUpload';
+import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 
 const MaterialType = () => {
   const [showForm, setShowForm] = useState(true);
@@ -34,43 +35,80 @@ const MaterialType = () => {
   const [value, setValue] = useState(0);
   const [editId, setEditId] = useState();
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [listViewData, setListViewData] = useState([]);
 
   const [formData, setFormData] = useState({
     materialType: '',
-
     itemGroup: '',
-
   });
   const [fieldErrors, setFieldErrors] = useState({
     materialType: '',
-
     itemGroup: '',
-
-
-
-
-
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [drawingDocumentsData, setDrawingDocumentsData] = useState([
+  const [materialTypeData, setMaterialTypeData] = useState([
     {
       id: 1,
       itemSubGroup: '',
 
     }
   ]);
-  const [drawingDocumentsErrors, setDrawingDocumentsErrors] = useState([
+  const [materialDetailErrors, setMaterialDetailErrors] = useState([
     {
       itemSubGroup: '',
 
     }
   ]);
-  const columns = [
-    { accessorKey: 'listCode', header: 'List Code', size: 140 },
-    { accessorKey: 'listDescription', header: 'Description', size: 140 },
-    // { accessorKey: 'active', header: 'Active', size: 140 }
+  const listViewColumns = [
+    { accessorKey: 'materialType', header: 'Material Type', size: 140 },
+    { accessorKey: 'itemGroup', header: 'Item Group', size: 140 },
   ];
- 
+  useEffect(() => {
+    getAllMaterialTypeByOrgId();
+  }, []);
+  const getAllMaterialTypeByOrgId = async () => {
+    try {
+      const response = await apiCalls('get', `/efitmaster/getAllMaterialTypeByOrgId?orgId=${orgId}`);
+      console.log('API Response:', response);
+
+      if (response.status === true) {
+        setListViewData(response.paramObjectsMap.materialTypeVO);
+      } else {
+        console.error('API Error:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const getMaterialTypeById = async (row) => {
+    console.log('Row selected:', row);
+    setShowForm(true);
+    try {
+      const result = await apiCalls('get', `/efitmaster/getMaterialTypeById?id=${row.original.id}`);
+      if (result) {
+        const materType = result.paramObjectsMap.materialTypeVO[0];
+        console.log('DataToEdit', materType);
+        setEditId(row.original.id);
+        setFormData({
+          materialType: materType.materialType,
+          itemGroup: materType.itemGroup || '',
+        });
+        setMaterialTypeData(
+          materType.materialDetailVO?.map((row) => ({
+            id: row.id,
+            itemSubGroup: row.itemSubGroup,
+          })) || []
+        );
+      } else {
+        console.error('No data found for the selected ID');
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     const inputValue = type === 'checkbox' ? checked : value;
@@ -105,57 +143,56 @@ const MaterialType = () => {
   };
 
   const handleKeyDown = (e, row, table) => {
-  
+
     if (e.key === 'Tab' && row.id === table[table.length - 1].id) {
-      e.preventDefault();   
-  
-       
+      e.preventDefault();
+
+
       if (isLastRowEmpty(table)) {
         displayRowError(table);
       } else {
-    
+
         handleAddRow();
       }
     }
   };
 
   const handleAddRow = () => {
-   
-    if (isLastRowEmpty(drawingDocumentsData)) {
-      displayRowError(drawingDocumentsData);
-      return;  
+
+    if (isLastRowEmpty(materialTypeData)) {
+      displayRowError(materialTypeData);
+      return;
     }
-   
+
     const newRow = {
-      id: Date.now(),   
-      itemSubGroup: '',  
+      id: Date.now(),
+      itemSubGroup: '',
     };
-  
-    
-    setDrawingDocumentsData((prevData) => [...prevData, newRow]);
-  
-    
-    setDrawingDocumentsErrors((prevErrors) => [
+
+
+    setMaterialTypeData((prevData) => [...prevData, newRow]);
+
+
+    setMaterialDetailErrors((prevErrors) => [
       ...prevErrors,
-      { itemSubGroup: '', attachments: '' }  
+      { itemSubGroup: '', }
     ]);
   };
   const isLastRowEmpty = (table) => {
-    const lastRow = table[table.length - 1];  
-    if (!lastRow) return false;   
-    
-    return !lastRow.itemSubGroup; 
+    const lastRow = table[table.length - 1];
+    if (!lastRow) return false;
+
+    return !lastRow.itemSubGroup;
   };
 
   const displayRowError = (table) => {
-    // Check if the table is drawingDocumentsData
-    if (table === drawingDocumentsData) {
-      setDrawingDocumentsErrors((prevErrors) => {
+    // Check if the table is materialTypeData
+    if (table === materialTypeData) {
+      setMaterialDetailErrors((prevErrors) => {
         const newErrors = [...prevErrors];
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
           itemSubGroup: !table[table.length - 1].itemSubGroup ? 'Item Sub Group is Required' : '',
-          attachments: !table[table.length - 1].attachments ? 'Attachments are Required' : '',
         };
         return newErrors;
       });
@@ -163,34 +200,27 @@ const MaterialType = () => {
   };
 
   const handleDeleteRow = (id) => {
-    const updatedData = drawingDocumentsData.filter(row => row.id !== id);
-    const updatedErrors = drawingDocumentsErrors.filter((_, index) => index !== updatedData.findIndex(row => row.id === id));
-    
-    setDrawingDocumentsData(updatedData);
-    setDrawingDocumentsErrors(updatedErrors);
+    const updatedData = materialTypeData.filter(row => row.id !== id);
+    const updatedErrors = materialDetailErrors.filter((_, index) => index !== updatedData.findIndex(row => row.id === id));
+
+    setMaterialTypeData(updatedData);
+    setMaterialDetailErrors(updatedErrors);
   };
-  
+
 
   const handleClear = () => {
     setFormData({
       materialType: '',
-
       itemGroup: '',
-
-
-
-
-
     });
     setFieldErrors({});
-    setDrawingDocumentsData([
+    setMaterialTypeData([
       {
         id: 1,
         itemSubGroup: '',
-
       }
     ]);
-    setDrawingDocumentsErrors('');
+    setMaterialDetailErrors('');
     setEditId('');
   };
 
@@ -201,43 +231,37 @@ const MaterialType = () => {
     if (!formData.materialType) errors.materialType = 'Material Type is Required';
     if (!formData.itemGroup) errors.itemGroup = 'Item Group is Required';
 
-    let drawingDocumentsDataValid = true;
-    if (!drawingDocumentsData || !Array.isArray(drawingDocumentsData) || drawingDocumentsData.length === 0) {
-      drawingDocumentsDataValid = false;
-      setDrawingDocumentsErrors([{ general: 'Drawing Documents Data is Required' }]);
+    let materialTypeDataValid = true;
+    if (!materialTypeData || !Array.isArray(materialTypeData) || materialTypeData.length === 0) {
+      materialTypeDataValid = false;
+      setMaterialDetailErrors([{ general: 'Drawing Documents Data is Required' }]);
     } else {
-      const newTableErrors = drawingDocumentsData.map((row, index) => {
+      const newTableErrors = materialTypeData.map((row, index) => {
         const rowErrors = {};
         if (!row.itemSubGroup) {
-          rowErrors.itemSubGroup = 'File Name is Required';
-          drawingDocumentsDataValid = false;
-        }
-        if (!row.attachments) {
-          rowErrors.attachments = 'Attachments is Required';
-          drawingDocumentsDataValid = false;
+          rowErrors.itemSubGroup = 'Item Sub Group is Required';
+          materialTypeDataValid = false;
         }
 
         return rowErrors;
       });
-      setDrawingDocumentsErrors(newTableErrors);
+      setMaterialDetailErrors(newTableErrors);
     }
     setFieldErrors(errors);
 
-    if (Object.keys(errors).length === 0 && drawingDocumentsDataValid) {
+    if (Object.keys(errors).length === 0 && materialTypeDataValid) {
       setIsLoading(true);
 
-      const detailsVo = drawingDocumentsData.map((row) => ({
+      const detailsVo = materialTypeData.map((row) => ({
         ...(editId && { id: row.id }),
         itemSubGroup: row.itemSubGroup,
-        attachments: row.attachments
       }));
 
       const saveFormData = {
         ...(editId && { id: editId }),
-        active: formData.active,
-        listCode: formData.listCode,
-        listDescription: formData.listDescription,
-        listOfValues1DTO: detailsVo,
+        materialType: formData.materialType,
+        itemGroup: formData.itemGroup,
+        materialDetailDTO: detailsVo,
         createdBy: loginUserName,
         orgId: orgId
       };
@@ -245,20 +269,20 @@ const MaterialType = () => {
       console.log('DATA TO SAVE IS:', saveFormData);
 
       try {
-        const response = await apiCalls('put', '/master/updateCreateListOfValues', saveFormData);
+        const response = await apiCalls('put', '/efitmaster/createUpdateMaterialType', saveFormData);
         if (response.status === true) {
           console.log('Response:', response);
-          showToast('success', editId ? 'List of values updated successfully' : 'List of values created successfully');
-          // getAllListOfValuesByOrgId();
+          showToast('success', editId ? 'List of values updated successfully' : 'Material Type values created successfully');
+          getAllMaterialTypeByOrgId();
           handleClear();
           setIsLoading(false);
         } else {
-          showToast('error', response.paramObjectsMap.errorMessage || 'List of value creation failed');
+          showToast('error', response.paramObjectsMap.errorMessage || 'Material Type value creation failed');
           setIsLoading(false);
         }
       } catch (error) {
         console.error('Error:', error);
-        showToast('error', 'List of value creation failed');
+        showToast('error', 'Material Type value creation failed');
         setIsLoading(false);
       }
     } else {
@@ -327,7 +351,7 @@ const MaterialType = () => {
               </div>
 
             </div>
-     
+
             <div className="row mt-2">
               <Box sx={{ width: '100%' }}>
                 <Tabs
@@ -380,7 +404,7 @@ const MaterialType = () => {
                                 </tr>
                               </thead>
                               <tbody>
-                                {drawingDocumentsData.map((row, index) => (
+                                {materialTypeData.map((row, index) => (
                                   <tr key={row.id}>
                                     <td className="border px-2 py-2 text-center">
                                       <ActionButton
@@ -396,8 +420,8 @@ const MaterialType = () => {
                                         value={row.itemSubGroup}
                                         onChange={(e) => {
                                           const value = e.target.value;
-                                          setDrawingDocumentsData((prev) => prev.map((r) => (r.id === row.id ? { ...r, itemSubGroup: value } : r)));
-                                          setDrawingDocumentsErrors((prev) => {
+                                          setMaterialTypeData((prev) => prev.map((r) => (r.id === row.id ? { ...r, itemSubGroup: value } : r)));
+                                          setMaterialDetailErrors((prev) => {
                                             const newErrors = [...prev];
                                             newErrors[index] = {
                                               ...newErrors[index],
@@ -406,11 +430,11 @@ const MaterialType = () => {
                                             return newErrors;
                                           });
                                         }}
-                                        className={drawingDocumentsErrors[index]?.itemSubGroup ? 'error form-control' : 'form-control'}
+                                        className={materialDetailErrors[index]?.itemSubGroup ? 'error form-control' : 'form-control'}
                                       />
-                                      {drawingDocumentsErrors[index]?.itemSubGroup && (
+                                      {materialDetailErrors[index]?.itemSubGroup && (
                                         <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                          {drawingDocumentsErrors[index].itemSubGroup}
+                                          {materialDetailErrors[index].itemSubGroup}
                                         </div>
                                       )}
                                     </td>
@@ -428,12 +452,7 @@ const MaterialType = () => {
             </div>
           </>
         ) : (
-          <CommonTable
-            data={data && data}
-            columns={columns}
-            blockEdit={true}
-          // toEdit={getListOfValueById}
-          />
+          <CommonTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getMaterialTypeById} /> 
         )}
       </div>
     </div>
