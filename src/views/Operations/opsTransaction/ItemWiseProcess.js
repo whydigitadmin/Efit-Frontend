@@ -4,8 +4,6 @@ import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
 import { FormControl, FormHelperText, InputLabel, Autocomplete, MenuItem, Select } from '@mui/material';
 import TextField from '@mui/material/TextField';
-import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 import 'react-tabs/style/react-tabs.css';
@@ -19,9 +17,6 @@ import Box from '@mui/material/Box';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import apiCalls from 'apicall';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import CommonBulkUpload from 'utils/CommonBulkUpload';
-import sampleFile from '../../../assets/sample-files/sample_data_buyerorder.xls';
 import CommonListViewTable from '../../basicMaster/CommonListViewTable';
 
 function ItemWiseProcess() {
@@ -35,10 +30,9 @@ function ItemWiseProcess() {
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [value, setValue] = useState(0);
   const [editId, setEditId] = useState('');
-  const [allOperationName, setAllOperationName] = useState([]);
-  const [currencies, setCurrencies] = useState([]);
+  const [itemAndDesc, setItemAndDesc] = useState([]);
+  const [allOperationName, setOperationName] = useState([]);
   const [docId, setDocId] = useState('');
-  const [file, setFile] = useState('');
   const [uploadOpen, setUploadOpen] = useState(false);
   const [listView, setListView] = useState(false);
   const [listViewData, setListViewData] = useState([]);
@@ -63,35 +57,94 @@ function ItemWiseProcess() {
   const [detailsTableData, setDetailsTableData] = useState([
     {
       id: 1,
-      operationName:''
+      processName:''
     }
   ]);
   const [detailsTableErrors, setDetailsTableErrors] = useState([
     {
-       operationName:''
+       processName:''
     }
   ]);
 
   useEffect(() => {
-    
-    // getAdjustmentJournalDocId();
-    // getAllAdjustmentJournalByOrgId();
-    // getAllOperationName();
+    getOperationName();
+    getDocId();
+    getItemAndDesc();
+    getAllItemWiseProcesByOrgId();
   }, []);
-  const getAllItemWiseProcessMasterById = async () => {}
-  const getAllOperationName = async () => {
-    try {
-      const response = await apiCalls('get', `/transaction/getOperationNameFromGroup?orgId=${orgId}`);
-      console.log('API Response:', response);
 
-      if (response.status === true) {
-        setAllOperationName(response.paramObjectsMap.generalJournalVO);
-        console.log('Account Name', response.paramObjectsMap.generalJournalVO);
+  const getAllItemWiseProcessMasterById = async (row) => {
+    console.log('first', row);
+    setShowForm(true);
+    try {
+      const result = await apiCalls('get', `/efitmaster/getItemWiseProcessMasterById?id=${row.original.id}`);
+
+      if (result) {
+        const iwpmVO = result.paramObjectsMap.ItemWiseProcessMasterVO[0];
+        setEditId(row.original.id);
+        setDocId(iwpmVO.docId);
+        setFormData({
+          processType: iwpmVO.processType,
+          item: iwpmVO.item,
+          itemDescription: iwpmVO.itemDesc,
+          orgId: iwpmVO.orgId
+        });
+        setDetailsTableData(
+          iwpmVO.itemWiseProcessDetailsVO.map((row) => ({
+            id: row.id,
+            processName: row.processName
+          }))
+        );
+        console.log('DataToEdit', iwpmVO);
       } else {
-        console.error('API Error:', response);
+        // Handle erro
       }
     } catch (error) {
       console.error('Error fetching data:', error);
+    }
+  };
+
+  const getAllItemWiseProcesByOrgId = async () => {
+    try {
+      const result = await apiCalls('get', `/efitmaster/getItemWiseProcessMasterByOrgId?orgId=${orgId}`);
+      setData(result.paramObjectsMap.ItemWiseProcessMasterVO || []);
+      // showForm(true);
+      console.log('ItemWiseProcessMasterVO', result);
+    } catch (err) {
+      console.log('error', err);
+    }
+  };
+
+  const getItemAndDesc = async () => {
+    try {
+      const response = await apiCalls('get', `/efitmaster/getItemAndItemDescforItemWiseProcess?orgId=${orgId}`);
+      console.log('getItemandDesc:', response);
+      setItemAndDesc(response.paramObjectsMap.itemWiseProcessVO)
+      
+    } catch (error) {
+      console.error('Error fetching ItemWise Process Master data:', error);
+    }
+  };
+  const getDocId = async () => {
+    try {
+      const response = await apiCalls(
+        'get',
+        `/efitmaster/getItemWiseProcessMasterDocId?orgId=${orgId}`
+      );
+      setDocId(response.paramObjectsMap.itemWiseProcessMasterDocId);
+    } catch (error) {
+      console.error('Error fetching gate passes:', error);
+    }
+  };
+  const getOperationName = async () => {
+    try {
+      const response = await apiCalls(
+        'get',
+        `/efitmaster/getProcessNameFromItemWiseProcess?orgId=${orgId}`
+      );
+      setOperationName(response.paramObjectsMap.ItemVO);
+    } catch (error) {
+      console.error('Error fetching gate passes:', error);
     }
   };
 
@@ -107,64 +160,43 @@ function ItemWiseProcess() {
       itemDescription: '',
     });
     setDetailsTableData([
-      { id: 1,   operationName:'' }
+      { id: 1,   processName:'' }
     ]);
     setDetailsTableErrors('');
     setEditId('');
-    // getAdjustmentJournalDocId();
+    getDocId();
   };
 
   const handleInputChange = (e) => {
     const { name, value, selectionStart, selectionEnd, type } = e.target;
     let errorMessage = '';
-
-    switch (name) {
-      case 'exRate':
-        if (isNaN(value)) errorMessage = 'Invalid format';
-        break;
-
-      case 'refNo':
-      case 'suppRefNo':
-        if (!/^[A-Za-z0-9\s]*$/.test(value)) {
-          errorMessage = 'Invalid format';
-        }
-        break;
-      case 'totalCreditAmount':
-      case 'totalDebitAmount':
-        if (isNaN(value)) {
-          errorMessage = 'Invalid format';
-        }
-        break;
-
-      default:
-        break;
+    let updatedFormData = { ...formData, [name]: value };
+  
+    if (name === 'item') {
+      const selectedItem = itemAndDesc.find((item) => item.itemName === value);
+      updatedFormData = {
+        ...updatedFormData,
+        itemDescription: selectedItem ? selectedItem.itemDesc : '',
+      };
     }
-
-    // Update field errors
+  
     setFieldErrors((prevErrors) => ({
       ...prevErrors,
-      [name]: errorMessage
+      [name]: errorMessage,
     }));
-
-    // If no error, update the form data
-    if (!errorMessage) {
-      setFormData((prevFormData) => ({
-        ...prevFormData,
-        [name]: type === 'text' || type === 'textarea' ? value.toUpperCase() : value
-      }));
-
-      // Preserve cursor position for text inputs
-      if (type === 'text' || type === 'textarea') {
-        setTimeout(() => {
-          const inputElement = document.getElementsByName(name)[0];
-          if (inputElement && inputElement.setSelectionRange) {
-            inputElement.setSelectionRange(selectionStart, selectionEnd);
-          }
-        }, 0);
-      }
+    setFormData(updatedFormData);
+  
+    // Preserve cursor position for text inputs
+    if ((type === 'text' || type === 'textarea') && !errorMessage) {
+      setTimeout(() => {
+        const inputElement = document.getElementsByName(name)[0];
+        if (inputElement && inputElement.setSelectionRange) {
+          inputElement.setSelectionRange(selectionStart, selectionEnd);
+        }
+      }, 0);
     }
   };
-
+  
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
@@ -176,12 +208,12 @@ function ItemWiseProcess() {
     }
     const newRow = {
       id: Date.now(),
-      operationName:''
+      processName:''
     };
     setDetailsTableData([...detailsTableData, newRow]);
     setDetailsTableErrors([
       ...detailsTableErrors,
-      {   operationName:'' }
+      {   processName:'' }
     ]);
   };
 
@@ -191,7 +223,7 @@ function ItemWiseProcess() {
 
     if (table === detailsTableData) {
       return (
-        !lastRow.operationName 
+        !lastRow.processName 
       );
     }
     return false;
@@ -203,7 +235,7 @@ function ItemWiseProcess() {
         const newErrors = [...prevErrors];
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
-            operationName: !table[table.length - 1].operationName ? '  Operation Name is required' : ''
+            processName: !table[table.length - 1].processName ? 'Operation Name is required' : ''
         };
         return newErrors;
       });
@@ -224,26 +256,7 @@ function ItemWiseProcess() {
     setShowForm(!showForm);
   };
 
-  const handleBulkUploadOpen = () => {
-    setUploadOpen(true); // Open dialog
-  };
-
-  const handleBulkUploadClose = () => {
-    setUploadOpen(false); // Close dialog
-  };
-
-  const handleFileUpload = (event) => {
-    console.log(event.target.files[0]);
-  };
-
-  const handleSubmit = () => {
-    console.log('Submit clicked');
-    handleBulkUploadClose();
-  };
-
-  
-
-  const handleSave = ()=> {
+  const handleSave = async () => {
     const errors = {};
     if (!formData.item) {
       errors.item = 'Item is required';
@@ -258,14 +271,49 @@ function ItemWiseProcess() {
     let detailTableDataValid = true;
     const newTableErrors = detailsTableData.map((row) => {
       const rowErrors = {};
-      if (!row.operationName) {
-        rowErrors.operationName = 'Operation Name is required';
+      if (!row.processName) {
+        rowErrors.processName = 'Operation Name is required';
         detailTableDataValid = false;
       }
       return rowErrors;
     });
     setFieldErrors(errors);
     setDetailsTableErrors(newTableErrors);
+    if (Object.keys(errors).length === 0 && detailTableDataValid) {
+      const ItemWiseProcessVO = detailsTableData.map((row) => ({
+        ...(editId && { id: row.id }),
+        processName: row.processName
+  }));
+  const saveFormData = {
+    ...(editId && { id: editId }),
+    branch: branch,
+          branchCode: branchCode,
+          createdBy: loginUserName,
+          finYear: finYear,
+          orgId: orgId,
+          itemWiseProcessDetailsDTO: ItemWiseProcessVO,
+          item: formData.item,
+          itemDesc: formData.itemDescription,
+          processType: formData.processType
+  };
+  console.log('DATA TO SAVE IS:', saveFormData);
+  try {
+          const response = await apiCalls('put', `/efitmaster/updateCreateItemWiseProcessMaster`, saveFormData);
+          if (response.status === true) {
+            console.log('Response:', response);
+            showToast('success', editId ? 'Item Wise Process Master Updated Successfully' : 'Item Wise Process Master Created successfully');
+            getAllItemWiseProcesByOrgId();
+            handleClear();
+          } else {
+            showToast('error', response.paramObjectsMap.message || 'Item Wise Process Master creation failed');
+          }
+        } catch (error) {
+          console.error('Error:', error);
+          showToast('error', 'Item Wise Process Master creation failed');
+        }
+    } else {
+      setFieldErrors(errors);
+    }
   }
   return(
   <>
@@ -315,31 +363,36 @@ function ItemWiseProcess() {
                   </FormControl>
                 </div>
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.item}>
-                    <InputLabel id="item">
-                      {
-                        <span>
-                          Item <span className="asterisk">*</span>
-                        </span>
-                      }
-                    </InputLabel>
-                    <Select
-                      labelId="item"
-                      id="item"
-                      label="item"
-                      onChange={handleInputChange}
-                      name="item"
-                      value={formData.item}
-                    >
-                      {currencies.map((item) => (
-                        <MenuItem key={item.id} value={item.item}>
-                          {item.item}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    {fieldErrors.item && <FormHelperText style={{ color: 'red' }}>Item is required</FormHelperText>}
-                  </FormControl>
-                </div>
+                <FormControl fullWidth size="small" error={!!fieldErrors.item}>
+                  <InputLabel id="demo-simple-select-label">
+                    {
+                      <span>
+                        Item <span className="asterisk">*</span>
+                      </span>
+                    }
+                  </InputLabel>
+                  <Select
+                    labelId="item"
+                    id="item"
+                    label="Item"
+                    required
+                    value={formData.item}
+                    name="item"
+                    onChange={handleInputChange}
+                  >
+                    {itemAndDesc.map((item) => (
+                      <MenuItem key={item.id} value={item.itemName}>
+                        {item.itemName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {fieldErrors.item && (
+                    <p className="error-text" style={{ color: 'red', fontSize: '12px', paddingLeft: '15px', paddingTop: '4px' }}>
+                      {fieldErrors.item}
+                    </p>
+                  )}
+                </FormControl>
+              </div>
                 <div className="col-md-3 mb-3">
                   <TextField
                     id="itemDescription"
@@ -350,11 +403,10 @@ function ItemWiseProcess() {
                     name="itemDescription"
                     value={formData.itemDescription}
                     onChange={handleInputChange}
-                    // helperText={<span style={{ color: 'red' }}>{fieldErrors.itemDescription ? fieldErrors.itemDescription : ''}</span>}
                     inputProps={{ maxLength: 40 }}
                     error={!!fieldErrors.itemDescription}
                     helperText={fieldErrors.itemDescription}
-                    // disabled
+                    disabled
                   />
                 </div>
               </div>
@@ -376,27 +428,13 @@ function ItemWiseProcess() {
                       <div className="row d-flex ml">
                         <div className="mb-1">
                           <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} />
-                          <ActionButton title="Upload" icon={CloudUploadIcon} onClick={handleBulkUploadOpen} />
                         </div>
-                        {uploadOpen && (
-          <CommonBulkUpload
-            open={uploadOpen}
-            handleClose={handleBulkUploadClose}
-            title="Upload Files"
-            uploadText="Upload file"
-            downloadText="Sample File"
-            onSubmit={handleSubmit}
-            sampleFileDownload={sampleFile}
-            handleFileUpload={handleFileUpload}
-            // apiUrl={`buyerOrder/ExcelUploadForBuyerOrder?branch=${loginBranch}&branchCode=${loginBranchCode}&client=${loginClient}&createdBy=${loginUserName}&customer=${loginCustomer}&finYear=${loginFinYear}&orgId=${orgId}&type=DOC&warehouse=${loginWarehouse}`}
-            screen="Item Wise Process Master"
-          ></CommonBulkUpload>
-        )}
-        {listView ? (
-          <div className="mt-4">
-            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getAllItemWiseProcessMasterById} />
-          </div>
-          ) : (
+                        
+                        {listView ? (
+                          <div className="mt-4">
+                            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getAllItemWiseProcessMasterById} />
+                          </div>
+                          ) : (
                         <div className="row mt-2">
                           <div className="col-lg-6">
                             <div className="table-responsive">
@@ -433,17 +471,17 @@ function ItemWiseProcess() {
                                       <td className="col-md-4 mb-3">
                                         <Autocomplete
                                           options={allOperationName}
-                                          getOptionLabel={(option) => option.OperationName || ''}
-                                          groupBy={(option) => (option.OperationName ? option.OperationName[0].toUpperCase() : '')}
-                                          value={row.operationName ? allOperationName.find((a) => a.OperationName === row.operationName) : null}
+                                          getOptionLabel={(option) => option.processName || ''}
+                                          groupBy={(option) => (option.processName ? option.processName[0].toUpperCase() : '')}
+                                          value={row.processName ? allOperationName.find((a) => a.processName === row.processName) : null}
                                           onChange={(event, newValue) => {
-                                            const value = newValue ? newValue.OperationName : '';
+                                            const value = newValue ? newValue.processName : '';
                                             setDetailsTableData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, OperationName: value } : r))
+                                              prev.map((r) => (r.id === row.id ? { ...r, processName: value } : r))
                                             );
                                             setDetailsTableErrors((prevErrors) =>
-                                              prevErrors.map((err, idx) => (idx === index ? { ...err, OperationName: '' } : err))
-                                            );
+                                              prevErrors.map((err, idx) => (idx === index ? { ...err, processName: '' } : err))
+                                            );    
                                           }}
                                           size="small"
                                           renderInput={(params) => (
@@ -451,8 +489,8 @@ function ItemWiseProcess() {
                                               {...params}
                                               label="Operation Name"
                                               variant="outlined"
-                                              error={!!detailsTableErrors[index]?.operationName}
-                                              helperText={detailsTableErrors[index]?.operationName}
+                                              error={!!detailsTableErrors[index]?.processName}
+                                              helperText={detailsTableErrors[index]?.processName}
                                             />
                                           )}
                                         />
