@@ -8,187 +8,130 @@ import TextField from '@mui/material/TextField';
 import apiCalls from 'apicall';
 import { useEffect, useState } from 'react';
 import 'react-tabs/style/react-tabs.css';
-import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ActionButton from 'utils/ActionButton';
-import { showToast } from 'utils/toast-component';
-import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
-import { encryptPassword } from 'views/utilities/encryptPassword';
+import ToastComponent, { showToast } from 'utils/toast-component';
+import CommonListViewTable from '../../basicMaster/CommonListViewTable';
 
-const Uom = () => {
-  const [isLoading, setIsLoading] = useState(false);
+export const Uom = () => {
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
-  const [editId, setEditId] = useState('');
+  const [branchCode, setBranchCode] = useState(localStorage.getItem('branchcode'));
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    UOMCode: '',
-    UOMDescription: '',
-    active: true
+    active: true,
+    uomCode: '',
+    uomDesc: '',
   });
-
+  const [editId, setEditId] = useState('');
   const [fieldErrors, setFieldErrors] = useState({
-    UOMCode: '',
-    UOMDescription: '',
-    active: ''
+    uomDesc: '',
+    uomCode: '',
   });
   const [listView, setListView] = useState(false);
-  const listViewColumns = [
-    { accessorKey: 'UOMCode', header: 'UOM Code', size: 140 },
-    {
-      accessorKey: 'UOMDescription',
-      header: 'UOM Description',
-      size: 140
-    },
-    { accessorKey: 'active', header: 'Active', size: 140 }
-  ];
-
   const [listViewData, setListViewData] = useState([]);
 
-  useEffect(() => {
-    getAllCompanies();
-  }, []);
-  const getAllCompanies = async () => {
-    try {
-      const response = await apiCalls('get', `commonmaster/company`);
-      console.log('API Response:', response);
+  const listViewColumns = [
+    { accessorKey: 'uomCode', header: 'UOM Code', size: 140 },
+    { accessorKey: 'uomDesc', header: 'UOM Description', size: 140 },
+    { accessorKey: 'active', header: 'Active', size: 140 },
+  ];
 
-      if (response.status === true) {
-        setListViewData(response.paramObjectsMap.companyVO);
-      } else {
-        console.error('API Error:', response);
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error);
+  useEffect(() => {
+    getAllUom();
+  }, []);
+
+  // List API
+  const getAllUom = async () => {
+    try {
+      const result = await apiCalls('get', `/efitmaster/getUomByOrgId?orgId=${orgId}`);
+      setListViewData(result.paramObjectsMap.uomVO.reverse());
+    } catch (err) {
+      console.error('Error fetching UOM data:', err);
     }
   };
-  const getCompanyById = async (row) => {
-    console.log('THE SELECTED COMPANY ID IS:', row.original.id);
+
+  // edit API
+  const getUomById = async (row) => {
     setEditId(row.original.id);
     try {
-      const response = await apiCalls('get', `commonmaster/company/${row.original.id}`);
-      console.log('API Response:', response);
-
+      const response = await apiCalls('get', `/efitmaster/getUomById?id=${row.original.id}`);
       if (response.status === true) {
-        setListView(false);
-        const particularCompany = response.paramObjectsMap.companyVO[0];
-        console.log('THE PARTICULAR COMPANY DETAILS ARE:', particularCompany);
-
+        const particularUom = response.paramObjectsMap.uomVO[0];
         setFormData({
-          UOMCode: particularCompany.UOMCode,
-          UOMDescription: particularCompany.UOMDescription,
-          active: particularCompany.active === 'Active' ? true : false
+          uomCode: particularUom.uomCode,
+          uomDesc: particularUom.uomDesc,
+          active: particularUom.active === 'Active' ? true : false
+
         });
+        setListView(false);
       } else {
-        console.error('API Error:', response);
+        console.error('API Error');
       }
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching UOM by ID:', error);
     }
   };
 
+
   const handleInputChange = (e) => {
-    const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
-    const nameRegex = /^[A-Za-z ]*$/;
-    const UOMDescriptionRegex = /^[A-Za-z 0-9@_\-*]*$/;
-    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    const UOMCodeRegex = /^[a-zA-Z0-9#_\-\/\\]*$/;
-
-    if (name === 'UOMDescription' && !UOMDescriptionRegex.test(value)) {
-      setFieldErrors({ ...fieldErrors, [name]: 'Only alphabetic characters and @*_- are allowed' });
-    } else if (name === 'UOMCode' && !UOMCodeRegex.test(value)) {
-      setFieldErrors({ ...fieldErrors, [name]: 'Invalid Format' });
-    } else if (name === 'companyAdminName' && !nameRegex.test(value)) {
-      setFieldErrors({ ...fieldErrors, [name]: 'Invalid Format' });
-    } else {
-      let updatedValue = value;
-
-      if (name !== 'companyAdminEmail') {
-        updatedValue = value.toUpperCase();
-      }
-
-      if (type === 'checkbox') {
-        setFormData({ ...formData, [name]: checked });
-      } else {
-        setFormData((prevFormData) => ({
-          ...prevFormData,
-          [name]: updatedValue
-        }));
-      }
-
-      setFieldErrors({ ...fieldErrors, [name]: '' });
-
-      // Update the cursor position after the input change only for text inputs
-      if (type === 'text' || type === 'email' || type === 'textarea') {
-        setTimeout(() => {
-          const inputElement = document.getElementsByName(name)[0];
-          inputElement.setSelectionRange(selectionStart, selectionEnd);
-        }, 0);
-      }
-    }
+    const { name, value, type, checked } = e.target;
+    const inputValue = type === 'checkbox' ? checked : value;
+    setFormData({ ...formData, [name]: inputValue });
+    setFieldErrors({ ...fieldErrors, [name]: false });
   };
 
   const handleClear = () => {
     setFormData({
-      UOMCode: '',
-      UOMDescription: '',
-      active: true
+      uomDesc: '',
+      uomCode: '',
+      active: true,
     });
     setFieldErrors({
-      UOMCode: '',
-      UOMDescription: '',
+      uomDesc: '',
+      uomCode: '',
     });
     setEditId('');
   };
 
   const handleSave = async () => {
     const errors = {};
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!formData.UOMCode) {
-      errors.UOMCode = 'UOM  Code is required';
+    if (!formData.uomCode) {
+      errors.uomCode = 'UOM Code is required';
     }
-    if (!formData.UOMDescription) {
-      errors.UOMDescription = 'UOM Description is required';
-    }
-   
-    if (!formData.companyAdminEmail) {
-      errors.companyAdminEmail = 'company Admin Email ID is required';
-    } else if (!emailRegex.test(formData.companyAdminEmail)) {
-      errors.companyAdminEmail = 'Invalid MailID Format';
+    if (!formData.uomDesc) {
+      errors.uomDesc = 'UOM Description is required';
     }
 
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
-
-      const saveData = {
+      const saveFormData = {
         ...(editId && { id: editId }),
+        createdby: loginUserName,
+        orgId: orgId,
         active: formData.active,
-        UOMCode: formData.UOMCode,
-        UOMDescription: formData.UOMDescription,
-        orgId: orgId
+        uomCode: formData.uomCode,
+        uomDesc: formData.uomDesc,
       };
-      console.log('DATA TO SAVE IS:', saveData);
 
+      // save and update api
       try {
-        const method = editId ? 'put' : 'post';
-        const url = editId ? 'commonmaster/updateCompany' : 'commonmaster/company';
+        const result = await apiCalls('put', `/efitmaster/updateCreateUom`, saveFormData);
 
-        const response = await apiCalls(method, url, saveData);
-        if (response.status === true) {
-          console.log('Response:', response);
-          showToast('success', editId ? ' Company Updated Successfully' : 'Company created successfully');
-
+        if (result.status === true) {
+          showToast(
+            'success',
+            editId ? 'Unit Of Measurement Updated Successfully' : 'Unit Of Measurement Added Successfully'
+          );
           handleClear();
-          getAllCompanies();
-          setIsLoading(false);
+          getAllUom();
         } else {
-          showToast('error', response.paramObjectsMap.errorMessage || 'Company creation failed');
-          setIsLoading(false);
+          showToast('error', result.paramObjectsMap.errorMessage || 'Operation failed');
         }
-      } catch (error) {
-        console.error('Error:', error);
-        showToast('error', 'Company creation failed');
-
+      } catch (err) {
+        console.error('Error saving UOM:', err);
+        showToast('error', 'Operation failed');
+      } finally {
         setIsLoading(false);
       }
     } else {
@@ -200,15 +143,28 @@ const Uom = () => {
     setListView(!listView);
   };
 
+  const handleCheckboxChange = (event) => {
+    setFormData({
+      ...formData,
+      active: event.target.checked
+    });
+  };
+
   return (
     <>
       <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px', borderRadius: '10px' }}>
         <div className="row d-flex ml">
-          <div className="d-flex flex-wrap justify-content-start" style={{ marginBottom: '20px' }}>
+          <div className="d-flex flex-wrap justify-content-start mb-4">
             <ActionButton title="Search" icon={SearchIcon} onClick={() => console.log('Search Clicked')} />
             <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
             <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} />
-            <ActionButton title="Save" icon={SaveIcon} isLoading={isLoading} onClick={handleSave} margin="0 10px 0 10px" />
+            <ActionButton
+              title="Save"
+              icon={SaveIcon}
+              isLoading={isLoading}
+              onClick={handleSave}
+              margin="0 10px 0 10px"
+            />
           </div>
         </div>
         {listView ? (
@@ -216,52 +172,51 @@ const Uom = () => {
             <CommonListViewTable
               data={listViewData}
               columns={listViewColumns}
-              // editCallback={editEmployee}
-              blockEdit={true} // DISAPLE THE MODAL IF TRUE
-              toEdit={getCompanyById}
+              blockEdit={true}
+              toEdit={getUomById}
             />
           </div>
         ) : (
-          <>
-            <div className="row">
-              <div className="col-md-3 mb-3">
-                <TextField
-                  label="UOM Code *"
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  name="UOMCode"
-                  value={formData.UOMCode}
-                  onChange={handleInputChange}
-                  error={!!fieldErrors.UOMCode}
-                  helperText={fieldErrors.UOMCode}
-                />
-              </div>
-              <div className="col-md-3 mb-3">
-                <TextField
-                  label="UOM Description * "
-                  variant="outlined"
-                  size="small"
-                  fullWidth
-                  name="UOMDescription"
-                  value={formData.UOMDescription}
-                  onChange={handleInputChange}
-                  error={!!fieldErrors.UOMDescription}
-                  helperText={fieldErrors.UOMDescription}
-                // inputRef={UOMDescriptionRef}
-                />
-              </div>
-              <div className="col-md-3 mb-3">
-                <FormControlLabel
-                  control={<Checkbox checked={formData.active} onChange={handleInputChange} name="active" />}
-                  label="Active"
-                />
-              </div>
+          <div className="row">
+            <div className="col-md-3 mb-3">
+              <TextField
+                label="UOM Code"
+                variant="outlined"
+                size="small"
+                fullWidth
+                name="uomCode"
+                value={formData.uomCode}
+                onChange={handleInputChange}
+                error={!!fieldErrors.uomCode}
+                helperText={fieldErrors.uomCode}
+              />
             </div>
-          </>
+            <div className="col-md-3 mb-3">
+              <TextField
+                label="UOM Description"
+                variant="outlined"
+                size="small"
+                fullWidth
+                name="uomDesc"
+                value={formData.uomDesc}
+                onChange={handleInputChange}
+                error={!!fieldErrors.uomDesc}
+                helperText={fieldErrors.uomDesc}
+              />
+            </div>
+            <div className="col-md-3 mb-3">
+              <FormControlLabel
+                control={<Checkbox checked={formData.active}
+                  name='active'
+                  onChange={handleInputChange} />}
+                label="Active"
+                labelPlacement="end"
+              />
+            </div>
+          </div>
         )}
       </div>
-      <ToastContainer />
+      <ToastComponent />
     </>
   );
 };
