@@ -1,26 +1,18 @@
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import Box from '@mui/material/Box';
 import ClearIcon from '@mui/icons-material/Clear';
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import { Avatar, ButtonBase, FormHelperText, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+import { FormHelperText, Autocomplete } from '@mui/material';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
-import { useTheme } from '@mui/material/styles';
-// import CommonListViewTable from '../basicMaster/CommonListViewTable';
-import axios from 'axios';
-import { useRef, useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import 'react-tabs/style/react-tabs.css';
-import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ActionButton from 'utils/ActionButton';
 import ToastComponent, { showToast } from 'utils/toast-component';
-import { getAllActiveCitiesByState, getAllActiveCountries, getAllActiveStatesByCountry } from 'utils/CommonFunctions';
 import apiCalls from 'apicall';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 
@@ -28,178 +20,147 @@ const MeasuringInstrument = () => {
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [isLoading, setIsLoading] = useState(false);
-  const [countryList, setCountryList] = useState([]);
-  const [stateList, setStateList] = useState([]);
-  const [cityList, setCityList] = useState([]);
+  const [docId, setDocId] = useState('');
+  const [itemName, setItemName] = useState([]);
   const [editId, setEditId] = useState('');
 
-  const [formData, setFormData] = useState({
-    measuringInstrumentID: '',
-    instrumentName: '',
-    range: '',
+  const [formData, setFormData] = useState([{
+    item: '',
+    ranges: '',
     leastCount: '',
-    colorCode: '',
+    colourCode: '',
     instrumentCode: '',
     calibrationFrequence: '',
     remarks: '',
-    // active: true
-  });
+  }]);
 
   const [fieldErrors, setFieldErrors] = useState({
-    measuringInstrumentID: '',
-    instrumentName: '',
-    range: '',
+    item: '',
+    ranges: '',
     leastCount: '',
-    colorCode: '',
+    colourCode: '',
     instrumentCode: '',
     calibrationFrequence: '',
     remarks: '',
-    // active: ''
   });
   const [listView, setListView] = useState(false);
   const listViewColumns = [
-    { accessorKey: 'measuringInstrumentID', header: 'Measuring Instrument ID', size: 140 },
+    { accessorKey: 'docId', header: 'Measuring Instrument ID', size: 140 },
     { accessorKey: 'instrumentName', header: 'Instrument Name', size: 140 },
-    { accessorKey: 'range', header: 'Range', size: 140 },
+    { accessorKey: 'ranges', header: 'Range', size: 140 },
     { accessorKey: 'leastCount', header: 'Least Count', size: 140 },
-    { accessorKey: 'colorCode', header: 'Color Code', size: 140 },
+    { accessorKey: 'colourCode', header: 'Color Code', size: 140 },
     { accessorKey: 'instrumentCode', header: 'Instrument Code', size: 140 },
     { accessorKey: 'calibrationFrequence', header: 'Calibration Frequence', size: 140 },
     { accessorKey: 'remarks', header: 'Remarks', size: 140 },
-    // { accessorKey: 'active', header: 'Active', size: 140 }
   ];
 
   const [listViewData, setListViewData] = useState([]);
-  useEffect(() => {
-    getCompanyDetails();
-    // getCompany();
-    getAllCountries();
-    if (formData.country) {
-      getAllStates();
-    }
-    if (formData.state) {
-      getAllCities();
-    }
-  }, [formData.country, formData.state]);
 
-  const getAllCountries = async () => {
+
+  useEffect(() => {
+    getMeasuringInstrumentDocId();
+    getAllMeasuringInstrument();
+    getAllInstrumentName(orgId)
+  }, []);
+
+
+  const getAllInstrumentName = async (orgId) => {
     try {
-      const countryData = await getAllActiveCountries(orgId);
-      setCountryList(countryData);
+      const response = await apiCalls('get', `efitmaster/getInstrumentNameFromItemMaster?orgId=${orgId}`);
+      if (response.status === true) {
+        const instrumentData = response.paramObjectsMap.measuringInstrumentVO
+          .map(({ id, item }) => ({ id, item }));
+        setItemName(instrumentData);
+        return instrumentData;
+      } else {
+        console.error('API Error:', response);
+        return response;
+      }
     } catch (error) {
-      console.error('Error fetching country data:', error);
+      console.error('Error fetching data:', error);
+      return error;
     }
   };
-  const getAllStates = async () => {
+
+  const getMeasuringInstrumentDocId = async () => {
     try {
-      const stateData = await getAllActiveStatesByCountry(formData.country, orgId);
-      setStateList(stateData);
+      const response = await apiCalls('get', `/efitmaster/getMeasuringInstrumentsDocId?orgId=${orgId}`);
+      setDocId(response.paramObjectsMap.MeasuringInstrumentsDocId);
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+      }));
     } catch (error) {
-      console.error('Error fetching country data:', error);
-    }
-  };
-  const getAllCities = async () => {
-    try {
-      const cityData = await getAllActiveCitiesByState(formData.state, orgId);
-      setCityList(cityData);
-    } catch (error) {
-      console.error('Error fetching country data:', error);
+      console.error('Error fetching gate passes:', error);
     }
   };
 
 
   const handleInputChange = (e) => {
-    const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
+    const { name, value, checked, type } = e.target;
 
-    // Regular expressions for validation
-    const nameRegex = /^[A-Za-z ]*$/; // Allows only alphabetic characters and spaces
-    const numericRegex = /^[0-9]*$/; // Allows only numeric characters
-    const alphanumericRegex = /^[A-Za-z0-9]*$/; // Allows only alphanumeric characters
+    const numericRegex = /^[0-9]*$/;
 
     let error = '';
 
-    // Validation logic
-    if (name === 'range') {
-      if (!nameRegex.test(value)) {
-        error = 'Only alphabetic characters are allowed';
-      }
-    } else if (name === 'pincode') {
+    if (name === 'ranges') {
       if (!numericRegex.test(value)) {
-        error = 'Only numeric characters are allowed';
-      } else if (value.length > 6) {
-        error = 'Only 6 digits are allowed';
-      }
-    } else if (name === 'gst') {
-      if (!alphanumericRegex.test(value)) {
-        error = 'Special characters are not allowed';
-      } else if (value.length > 15) {
-        error = 'Only 15 characters are allowed';
+        error = 'Only numeric values are allowed.';
       }
     }
 
-    // Handle errors if validation fails
     if (error) {
       setFieldErrors((prevErrors) => ({
         ...prevErrors,
-        [name]: error
+        [name]: error,
       }));
     } else {
-      // Clear previous error if input is valid
       setFieldErrors((prevErrors) => ({
         ...prevErrors,
-        [name]: ''
+        [name]: '',
       }));
 
-      // Update the form data
       let updatedValue = value;
-
-      if (name !== 'active') {
-        updatedValue = value.toUpperCase();
-      }
 
       if (type === 'checkbox') {
         setFormData((prevFormData) => ({
           ...prevFormData,
-          [name]: checked
+          [name]: checked,
         }));
       } else {
         setFormData((prevFormData) => ({
           ...prevFormData,
-          [name]: updatedValue
+          [name]: updatedValue,
         }));
       }
 
-      if (type === 'text' || type === 'textarea' || type === 'email') {
-        setTimeout(() => {
-          const inputElement = document.getElementsByName(name)[0];
-          if (inputElement) {
-            inputElement.setSelectionRange(selectionStart, selectionEnd);
-          }
-        }, 0);
-      }
     }
   };
 
-  const getCompanyById = async (row) => {
+
+  const getMeasuringInstrumentId = async (row) => {
     try {
-      const response = await apiCalls('get', `commonmaster/company/${row.original.id}`);
+      const response = await apiCalls('get', `efitmaster/getMeasuringInstrumentById?id=${row.original.id}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
+        setEditId(row.original.id)
         setListView(false);
-        const particularCompany = response.paramObjectsMap.companyVO[0];
-        console.log('PARTICULAR COMPANY IS:', particularCompany);
+        const particularInstrument = response.paramObjectsMap.measuringInstrumentsVO[0];
+        console.log('PARTICULAR Instrument IS:', particularInstrument);
 
-        setFormData({
-          measuringInstrumentID: particularCompany.measuringInstrumentID,
-          instrumentName: particularCompany.instrumentName,
-          range: particularCompany.range,
-          leastCount: particularCompany.leastCount,
-          colorCode: particularCompany.colorCode,
-          instrumentCode: particularCompany.instrumentCode,
-          calibrationFrequence: particularCompany.calibrationFrequence,
-          remarks: particularCompany.remarks,
-        });
+        setDocId(particularInstrument.docId);
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          orgId: particularInstrument.orgId,
+          item: particularInstrument.instrumentName,
+          ranges: particularInstrument.ranges,
+          leastCount: particularInstrument.leastCount,
+          colourCode: particularInstrument.colourCode,
+          instrumentCode: particularInstrument.instrumentCode,
+          calibrationFrequence: particularInstrument.calibrationFrequence,
+          remarks: particularInstrument.remarks,
+        }));
       } else {
         console.error('API Error:', response);
       }
@@ -207,17 +168,15 @@ const MeasuringInstrument = () => {
       console.error('Error fetching data:', error);
     }
   };
-  const getCompanyDetails = async () => {
+
+  const getAllMeasuringInstrument = async () => {
     try {
-      const response = await apiCalls('get', `commonmaster/company/${orgId}`);
+      const response = await apiCalls('get', `efitmaster/getMeasuringInstrumentByOrgId?orgId=${orgId}`);
+
       console.log('API Response:', response);
 
       if (response.status === true) {
-        const particularCompany = response.paramObjectsMap.companyVO[0];
-        setListViewData(response.paramObjectsMap.companyVO);
-        console.log('THE LISTVIEW COMPANY IS:', particularCompany);
-
-        setFormData({ ...formData, companyCode: particularCompany.companyCode, companyName: particularCompany.companyName });
+        setListViewData(response.paramObjectsMap.measuringInstrumentsVO.reverse());
       } else {
         console.error('API Error:', response);
       }
@@ -228,95 +187,109 @@ const MeasuringInstrument = () => {
 
   const handleClear = () => {
     setFormData({
-      measuringInstrumentID: '',
-      range: '',
+      item: '',
+      ranges: '',
       leastCount: '',
-      colorCode: '',
+      colourCode: '',
       instrumentCode: '',
       calibrationFrequence: '',
-      remarks: '',
-      // active: true
+      remarks: ''
     });
     setFieldErrors({
-      // companyCode: '',
-      measuringInstrumentID: '',
-      range: '',
+      item: '',
+      ranges: '',
       leastCount: '',
-      colorCode: '',
+      colourCode: '',
       instrumentCode: '',
       calibrationFrequence: '',
       remarks: '',
     });
     setEditId('');
+    getMeasuringInstrumentDocId();
   };
 
   const handleSave = async () => {
     const errors = {};
 
-
-    if (!formData.instrumentName) {
-      errors.instrumentName = 'Instrument Name is required';
+    // Validation
+    if (!formData.item) {
+      errors.item = 'Instrument Name is required';
     }
-    if (!formData.range) {
-      errors.range = 'Range is required';
+    if (!formData.ranges) {
+      errors.ranges = 'Range is required';
     }
     if (!formData.leastCount) {
       errors.leastCount = 'Least Count is required';
     }
-    if (!formData.colorCode) {
-      errors.colorCode = 'Color Code is required';
+    if (!formData.colourCode) {
+      errors.colourCode = 'Color Code is required';
     }
     if (!formData.instrumentCode) {
       errors.instrumentCode = 'Instrument Code is required';
     }
     if (!formData.calibrationFrequence) {
-      errors.calibrationFrequence = 'Calibration Frequence is required';
+      errors.calibrationFrequence = 'Calibration Frequency is required';
     }
     if (!formData.remarks) {
-      errors.remarks = 'remarks is required';
-    }
-    if (!formData.measuringInstrumentID) {
-      errors.measuringInstrumentID = 'Measuring Instrument ID is required';
+      errors.remarks = 'Remarks are required';
     }
 
-    if (Object.keys(errors).length === 0) {
-      setIsLoading(true);
-      const saveFormData = {
-        id: orgId,
-        measuringInstrumentID: formData.measuringInstrumentID,
-        instrumentName: formData.instrumentName,
-        range: formData.range,
-        leastCount: formData.leastCount,
-        colorCode: formData.colorCode,
-        instrumentCode: formData.instrumentCode,
-        calibrationFrequence: formData.calibrationFrequence,
-        remarks: formData.remarks,
-        // active: formData.active,
-        // updatedBy: loginUserName
-      };
-      console.log('THE SAVE FORM DATA IS:', saveFormData);
-
-      try {
-        const response = await apiCalls('put', `commonmaster/updateCompany`, saveFormData);
-        if (response.status === true) {
-          console.log('Response:', response);
-
-          showToast('success', ' Company updated Successfully');
-          handleClear();
-          setIsLoading(false);
-        } else {
-          showToast('error', response.paramObjectsMap.errorMessage || 'Company updation failed');
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        showToast('error', 'Company updation failed');
-
-        setIsLoading(false);
-      }
-    } else {
+    // Check for errors
+    if (Object.keys(errors).length > 0) {
+      console.log('Validation Errors:', errors);
       setFieldErrors(errors);
+      return;
     }
+
+    // Prepare data for API
+    const saveFormData = {
+      ...(editId && { id: editId }),
+      orgId: orgId,
+      createdBy: loginUserName,
+      docId: formData.docId,
+      instrumentName: formData.item,
+      ranges: formData.ranges,
+      leastCount: formData.leastCount,
+      colourCode: formData.colourCode,
+      instrumentCode: formData.instrumentCode,
+      calibrationFrequence: formData.calibrationFrequence,
+      remarks: formData.remarks,
+    };
+
+    console.log('Save Form Data:', saveFormData);
+
+    // API Call
+    setIsLoading(true);
+    try {
+      const response = await apiCalls('put', 'efitmaster/updateCreateMeasuringInstruments', saveFormData);
+
+      if (response.status === true) {
+        showToast('success', 'Measuring Instrument updated successfully');
+        setFormData({});
+        handleClear();
+        setFieldErrors({});
+        getAllMeasuringInstrument();
+      } else {
+        const errorMessage =
+          response.paramObjectsMap?.errorMessage ||
+          'An unknown error occurred.';
+        showToast('error', errorMessage);
+      }
+    } catch (error) {
+      if (error.response) {
+        // API responded with a status code outside 2xx range
+        console.error('Error response:', error.response);
+        showToast('error', `Error ${error.response.status}: ${error.response.data || 'Bad Request'}`);
+      } else {
+        // No response received or other errors
+        console.error('API Error:', error);
+        showToast('error', 'Failed to update Measuring Instrument.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+
+
   };
 
   const handleView = () => {
@@ -333,7 +306,7 @@ const MeasuringInstrument = () => {
             <ActionButton title="Search" icon={SearchIcon} onClick={() => console.log('Search Clicked')} />
             <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
             <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} />
-            <ActionButton title="Save" icon={SaveIcon} isLoading={isLoading} onClick={() => handleSave()} margin="0 10px 0 10px" />
+            <ActionButton title="Save" icon={SaveIcon} isLoading={isLoading} onClick={handleSave} margin="0 10px 0 10px" disabled={isLoading} />
           </div>
         </div>
         {listView ? (
@@ -343,7 +316,7 @@ const MeasuringInstrument = () => {
               columns={listViewColumns}
               // editCallback={editEmployee}
               blockEdit={true} // DISAPLE THE MODAL IF TRUE
-              toEdit={getCompanyById}
+              toEdit={getMeasuringInstrumentId}
             />
           </div>
         ) : (
@@ -356,11 +329,9 @@ const MeasuringInstrument = () => {
                   variant="outlined"
                   size="small"
                   fullWidth
-                  name="measuringInstrumentID"
-                  value={formData.measuringInstrumentID}
+                  name="docId"
+                  value={docId}
                   onChange={handleInputChange}
-                  error={!!fieldErrors.measuringInstrumentID}
-                  helperText={fieldErrors.measuringInstrumentID}
                 />
               </div>
 
@@ -380,18 +351,36 @@ const MeasuringInstrument = () => {
               </div>
 
               <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.instrumentName}>
-                  <InputLabel id="country-label" required>Instrument Name</InputLabel>
-                  <Select labelId="country-label" label="instrumentName" value={formData.instrumentName} onChange={handleInputChange} name="instrumentName">
-                    {Array.isArray(countryList) &&
-                      countryList?.map((row) => (
-                        <MenuItem key={row.id} value={row.instrumentName}>
-                          {row.instrumentName}
-                        </MenuItem>
-                      ))}
-                  </Select>
-                  {fieldErrors.instrumentName && <FormHelperText>{fieldErrors.instrumentName}</FormHelperText>}
-                </FormControl>
+                <Autocomplete
+                  disablePortal
+                  options={itemName}
+                  getOptionLabel={(option) => option.item || ''}
+                  sx={{ width: '100%' }}
+                  size="small"
+                  value={formData.item ? itemName.find((c) => c.item === formData.item) : null}
+                  onChange={(event, newValue) => {
+                    handleInputChange({
+                      target: {
+                        name: 'item',
+                        value: newValue ? newValue.item : '',
+                      },
+                    });
+                  }}
+
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Instrument Name"
+                      name="item"
+                      error={!!fieldErrors.item}
+                      helperText={fieldErrors.item}
+                      InputProps={{
+                        ...params.InputProps,
+                        style: { height: 40 },
+                      }}
+                    />
+                  )}
+                />
               </div>
 
               <div className="col-md-3 mb-3">
@@ -401,11 +390,11 @@ const MeasuringInstrument = () => {
                   size="small"
                   required
                   fullWidth
-                  name="range"
-                  value={formData.range}
+                  name="ranges"
+                  value={formData.ranges}
                   onChange={handleInputChange}
-                  error={!!fieldErrors.range}
-                  helperText={fieldErrors.range}
+                  error={!!fieldErrors.ranges}
+                  helperText={fieldErrors.ranges}
                 />
               </div>
 
@@ -424,17 +413,20 @@ const MeasuringInstrument = () => {
               </div>
 
               <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.colorCode}>
-                  <InputLabel id="country-label">Color Code</InputLabel>
-                  <Select labelId="country-label" label="colorCode" value={formData.colorCode} onChange={handleInputChange} name="colorCode">
-                    {Array.isArray(countryList) &&
-                      countryList?.map((row) => (
-                        <MenuItem key={row.id} value={row.colorCode}>
-                          {row.colorCode}
-                        </MenuItem>
-                      ))}
+                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.colourCode}>
+                  <InputLabel id="colourCode">Color Code</InputLabel>
+                  <Select
+                    labelId="colourCode"
+                    id="colourCode"
+                    label="Color Code"
+                    onChange={handleInputChange}
+                    name="colourCode"
+                    value={formData.colourCode}
+                  >
+                    <MenuItem value="YELLOW">YELLOW</MenuItem>
+                    <MenuItem value="GREEN">GREEN</MenuItem>
                   </Select>
-                  {fieldErrors.colorCode && <FormHelperText>{fieldErrors.colorCode}</FormHelperText>}
+                  {fieldErrors.colourCode && <FormHelperText>{fieldErrors.colourCode}</FormHelperText>}
                 </FormControl>
               </div>
 

@@ -4,14 +4,14 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import { FormControl, FormHelperText, InputLabel, MenuItem, Select } from '@mui/material';
+import { Autocomplete, FormControl, FormHelperText, InputLabel, MenuItem, Select } from '@mui/material';
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import apiCalls from 'apicall';
 import dayjs from 'dayjs';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import 'react-tabs/style/react-tabs.css';
 import 'react-toastify/dist/ReactToastify.css';
 import ActionButton from 'utils/ActionButton';
@@ -36,10 +36,12 @@ const Putaway = () => {
   const [listView, setListView] = useState(false);
   const [empList, setEmpList] = useState([]);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [putawayDocId, setPutawayDocId] = useState('');
+  const [fromLocation, setFromLocation] = useState([]);
+  const [rackNo, setRackNo] = useState('');
 
   const [formData, setFormData] = useState({
-    putawayId: '',
-    putawayDate: '',
+    docDate: '',
     grnNo: '',
     grnDate: '',
     supplier: '',
@@ -48,12 +50,12 @@ const Putaway = () => {
     toLocation: '',
     goodsType: '',
     dcInvNo: '',
+    narration: '',
     orgId: orgId
   });
 
   const [fieldErrors, setFieldErrors] = useState({
-    putawayId: '',
-    putawayDate: '',
+    docDate: '',
     grnNo: '',
     grnDate: '',
     supplier: '',
@@ -62,12 +64,13 @@ const Putaway = () => {
     toLocation: '',
     goodsType: '',
     dcInvNo: '',
+    narration: '',
     orgId: orgId
   });
 
   const listViewColumns = [
-    { accessorKey: 'putawayId', header: 'Putaway ID', size: 140 },
-    { accessorKey: 'putawayDate', header: 'Date', size: 140 },
+    { accessorKey: 'putawayDocId', header: 'Putaway ID', size: 140 },
+    { accessorKey: 'docDate', header: 'Date', size: 140 },
     { accessorKey: 'grnNo', header: 'GRN No', size: 140 },
     { accessorKey: 'grnDate', header: 'GRN Date', size: 140 },
     { accessorKey: 'supplier', header: 'Supplier', size: 140 },
@@ -86,7 +89,6 @@ const Putaway = () => {
       unit: '',
       recQty: '',
       putawayQty: '',
-      rackNo: '',
     }
   ]);
   const [putawayErrors, setPutawayErrors] = useState([
@@ -96,21 +98,88 @@ const Putaway = () => {
       unit: '',
       recQty: '',
       putawayQty: '',
-      rackNo: '',
     }
   ]);
 
-  const [SummaryData, setSummaryData] = useState([
-    {
-      id: 1,
-      narration: ''
+  useEffect(() => {
+    getPutAwayDocId();
+    getLocationCode(orgId);
+    if (orgId) {
+      getRackNo(orgId, setRackNo);
     }
-  ]);
-  const [SummaryErrors, setSummaryErrors] = useState([
-    {
-      narration: ''
+    getAllPutAway();
+  }, [orgId]);
+
+  const getPutAwayDocId = async () => {
+    try {
+      const response = await apiCalls('get', `/inventory/getPutawayDocId?orgId=${orgId}`);
+
+      // Update state with the new docId
+      setPutawayDocId(response.paramObjectsMap.putawayDocId);
+
+      // Optionally update formData if docId is part of it
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+      }));
+    } catch (error) {
+      console.error('Error fetching gate passes:', error);
     }
-  ]);
+  };
+
+  const getLocationCode = async (orgId) => {
+    try {
+      const response = await apiCalls('get', `inventory/getLocationCodeForPutaway?orgId=${orgId}`);
+      if (response.status === true) {
+        const locationData = response.paramObjectsMap.putawayVO
+          .map(({ id, locationCode }) => ({ id, locationCode }));
+        setFromLocation(locationData);
+        return locationData;
+      } else {
+        console.error('API Error:', response);
+        return response;
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      return error;
+    }
+  };
+
+  const getRackNo = async (orgId, setRackNo) => {
+    try {
+      const response = await apiCalls('get', `inventory/getRackNoForPutaway?orgId=${orgId}`);
+      console.log('API Response:', response);
+
+      if (response.status === true && Array.isArray(response.paramObjectsMap.putawayVO)) {
+        const rackData = response.paramObjectsMap.putawayVO.map(({ rackNo }) => ({ rackNo }));
+        console.log('Rack Data:', rackData);
+        setRackNo(rackData);
+        return rackData;
+      } else {
+        console.error('API Error or unexpected response structure:', response);
+        return [];
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      return [];
+    }
+  };
+
+  const getAllPutAway = async () => {
+    try {
+      const response = await apiCalls('get', `inventory/getPutawayByOrgId?orgId=${orgId}`);
+
+      console.log('API Response:', response);
+
+      if (response.status === true) {
+        setListViewData(response.paramObjectsMap.putawayVO.reverse());
+      } else {
+        console.error('API Error:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
 
   const handleInputChange = (e) => {
     const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
@@ -143,63 +212,14 @@ const Putaway = () => {
     setFieldErrors({ ...fieldErrors, [name]: false });
   };
 
-
-  // const getAllRoles = async () => {
-  //   try {
-  //     const branchData = await getAllActiveRoles(orgId);
-  //     setRoleList(branchData);
-  //   } catch (error) {
-  //     console.error('Error fetching country data:', error);
-  //   }
-  // };
-  // const getAllBranches = async () => {
-  //   try {
-  //     const branchData = await getAllActiveBranches(orgId);
-  //     setBranchList(branchData);
-  //   } catch (error) {
-  //     console.error('Error fetching country data:', error);
-  //   }
-  // };
-
-  // const getAllUsers = async () => {
-  //   try {
-  //     const response = await apiCalls('get', `/master/getAllEmployeeByOrgId?orgId=${orgId}`);
-  //     console.log('API Response:', response);
-
-  //     if (response.status === true) {
-  //       setEmpList(response.paramObjectsMap.employeeVO);
-  //     } else {
-  //       console.error('API Error:', response);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching data:', error);
-  //   }
-  // };
-
-  // const getAllUserCreation = async () => {
-  //   try {
-  //     const response = await apiCalls('get', `/auth/allUsersByOrgId?orgId=${orgId}`);
-  //     console.log('API Response:', response);
-
-  //     if (response.status === true) {
-  //       setListViewData(response.paramObjectsMap.userVO);
-  //     } else {
-  //       console.error('API Error:', response);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching data:', error);
-  //   }
-  // };
-
-
   const handleSave = async () => {
     const errors = {};
 
-    if (!formData.putawayId) {
-      errors.putawayId = 'Putaway ID is required';
+    if (!formData.putawayDocId) {
+      errors.putawayDocId = 'Putaway ID is required';
     }
-    if (!formData.putawayDate) {
-      errors.putawayDate = 'Date is required';
+    if (!formData.docDate) {
+      errors.docDate = 'Date is required';
     }
     if (!formData.grnNo) {
       errors.grnNo = 'GRN No is required';
@@ -282,11 +302,10 @@ const Putaway = () => {
       }));
 
       const saveFormData = {
-        ...(editId && { id: formData.docId }),
+        ...(editId && { id: formData.putawayDocId }),
         userName: formData.userName,
         ...(!editId && { password: encryptedPassword }),
-        putawayId: formData.putawayId,
-        putawayDate: formData.putawayDate,
+        docDate: formData.docDate,
         grnNo: formData.grnNo,
         grnDate: formData.grnDate,
         supplier: formData.supplier,
@@ -322,8 +341,7 @@ const Putaway = () => {
 
   const handleClear = () => {
     setFormData({
-      putawayId: '',
-      putawayDate: '',
+      docDate: '',
       grnNo: '',
       grnDate: '',
       supplier: '',
@@ -332,11 +350,11 @@ const Putaway = () => {
       toLocation: "",
       goodsType: "",
       dcInvNo: '',
+      narration: '',
       orgId: orgId
     });
     setFieldErrors({
-      putawayId: false,
-      putawayDate: false,
+      docDate: false,
       grnNo: false,
       grnDate: false,
       supplier: false,
@@ -347,10 +365,9 @@ const Putaway = () => {
       dcInvNo: false,
     });
     setPutawayData([{ id: 1, item: '', description: '', unit: '', recQty: '', putawayQty: '', rackNo: '', narration: '' }]);
-    setSummaryData([{ narration: '' }])
     setPutawayErrors('');
-    setSummaryErrors('');
     setEditId('');
+    getPutAwayDocId();
   };
 
   const handleAddRow = () => {
@@ -420,9 +437,38 @@ const Putaway = () => {
 
   const handleIndentChange = (row, index, event) => {
     const value = event.target.value;
+
+    // Check if roleList and the selectedRole are defined before using them
+    if (!roleList || value === '') {
+      setPutawayData((prev) =>
+        prev.map((r) => (r.id === row.id ? { ...r, role: value, roleId: null } : r))
+      );
+      setPutawayErrors((prev) => {
+        const newErrors = [...prev];
+        newErrors[index] = {
+          ...newErrors[index],
+          role: !value ? 'Role is required' : ''
+        };
+        return newErrors;
+      });
+      return;
+    }
+
     const selectedRole = roleList.find((role) => role.role === value);
-    setPutawayData((prev) => prev.map((r) => (r.id === row.id ? { ...r, role: value, roleId: selectedRole.id } : r)));
-    setSummaryData((prev) => prev.map((r) => (r.id === row.id ? { ...r, role: value, roleId: selectedRole.id } : r)));
+
+    if (!selectedRole) {
+      console.error('Role not found in roleList:', value);
+      return;
+    }
+
+    setPutawayData((prev) =>
+      prev.map((r) =>
+        r.id === row.id
+          ? { ...r, role: value, roleId: selectedRole.id }
+          : r
+      )
+    );
+
     setPutawayErrors((prev) => {
       const newErrors = [...prev];
       newErrors[index] = {
@@ -432,6 +478,7 @@ const Putaway = () => {
       return newErrors;
     });
   };
+
 
   const handleView = () => {
     setListView(!listView);
@@ -489,8 +536,8 @@ const Putaway = () => {
                     variant="outlined"
                     size="small"
                     fullWidth
-                    name="putawayId"
-                    value={formData.putawayId}
+                    name="putawayDocId"
+                    value={putawayDocId}
                     onChange={handleInputChange}
                     inputProps={{ maxLength: 10 }}
                   />
@@ -501,14 +548,14 @@ const Putaway = () => {
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <DatePicker
                         label="Date"
-                        value={formData.putawayDate ? dayjs(formData.putawayDate, 'YYYY-MM-DD') : dayjs()} // Default to current date
-                        onChange={(date) => handleDateChange('putawayDate', date)}
+                        value={formData.docDate ? dayjs(formData.docDate, 'YYYY-MM-DD') : dayjs()}
+                        onChange={(date) => handleDateChange('docDate', date)}
                         slotProps={{
                           textField: { size: 'small', clearable: true }
                         }}
                         format="DD-MM-YYYY"
-                        error={!!fieldErrors.putawayDate}
-                        helperText={<span style={{ color: 'red' }}>{fieldErrors.putawayDate ? 'Date is required' : ''}</span>}
+                        error={!!fieldErrors.docDate}
+                        helperText={<span style={{ color: 'red' }}>{fieldErrors.docDate ? 'Date is required' : ''}</span>}
                       />
                     </LocalizationProvider>
                   </FormControl>
@@ -572,51 +619,98 @@ const Putaway = () => {
                     value={formData.vehicleNo}
                     onChange={handleInputChange}
                     error={!!fieldErrors.vehicleNo}
-                    helperText={fieldErrors.vehicleNo }
+                    helperText={fieldErrors.vehicleNo}
                     inputProps={{ maxLength: 40 }}
                   />
                 </div>
 
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.fromLocation}>
-                    <InputLabel id="fromLocation-label" required>From-Location</InputLabel>
-                    <Select labelId="fromLocation-label" label="fromLocation" value={formData.fromLocation} onChange={handleInputChange} name="fromLocation">
-                      {/* {Array.isArray(countryList) &&
-                        countryList?.map((row) => (
-                          <MenuItem key={row.id} value={row.fromLocation}>
-                            {row.fromLocation}
-                          </MenuItem>
-                        ))} */}
-                    </Select>
-                    {fieldErrors.fromLocation && <FormHelperText>{fieldErrors.fromLocation}</FormHelperText>}
-                  </FormControl>
+                  <Autocomplete
+                    disablePortal
+                    options={fromLocation}
+                    getOptionLabel={(option) => option.locationCode || ''}
+                    sx={{ width: '100%' }}
+                    size="small"
+                    value={
+                      formData.fromLocation
+                        ? fromLocation.find((c) => c.locationCode === formData.fromLocation)
+                        : null
+                    }
+                    onChange={(event, newValue) => {
+                      handleInputChange({
+                        target: {
+                          name: 'fromLocation',
+                          value: newValue ? newValue.locationCode : '',
+                        },
+                      });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="From Location"
+                        name="fromLocation"
+                        error={!!fieldErrors.fromLocation}
+                        helperText={fieldErrors.fromLocation}
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 },
+                        }}
+                      />
+                    )}
+                  />
                 </div>
 
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.toLocation}>
-                    <InputLabel id="toLocation-label" required>To-Location</InputLabel>
-                    <Select labelId="toLocation-label" label="toLocation" value={formData.toLocation} onChange={handleInputChange} name="toLocation">
-                      {/* {Array.isArray(countryList) &&
-                        countryList?.map((row) => (
-                          <MenuItem key={row.id} value={row.toLocation}>
-                            {row.toLocation}
-                          </MenuItem>
-                        ))} */}
-                    </Select>
-                    {fieldErrors.toLocation && <FormHelperText>{fieldErrors.toLocation}</FormHelperText>}
-                  </FormControl>
+                  <Autocomplete
+                    disablePortal
+                    options={fromLocation.filter(
+                      (option) => option.locationCode !== formData.fromLocation
+                    )}
+                    getOptionLabel={(option) => option.locationCode || ''}
+                    sx={{ width: '100%' }}
+                    size="small"
+                    value={
+                      formData.toLocation
+                        ? fromLocation.find((c) => c.locationCode === formData.toLocation)
+                        : null
+                    }
+                    onChange={(event, newValue) => {
+                      handleInputChange({
+                        target: {
+                          name: 'toLocation',
+                          value: newValue ? newValue.locationCode : '',
+                        },
+                      });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="To Location"
+                        name="toLocation"
+                        error={!!fieldErrors.toLocation}
+                        helperText={fieldErrors.toLocation}
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 },
+                        }}
+                      />
+                    )}
+                  />
                 </div>
 
                 <div className="col-md-3 mb-3">
                   <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.goodsType}>
-                    <InputLabel id="country-label">Goods Type</InputLabel>
-                    <Select labelId="country-label" label="goodsType" value={formData.goodsType} onChange={handleInputChange} name="goodsType">
-                      {/* {Array.isArray(countryList) &&
-                        countryList?.map((row) => (
-                          <MenuItem key={row.id} value={row.goodsType}>
-                            {row.goodsType}
-                          </MenuItem> */}
-                      {/* ))} */}
+                    <InputLabel id="goodsType">Goods Type</InputLabel>
+                    <Select
+                      labelId="goodsType"
+                      id="goodsType"
+                      label="Color Code"
+                      onChange={handleInputChange}
+                      name="goodsType"
+                      value={formData.goodsType}
+                    >
+                      <MenuItem value="RAW MATERIAL">RAW MATERIAL</MenuItem>
+                      <MenuItem value="TOOLS">TOOLS</MenuItem>
                     </Select>
                     {fieldErrors.goodsType && <FormHelperText>{fieldErrors.goodsType}</FormHelperText>}
                   </FormControl>
@@ -738,6 +832,8 @@ const Putaway = () => {
                                           className={putawayErrors[index]?.role ? 'error form-control' : 'form-control'}
                                         >
                                           <option value="">Select Option</option>
+                                          <option value="">Select Option1</option>
+                                          <option value="">Select Option2</option>
                                           {/* {getAvailableRoles(row.id).map((role) => (
                                             <option key={role.id} value={role.role}>
                                               {role.role}
@@ -875,14 +971,14 @@ const Putaway = () => {
                                           value={row.rackNo}
                                           style={{ width: '150px' }}
                                           onChange={(e) => handleIndentChange(row, index, e)}
-                                          className={putawayErrors[index]?.role ? 'error form-control' : 'form-control'}
+                                          className={putawayErrors[index]?.rackNo ? 'error form-control' : 'form-control'}
                                         >
                                           <option value="">Select Option</option>
-                                          {/* {getAvailableRoles(row.id).map((role) => (
-                                            <option key={role.id} value={role.role}>
-                                              {role.role}
+                                          {Array.isArray(rackNo) && rackNo.map((rack) => (
+                                            <option key={rack.id} value={rack.rackNo}>
+                                              {rack.rackNo}
                                             </option>
-                                          ))} */}
+                                          ))}
                                         </select>
                                         {putawayErrors[index]?.rackNo && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
@@ -890,6 +986,7 @@ const Putaway = () => {
                                           </div>
                                         )}
                                       </td>
+
 
                                     </tr>
                                   ))}
@@ -904,54 +1001,57 @@ const Putaway = () => {
 
                   {value === 1 && (
                     <>
-                      {SummaryData.map((row, index) => (
-                        <div className="row d-flex">
+                      <div className="row d-flex">
+                        <div className="col-md-3 mb-3">
+                          <FormControl fullWidth variant="filled">
+                            <TextField
+                              id="narration"
+                              label={
+                                <span>
+                                  Narration <span className="asterisk"></span>
+                                </span>
+                              }
+                              name="narration"
+                              size="small"
+                              value={formData.narration || ''}
+                              onChange={(e) => {
+                                const value = e.target.value;
 
-                          <div className="col-md-3 mb-3">
-                            <FormControl fullWidth variant="filled">
-                              <TextField
-                                id="narration"
-                                label={
-                                  <span>
-                                    Narration <span className="asterisk"></span>
-                                  </span>
-                                }
-                                name="narration"
-                                size="small"
-                                value={formData.narration || ''}
-                                onChange={(e) => {
-                                  const value = e.target.value;
+                                // Update formData directly
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  narration: value,
+                                }));
 
-                                  // Update formData directly
-                                  setFormData((prev) => ({
-                                    ...prev,
-                                    narration: value,
-                                  }));
+                                // Assuming formData is an array and you are updating a specific index
+                                // Replace 'index' with the actual value or calculate it if needed
+                                const currentIndex = formData.findIndex((r) => r.id === formData.id);
 
-                                  setSummaryData((prev) =>
-                                    prev.map((r) =>
-                                      r.id === formData.id ? { ...r, row: value } : r
-                                    )
-                                  );
+                                setFormData((prev) =>
+                                  prev.map((r, i) =>
+                                    i === currentIndex ? { ...r, row: value } : r
+                                  )
+                                );
 
-                                  setSummaryErrors((prev) => {
-                                    const newErrors = [...prev];
-                                    newErrors[index] = {
-                                      ...newErrors[index],
+                                setFieldErrors((prev) => {
+                                  const newErrors = [...prev];
+                                  if (currentIndex >= 0) {
+                                    newErrors[currentIndex] = {
+                                      ...newErrors[currentIndex],
                                       row: !value ? 'Narration is required' : '',
                                     };
-                                    return newErrors;
-                                  });
-                                }}
-                                inputProps={{ maxLength: 30 }}
-                                error={!!fieldErrors.narration}
-                                helperText={fieldErrors.narration}
-                              />
-                            </FormControl>
-                          </div>
-
+                                  }
+                                  return newErrors;
+                                });
+                              }}
+                              inputProps={{ maxLength: 30 }}
+                              error={!!fieldErrors.narration}
+                              helperText={fieldErrors.narration}
+                            />
+                          </FormControl>
                         </div>
-                      ))}
+                      </div>
+
                     </>
                   )}
                 </Box>

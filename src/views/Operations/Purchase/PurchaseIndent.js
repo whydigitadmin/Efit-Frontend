@@ -4,18 +4,17 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import { FormControl, FormHelperText, InputLabel, MenuItem, Select } from '@mui/material';
+import { Autocomplete, FormControl, FormHelperText, InputLabel, MenuItem, Select } from '@mui/material';
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import apiCalls from 'apicall';
 import dayjs from 'dayjs';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import 'react-tabs/style/react-tabs.css';
 import 'react-toastify/dist/ReactToastify.css';
 import ActionButton from 'utils/ActionButton';
-// import { getAllActiveBranches, getAllActiveRoles } from 'utils/CommonFunctions';
 import ToastComponent, { showToast } from 'utils/toast-component';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 import { encryptPassword } from 'views/utilities/passwordEnc';
@@ -29,18 +28,23 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 const PurchaseIndent = () => {
   const [listViewData, setListViewData] = useState([]);
   const [roleList, setRoleList] = useState([]);
-  const [orgId, setOrgId] = useState(parseInt(localStorage.getItem('orgId')));
+  const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
+  const [branch, setBranch] = useState(localStorage.getItem('branch'));
+  const [branchCode, setBranchCode] = useState(localStorage.getItem('branchcode'));
+  const [finYear, setFinYear] = useState(localStorage.getItem('finYear'));
+  const [orgId, setOrgId] = useState(parseInt(localStorage.getItem('orgId'), 10));
   const [value, setValue] = useState(0);
   const [editId, setEditId] = useState('');
+  const [typeName, setTypeName] = useState([]);
+  const [indentCustomer, setIndentCustomer] = useState([]);
+  const [indentDepartment, setIndentDepartment] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [listView, setListView] = useState(false);
-  const [empList, setEmpList] = useState([]);
   const [uploadOpen, setUploadOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     indentNo: '',
     purchaseIndentDate: '',
-    indentType: '',
     customerName: '',
     workOrderNo: '',
     department: '',
@@ -48,7 +52,9 @@ const PurchaseIndent = () => {
     fgPartDesc: '',
     fgQty: '',
     requestedBy: '',
-    customerPONo: '',
+    customerPoNo: '',
+    purchaseIndentDTO1: '',
+    purchaseIndentDTO2: '',
     verifiedBy: '',
     orgId: orgId
   });
@@ -56,7 +62,6 @@ const PurchaseIndent = () => {
   const [fieldErrors, setFieldErrors] = useState({
     indentNo: '',
     purchaseIndentDate: '',
-    indentType: '',
     customerName: '',
     workOrderNo: '',
     department: '',
@@ -64,7 +69,9 @@ const PurchaseIndent = () => {
     fgPartDesc: '',
     fgQty: '',
     requestedBy: '',
-    customerPONo: '',
+    customerPoNo: '',
+    purchaseIndentDTO1: '',
+    purchaseIndentDTO2: '',
     verifiedBy: '',
     orgId: orgId
   });
@@ -72,7 +79,7 @@ const PurchaseIndent = () => {
   const listViewColumns = [
     { accessorKey: 'indentNo', header: 'Indent No', size: 140 },
     { accessorKey: 'purchaseIndentDate', header: 'Date', size: 140 },
-    { accessorKey: 'indentType', header: 'Indent Type', size: 140 },
+    { accessorKey: 'itemType', header: 'Indent Type', size: 140 },
     { accessorKey: 'customerName', header: 'Customer Name', size: 140 },
     { accessorKey: 'workOrderNo', header: 'Work Order No', size: 140 },
     { accessorKey: 'department', header: 'Department', size: 140 },
@@ -80,20 +87,19 @@ const PurchaseIndent = () => {
     { accessorKey: 'fgPartDesc', header: 'FG Part Desc', size: 140 },
     { accessorKey: 'fgQty', header: 'FG Qty', size: 140 },
     { accessorKey: 'requestedBy', header: 'Requested By', size: 140 },
-    { accessorKey: 'customerPONo', header: 'Customer PO No', size: 140 }
+    { accessorKey: 'customerPoNo', header: 'Customer PO No', size: 140 }
   ];
 
   const [indentDocumentsData, setIndentDocumentsData] = useState([
     {
       id: 1,
       item: '',
-      description: '',
-      uom: '',
+      description: 'Description',
+      uom: 'Description',
       qty: '',
-      avlStock: '',
+      avlStock: 2,
       indentQty: '',
-      verifiedBy: '',
-      remarks: ''
+
     }
   ]);
   const [indentDocumentsErrors, setIndentDocumentsErrors] = useState([
@@ -104,22 +110,130 @@ const PurchaseIndent = () => {
       qty: '',
       avlStock: '',
       indentQty: '',
-      verifiedBy: '',
-      remarks: ''
     }
   ]);
+
+  useEffect(() => {
+    getIndendType();
+    getAllPurchaseIndent();
+    getCustomerName(orgId);
+    getIndentDepartment();
+  }, []);
+
+  const getIndendType = async () => {
+    try {
+      const response = await apiCalls('get', `documentType/getIndentType`);
+      if (response.status === true) {
+        const indentTypeData = response.paramObjectsMap.indentType
+          .map(({ id, itemType }) => ({ id, itemType }));
+        setTypeName(indentTypeData);
+        return indentTypeData;
+      } else {
+        console.error('API Error:', response);
+        return response;
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      return error;
+    }
+  };
+
+  const getCustomerName = async (orgId) => {
+    try {
+      const response = await apiCalls('get', `documentType/getCustomerNameForPurchaseIndent?orgId=${orgId}`);
+      if (response.status === true) {
+        const indentCustomerData = response.paramObjectsMap.customerNameList
+          .map(({ id, customerName }) => ({ id, customerName }));
+        setIndentCustomer(indentCustomerData);
+        return indentCustomerData;
+      } else {
+        console.error('API Error:', response);
+        return response;
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      return error;
+    }
+  };
+
+  const getIndentDepartment = async () => {
+    try {
+      const response = await apiCalls('get', `documentType/getDepartmentForPurchase`);
+      if (response.status === true) {
+        const indentDepartmentData = response.paramObjectsMap.department
+          .map(({ id, department }) => ({ id, department }));
+        setIndentCustomer(indentDepartmentData);
+        return indentDepartmentData;
+      } else {
+        console.error('API Error:', response);
+        return response;
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      return error;
+    }
+  };
+
+  const getPurchaseIndentById = async (row) => {
+    try {
+      const response = await apiCalls('get', `documentType/getPurchaseIndentById?id=${row.original.id}`);
+      console.log('API Response:', response);
+
+      if (response.status === true) {
+        setEditId(row.original.id)
+        setListView(false);
+        const purchaseIndentVO = response.paramObjectsMap?.purchaseIndentVO;
+        if (Array.isArray(purchaseIndentVO) && purchaseIndentVO[0]) {
+          const particularIndent = purchaseIndentVO[0];
+          console.log('PURCHASE INDENT:', particularIndent);
+
+          setFormData((prevFormData) => ({
+            ...prevFormData,
+            customerName: particularIndent.customerName,
+            customerPoNo: particularIndent.customerPoNo || '', // Default to empty string if undefined
+            department: particularIndent.department || '',
+            fgPart: particularIndent.fgPart,
+            fgPartDesc: particularIndent.fgPartDesc || '',
+            fgQty: particularIndent.fgQty || '',
+            indentType: particularIndent.indentType || '',
+            requestedBy: particularIndent.requestedBy || '',
+            workOrderNo: particularIndent.workOrderNo || '',
+          }));
+        } else {
+          console.error('No purchase indent found in response:', response);
+        }
+      } else {
+        console.error('API Error:', response);
+      }
+
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const getAllPurchaseIndent = async () => {
+    try {
+      const response = await apiCalls('get', `documentType/getAllPurchaseIndentByOrgId?orgId=${orgId}`);
+
+      console.log('API Response:', response);
+
+      if (response.status === true) {
+        setListViewData(response.paramObjectsMap.purchaseIndentVO.reverse());
+      } else {
+        console.error('API Error:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
 
-    if (name === 'indentNo' || name === 'customerPONo') {
-      if (!/^\d*$/.test(value)) {
-        return;
-      }
-      setFormData({ ...formData, [name]: value });
-    } else {
-      setFormData({ ...formData, [name]: value.toUpperCase() });
-    }
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      [name]: value, // Update only the specific field
+    }));
 
     if (type === 'checkbox') {
       setFormData({ ...formData, [name]: checked });
@@ -140,66 +254,17 @@ const PurchaseIndent = () => {
     setFieldErrors({ ...fieldErrors, [name]: false });
   };
 
-
-  // const getAllRoles = async () => {
-  //   try {
-  //     const branchData = await getAllActiveRoles(orgId);
-  //     setRoleList(branchData);
-  //   } catch (error) {
-  //     console.error('Error fetching country data:', error);
-  //   }
-  // };
-  // const getAllBranches = async () => {
-  //   try {
-  //     const branchData = await getAllActiveBranches(orgId);
-  //     setBranchList(branchData);
-  //   } catch (error) {
-  //     console.error('Error fetching country data:', error);
-  //   }
-  // };
-
-  // const getAllUsers = async () => {
-  //   try {
-  //     const response = await apiCalls('get', `/master/getAllEmployeeByOrgId?orgId=${orgId}`);
-  //     console.log('API Response:', response);
-
-  //     if (response.status === true) {
-  //       setEmpList(response.paramObjectsMap.employeeVO);
-  //     } else {
-  //       console.error('API Error:', response);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching data:', error);
-  //   }
-  // };
-
-  // const getAllUserCreation = async () => {
-  //   try {
-  //     const response = await apiCalls('get', `/auth/allUsersByOrgId?orgId=${orgId}`);
-  //     console.log('API Response:', response);
-
-  //     if (response.status === true) {
-  //       setListViewData(response.paramObjectsMap.userVO);
-  //     } else {
-  //       console.error('API Error:', response);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching data:', error);
-  //   }
-  // };
-
-
   const handleSave = async () => {
     const errors = {};
 
     if (!formData.indentNo) {
       errors.indentNo = 'Indent No is required';
     }
-    if (!formData.purchaseIndentDate) {
-      errors.purchaseIndentDate = 'Date is required';
-    }
-    if (!formData.indentType) {
-      errors.indentType = 'Indent Type is required';
+    // if (!formData.purchaseIndentDate) {
+    //   errors.purchaseIndentDate = 'Date is required';
+    // }
+    if (!formData.itemType) {
+      errors.itemType = 'Indent Type is required';
     }
     if (!formData.customerName) {
       errors.customerName = 'Customer Name is required';
@@ -222,8 +287,8 @@ const PurchaseIndent = () => {
     if (!formData.requestedBy) {
       errors.requestedBy = 'Requested By is required';
     }
-    if (!formData.customerPONo) {
-      errors.customerPONo = 'Customer PO No is required';
+    if (!formData.customerPoNo) {
+      errors.customerPoNo = 'Customer PO No is required';
     }
     if (!formData.verifiedBy) {
       errors.verifiedBy = 'Verified By is required';
@@ -242,24 +307,12 @@ const PurchaseIndent = () => {
     } else {
       const newTableErrors = indentDocumentsData.map((row, index) => {
         const rowErrors = {};
-        if (!row.item) {
-          rowErrors.item = 'Item is required';
-          indentDocumentsDataValid = false;
-        }
-        if (!row.description) {
-          rowErrors.description = 'Decription is required';
-          indentDocumentsDataValid = false;
-        }
-        if (!row.uom) {
-          rowErrors.uom = 'UOM is required';
-          indentDocumentsDataValid = false;
-        }
+        // if (!row.item) {
+        //   rowErrors.item = 'Item is required';
+        //   indentDocumentsDataValid = false;
+        // }
         if (!row.qty) {
           rowErrors.qty = 'Required QTY is required';
-          indentDocumentsDataValid = false;
-        }
-        if (!row.avlStock) {
-          rowErrors.avlStock = 'Avl Stock is required';
           indentDocumentsDataValid = false;
         }
         if (!row.indentQty) {
@@ -273,62 +326,75 @@ const PurchaseIndent = () => {
     }
     setFieldErrors(errors);
 
-
     if (Object.keys(errors).length === 0 && indentDocumentsDataValid) {
       setIsLoading(true);
 
-      const encryptedPassword = encryptPassword('Wds@2022');
-      const branchVo = indentDocumentsData.map((row) => ({
-        branchCode: row.branchCode,
-        branch: row.branch
+      const detailsVo = indentDocumentsData.map((row) => ({
+        ...(editId && { id: row.id }),
+        item: row.item,
+        itemDescription: row.description,
+        uom: row.uom,
+        reqQty: parseInt(row.qty, 10),
+        avlStock: parseInt(row.avlStock, 10),
+        indentQty: parseInt(row.indentQty, 10)
       }));
 
       const saveFormData = {
-        ...(editId && { id: formData.docId }),
-        userName: formData.userName,
-        ...(!editId && { password: encryptedPassword }),
-        indentNo: formData.indentNo,
-        purchaseIndentDate: formData.purchaseIndentDate,
-        indentType: formData.indentType,
+        ...(editId && { id: editId }),
+        createdBy: loginUserName,
+        purchaseIndentDTO1: detailsVo,
         customerName: formData.customerName,
-        workOrderNo: formData.workOrderNo,
+        customerPoNo: formData.customerPoNo,
         department: formData.department,
         fgPart: formData.fgPart,
         fgPartDesc: formData.fgPartDesc,
-        fgQty: formData.fgQty,
+        verifiedBy: formData.verifiedBy,
+        fgQty: parseInt(formData.fgQty, 10),
+        indentType: formData.indentType,
+        purchaseIndentDTO2: formData.purchaseIndentDTO2,
         requestedBy: formData.requestedBy,
-        customerPONo: formData.customerPONo,
+        workOrderNo: formData.workOrderNo,
         orgId: orgId,
-        branchAccessDTOList: branchVo
+        finYear: finYear,
       };
+
       console.log('DATA TO SAVE IS:', saveFormData);
+
       try {
-        const response = await apiCalls('put', `auth/signup`, saveFormData);
+        const response = await apiCalls('put', 'documentType/updateCreatePurchaseIndent', saveFormData);
         if (response.status === true) {
           console.log('Response:', response);
-          showToast('success', editId ? 'User Updated Successfully' : 'User created successfully');
+          showToast('success', editId ? 'List of values updated successfully' : 'Material Type values created successfully');
+
           handleClear();
-          // getAllUsers();
           setIsLoading(false);
         } else {
-          showToast('error', response.paramObjectsMap.errorMessage || 'User creation failed');
+          showToast('error', response.paramObjectsMap.errorMessage || 'Material Type value creation failed');
           setIsLoading(false);
         }
       } catch (error) {
         console.error('Error:', error);
-        showToast('error', 'User creation failed');
+        showToast('error', 'Material Type value creation failed');
         setIsLoading(false);
       }
-    } else {
+    }
+
+    else {
       setFieldErrors(errors);
     }
   };
+
+
+
+
+
+
 
   const handleClear = () => {
     setFormData({
       indentNo: '',
       purchaseIndentDate: '',
-      indentType: '',
+      itemType: '',
       customerName: "",
       workOrderNo: "",
       department: "",
@@ -336,7 +402,7 @@ const PurchaseIndent = () => {
       fgPartDesc: '',
       fgQty: '',
       requestedBy: '',
-      customerPONo: '',
+      customerPoNo: '',
       orgId: orgId
     });
     setFieldErrors({
@@ -382,10 +448,7 @@ const PurchaseIndent = () => {
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
           item: !table[table.length - 1].item ? 'Item is required' : '',
-          description: !table[table.length - 1].description ? 'Item Description is required' : '',
-          uom: !table[table.length - 1].uom ? 'UOM is required' : '',
           qty: !table[table.length - 1].qty ? 'Require Qty is required' : '',
-          avlStock: !table[table.length - 1].avlStock ? 'Avl Stock is required' : '',
           indentQty: !table[table.length - 1].indentQty ? 'Indent Qty is required' : '',
           verifiedBy: !table[table.length - 1].verifiedBy ? 'VerifiedBy is required' : '',
           remarks: !table[table.length - 1].remarks ? 'Remarks is required' : '',
@@ -406,18 +469,23 @@ const PurchaseIndent = () => {
     }
   };
 
+  // const handleIndentChange = (row, index, event) => {
+  //   const value = event.target.value;
+  //   const selectedRole = roleList.find((role) => role.role === value);
+  //   setIndentDocumentsData((prev) => prev.map((r) => (r.id === row.id ? { ...r, role: value, roleId: selectedRole.id } : r)));
+  //   setIndentDocumentsErrors((prev) => {
+  //     const newErrors = [...prev];
+  //     newErrors[index] = {
+  //       ...newErrors[index],
+  //       role: !value ? 'Role is required' : ''
+  //     };
+  //     return newErrors;
+  //   });
+  // };
   const handleIndentChange = (row, index, event) => {
-    const value = event.target.value;
-    const selectedRole = roleList.find((role) => role.role === value);
-    setIndentDocumentsData((prev) => prev.map((r) => (r.id === row.id ? { ...r, role: value, roleId: selectedRole.id } : r)));
-    setIndentDocumentsErrors((prev) => {
-      const newErrors = [...prev];
-      newErrors[index] = {
-        ...newErrors[index],
-        role: !value ? 'Role is required' : ''
-      };
-      return newErrors;
-    });
+    const updatedRows = [...indentDocumentsData]; // Clone the data
+    updatedRows[index].value = event.target.value; // Update the value
+    setIndentDocumentsData(updatedRows); // Update the state
   };
 
   const handleView = () => {
@@ -505,64 +573,146 @@ const PurchaseIndent = () => {
                 </div>
 
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.indentType}>
-                    <InputLabel id="indentType-label" required>Indent Type</InputLabel>
-                    <Select labelId="indentType-label" label="indentType" value={formData.indentType} onChange={handleInputChange} name="indentType" required>
-                      {/* {Array.isArray(countryList) &&
-                        countryList?.map((row) => (
-                          <MenuItem key={row.id} value={row.indentType}>
-                            {row.indentType}
-                          </MenuItem>
-                        ))} */}
-                    </Select>
-                    {fieldErrors.indentType && <FormHelperText>{fieldErrors.indentType}</FormHelperText>}
-                  </FormControl>
+                  <Autocomplete
+                    disablePortal
+                    options={typeName}
+                    getOptionLabel={(option) => option.itemType || ''}
+                    sx={{ width: '100%' }}
+                    size="small"
+                    value={typeName.find((option) => option.itemType === formData.itemType) || null}
+                    onChange={(event, newValue) => {
+                      handleInputChange({
+                        target: {
+                          name: 'itemType',
+                          value: newValue ? newValue.itemType : '',
+                        },
+                      });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Indent Type"
+                        name="itemType"
+                        error={!!fieldErrors.itemType}
+                        helperText={fieldErrors.itemType}
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 },
+                        }}
+                      />
+                    )}
+                  />
                 </div>
 
+
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.customerName}>
-                    <InputLabel id="country-label">Customer Name</InputLabel>
-                    <Select labelId="country-label" label="customerName" value={formData.customerName} onChange={handleInputChange} name="customerName">
-                      {/* {Array.isArray(countryList) &&
-                        countryList?.map((row) => (
-                          <MenuItem key={row.id} value={row.customerName}>
-                            {row.customerName}
-                          </MenuItem>
-                        ))} */}
-                    </Select>
-                    {fieldErrors.customerName && <FormHelperText>{fieldErrors.customerName}</FormHelperText>}
-                  </FormControl>
+                  <Autocomplete
+                    disablePortal
+                    options={indentCustomer}
+                    getOptionLabel={(option) => option.customerName || ''}
+                    sx={{ width: '100%' }}
+                    size="small"
+                    value={
+                      formData.customerName
+                        ? indentCustomer.find((c) => c.customerName === formData.customerName) || null
+                        : null
+                    }
+                    onChange={(event, newValue) => {
+                      handleInputChange({
+                        target: {
+                          name: 'customerName',
+                          value: newValue ? newValue.customerName : '',
+                        },
+                      });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Customer Name"
+                        name="customerName"
+                        error={!!fieldErrors.customerName}
+                        helperText={fieldErrors.customerName}
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 },
+                        }}
+                      />
+                    )}
+                  />
                 </div>
 
                 <div className="col-md-3 mb-3">
                   <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.workOrderNo}>
-                    <InputLabel id="country-label">Work Order No</InputLabel>
-                    <Select labelId="country-label" label="workOrderNo" value={formData.workOrderNo} onChange={handleInputChange} name="workOrderNo">
-                      {/* {Array.isArray(countryList) &&
-                        countryList?.map((row) => (
-                          <MenuItem key={row.id} value={row.workOrderNo}>
-                            {row.workOrderNo}
-                          </MenuItem>
-                        ))} */}
+                    <InputLabel id="work-order-label">Work Order No</InputLabel>
+                    <Select
+                      labelId="work-order-label"
+                      label="Work Order No"
+                      value={formData.workOrderNo || ''}
+                      onChange={(e) => {
+                        handleInputChange({
+                          target: {
+                            name: 'workOrderNo',
+                            value: e.target.value,
+                          },
+                        });
+                      }}
+                      name="workOrderNo"
+                    >
+                      <MenuItem value="">
+                        <em>None</em>
+                      </MenuItem>
+                      {/* Manual selection options */}
+                      <MenuItem value="WorkOrder1">Work Order 1</MenuItem>
+                      <MenuItem value="WorkOrder2">Work Order 2</MenuItem>
+                      <MenuItem value="ManualOption1">Manual Option 1</MenuItem>
+                      <MenuItem value="ManualOption2">Manual Option 2</MenuItem>
                     </Select>
                     {fieldErrors.workOrderNo && <FormHelperText>{fieldErrors.workOrderNo}</FormHelperText>}
                   </FormControl>
                 </div>
 
+
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.department}>
-                    <InputLabel id="country-label">Department</InputLabel>
-                    <Select labelId="country-label" label="department" value={formData.department} onChange={handleInputChange} name="department">
-                      {/* {Array.isArray(countryList) &&
-                        countryList?.map((row) => (
-                          <MenuItem key={row.id} value={row.department}>
-                            {row.department}
-                          </MenuItem> */}
-                      {/* ))} */}
-                    </Select>
-                    {fieldErrors.department && <FormHelperText>{fieldErrors.department}</FormHelperText>}
-                  </FormControl>
+                  <Autocomplete
+                    disablePortal
+                    options={[
+                      ...indentDepartment, // Existing options
+                      { department: 'Manual Option 1' }, // Manual selection 1
+                      { department: 'Manual Option 2' }, // Manual selection 2
+                    ]}
+                    getOptionLabel={(option) => option.department || ''}
+                    sx={{ width: '100%' }}
+                    size="small"
+                    value={
+                      formData.department
+                        ? indentDepartment.find((c) => c.department === formData.department) ||
+                        { department: formData.department }
+                        : null
+                    }
+                    onChange={(event, newValue) => {
+                      handleInputChange({
+                        target: {
+                          name: 'department',
+                          value: newValue?.department || '',
+                        },
+                      });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Department"
+                        name="department"
+                        error={!!fieldErrors.department}
+                        helperText={fieldErrors.department}
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 },
+                        }}
+                      />
+                    )}
+                  />
                 </div>
+
 
                 <div className="col-md-3 mb-3">
                   <TextField
@@ -630,12 +780,12 @@ const PurchaseIndent = () => {
                     label="Customer PO No"
                     variant="outlined"
                     size="small"
-                    name="customerPONo"
+                    name="customerPoNo"
                     fullWidth
-                    value={formData.customerPONo}
+                    value={formData.customerPoNo}
                     onChange={handleInputChange}
-                    error={!!fieldErrors.customerPONo}
-                    helperText={fieldErrors.customerPONo}
+                    error={!!fieldErrors.customerPoNo}
+                    helperText={fieldErrors.customerPoNo}
                     inputProps={{ maxLength: 15 }}
                   />
                 </div>
@@ -719,24 +869,22 @@ const PurchaseIndent = () => {
                                       </td>
                                       <td className="border px-2 py-2">
                                         <select
-                                          value={row.item}
+                                          value={row?.value || ''}
                                           style={{ width: '150px' }}
                                           onChange={(e) => handleIndentChange(row, index, e)}
-                                          className={indentDocumentsErrors[index]?.role ? 'error form-control' : 'form-control'}
+                                          className={`form-control ${indentDocumentsErrors?.[index]?.item ? 'error' : ''}`}
                                         >
                                           <option value="">Select Option</option>
-                                          {/* {getAvailableRoles(row.id).map((role) => (
-                                            <option key={role.id} value={role.role}>
-                                              {role.role}
-                                            </option>
-                                          ))} */}
+                                          <option value="Select Option1">Select Option1</option>
+                                          <option value="Select Option2">Select Option2</option>
                                         </select>
-                                        {indentDocumentsErrors[index]?.item && (
+                                        {indentDocumentsErrors?.[index]?.item && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
                                             {indentDocumentsErrors[index].item}
                                           </div>
                                         )}
                                       </td>
+
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
@@ -980,7 +1128,7 @@ const PurchaseIndent = () => {
               data={listViewData}
               columns={listViewColumns}
               blockEdit={true}
-            // toEdit={getUserById} 
+              toEdit={getPurchaseIndentById}
             />
           )}
         </div>

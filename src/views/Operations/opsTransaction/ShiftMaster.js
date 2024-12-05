@@ -10,7 +10,7 @@ import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import apiCalls from 'apicall';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import 'react-tabs/style/react-tabs.css';
 import 'react-toastify/dist/ReactToastify.css';
 import ActionButton from 'utils/ActionButton';
@@ -26,12 +26,13 @@ const ShiftMaster = () => {
   const [listViewData, setListViewData] = useState([]);
   const [roleList, setRoleList] = useState([]);
   const [orgId, setOrgId] = useState(parseInt(localStorage.getItem('orgId')));
+  const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [value, setValue] = useState(0);
   const [editId, setEditId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [listView, setListView] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
-
+  const [showForm, setShowForm] = useState(true)
 
   const [formData, setFormData] = useState({
     shiftName: '',
@@ -51,7 +52,6 @@ const ShiftMaster = () => {
     fromHour: '',
     toHour: '',
     timing: '',
-    active: '',
     orgId: orgId
   });
 
@@ -68,26 +68,22 @@ const ShiftMaster = () => {
   const [shiftMasterData, setShiftMasterData] = useState([
     {
       id: 1,
-      timing: '',
+      shiftTiming: '',
     }
   ]);
   const [shiftMasterErrors, setShiftMasterErrors] = useState([
     {
-      timing: '',
+      shiftTiming: '',
     }
   ]);
 
+  useEffect(() => {
+    getAllShiftMaster();
+    // getShiftById();
+  }, []);
+
   const handleInputChange = (e) => {
     const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
-
-    if (name === 'indentNo' || name === 'customerPONo') {
-      if (!/^\d*$/.test(value)) {
-        return;
-      }
-      setFormData({ ...formData, [name]: value });
-    } else {
-      setFormData({ ...formData, [name]: value.toUpperCase() });
-    }
 
     if (type === 'checkbox') {
       setFormData({ ...formData, [name]: checked });
@@ -105,34 +101,33 @@ const ShiftMaster = () => {
     }
     const inputValue = type === 'checkbox' ? checked : value;
     setFormData({ ...formData, [name]: inputValue });
+    console.log(`Checkbox updated: ${name} = ${inputValue}`);
     setFieldErrors({ ...fieldErrors, [name]: false });
   };
 
-
-  // const getAllRoles = async () => {
+  // const getShiftMasterById = async (row) => {
   //   try {
-  //     const branchData = await getAllActiveRoles(orgId);
-  //     setRoleList(branchData);
-  //   } catch (error) {
-  //     console.error('Error fetching country data:', error);
-  //   }
-  // };
-  // const getAllBranches = async () => {
-  //   try {
-  //     const branchData = await getAllActiveBranches(orgId);
-  //     setBranchList(branchData);
-  //   } catch (error) {
-  //     console.error('Error fetching country data:', error);
-  //   }
-  // };
-
-  // const getAllUsers = async () => {
-  //   try {
-  //     const response = await apiCalls('get', `/master/getAllEmployeeByOrgId?orgId=${orgId}`);
+  //     const response = await apiCalls('get', `efitmaster/getShiftById?id=${row.original.id}`);
   //     console.log('API Response:', response);
 
   //     if (response.status === true) {
-  //       setEmpList(response.paramObjectsMap.employeeVO);
+  //       setEditId(row.original.id)
+  //       setListView(false);
+  //       const particularShift = response.paramObjectsMap.shiftVO[0];
+  //       console.log('PARTICULAR SHIFT IS:', particularShift);
+
+  //       setFormData((prevFormData) => ({
+  //         ...prevFormData,
+  //         orgId: particularShift.orgId,
+  //         shiftName: particularShift.shiftName,
+  //         shiftType: particularShift.shiftType,
+  //         shiftCode: particularShift.shiftCode,
+  //         fromHour: particularShift.fromHour,
+  //         toHour: particularShift.toHour,
+  //         timing: particularShift.timing,
+  //         active: particularShift.active === 'Active' || particularShift.active === true ? true : false
+
+  //       }));
   //     } else {
   //       console.error('API Error:', response);
   //     }
@@ -141,25 +136,68 @@ const ShiftMaster = () => {
   //   }
   // };
 
-  // const getAllUserCreation = async () => {
-  //   try {
-  //     const response = await apiCalls('get', `/auth/allUsersByOrgId?orgId=${orgId}`);
-  //     console.log('API Response:', response);
 
-  //     if (response.status === true) {
-  //       setListViewData(response.paramObjectsMap.userVO);
-  //     } else {
-  //       console.error('API Error:', response);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching data:', error);
-  //   }
-  // };
+  const getShiftMasterById = async (row) => {
+    console.log('Row selected:', row);
+    try {
+      console.log('Fetching shift data for ID:', row.original.id);
+      const response = await apiCalls('get', `/efitmaster/getShiftById?id=${row.original.id}`);
+      if (response.status === true) {
+        setEditId(row.original.id);
+        setListView(false);
+        const materType = response.paramObjectsMap.shiftVO[0];
+        if (materType) {
+          // setEditId(row.original.id);
+          setFormData((prevFormData) => ({
+            ...prevFormData,
+            orgId: materType.orgId,
+            shiftName: materType.shiftName,
+            shiftType: materType.shiftType,
+            shiftCode: materType.shiftCode,
+            fromHour: materType.fromHour,
+            toHour: materType.toHour,
+            timing: materType.timing,
+            active: materType.active === 'Active' || materType.active === true,
+          }));
+          setShiftMasterData(
+            materType.shiftDetailsVO?.map((row) => ({
+              id: row.id,
+              shiftTiming: row.shiftTiming,
+            })) || []
+          );
+        } else {
+          console.error('No shiftVO data found in response');
+        }
+      } else {
+        console.error('No data returned from API');
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+
+  };
+
+  const getAllShiftMaster = async () => {
+    try {
+      const response = await apiCalls('get', `efitmaster/getShiftByOrgId?orgId=${orgId}`);
+
+      console.log('API Response:', response);
+
+      if (response.status === true) {
+        setListViewData(response.paramObjectsMap.shiftVO.reverse());
+      } else {
+        console.error('API Error:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
 
 
   const handleSave = async () => {
     const errors = {};
 
+    // Validation
     if (!formData.shiftName) {
       errors.shiftName = 'Shift Name is required';
     }
@@ -179,19 +217,15 @@ const ShiftMaster = () => {
       errors.timing = 'Timing is required';
     }
 
-
-    setFieldErrors(errors);
-
-
     let shiftMasterDataValid = true;
     if (!shiftMasterData || !Array.isArray(shiftMasterData) || shiftMasterData.length === 0) {
       shiftMasterDataValid = false;
-      setShiftMasterErrors([{ general: 'PurchaseIndent is required' }]);
+      setShiftMasterErrors([{ general: 'Shift Master Data is Required' }]);
     } else {
       const newTableErrors = shiftMasterData.map((row, index) => {
         const rowErrors = {};
-        if (!row.timing) {
-          rowErrors.timing = 'Timing is required';
+        if (!row.shiftTiming) {
+          rowErrors.shiftTiming = 'Timing is Required';
           shiftMasterDataValid = false;
         }
 
@@ -199,50 +233,66 @@ const ShiftMaster = () => {
       });
       setShiftMasterErrors(newTableErrors);
     }
-    setFieldErrors(errors);
 
 
-    if (Object.keys(errors).length === 0 && shiftMasterDataValid) {
-      setIsLoading(true);
-
-      const encryptedPassword = encryptPassword('Wds@2022');
-      const branchVo = shiftMasterData.map((row) => ({
-        branchCode: row.branchCode,
-        branch: row.branch
-      }));
-
-      const saveFormData = {
-        ...(editId && { id: formData.docId }),
-        userName: formData.userName,
-        ...(!editId && { password: encryptedPassword }),
-        shiftName: formData.shiftName,
-        shiftType: formData.shiftType,
-        shiftCode: formData.shiftCode,
-        fromHour: formData.fromHour,
-        toHour: formData.toHour,
-        timing: formData.timing,
-        orgId: orgId,
-      };
-      console.log('DATA TO SAVE IS:', saveFormData);
-      try {
-        const response = await apiCalls('put', `auth/signup`, saveFormData);
-        if (response.status === true) {
-          console.log('Response:', response);
-          showToast('success', editId ? 'User Updated Successfully' : 'User created successfully');
-          handleClear();
-          // getAllUsers();
-          setIsLoading(false);
-        } else {
-          showToast('error', response.paramObjectsMap.errorMessage || 'User creation failed');
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        showToast('error', 'User creation failed');
-        setIsLoading(false);
-      }
-    } else {
+    // Check for errors
+    if (Object.keys(errors).length > 0) {
+      console.log('Validation Errors:', errors);
       setFieldErrors(errors);
+      return;
+    }
+
+    // Prepare data for API
+    const saveFormData = {
+      ...(editId && { id: editId }),
+      userName: formData.userName || loginUserName,
+      shiftName: formData.shiftName,
+      shiftType: formData.shiftType,
+      shiftCode: formData.shiftCode,
+      fromHour: formData.fromHour,
+      toHour: formData.toHour,
+      timing: formData.timing,
+      active: formData.active || false,
+      orgId: orgId,
+      createdBy: loginUserName,
+      shiftDetailsDTO: formData.shiftDetailsDTO || [],
+      message: formData.message || '',
+    };
+
+    console.log('Save Form Data:', saveFormData);
+
+    // API Call
+    setIsLoading(true);
+    try {
+      const response = await apiCalls('put', 'efitmaster/updateCreateShift', saveFormData);
+
+      if (response.status === true && response.statusFlag !== 'Error') {
+        showToast('success', 'Shift Master Created/Updated successfully');
+        setFormData({});
+        handleClear();
+        setFieldErrors({});
+        getAllShiftMaster();
+      } else {
+        const errorMessage =
+          response.paramObjectsMap?.errorMessage ||
+          response.paramObjectsMap?.message ||
+          'An error occurred while creating/updating the Shift Master.';
+        showToast('error', errorMessage);
+      }
+    } catch (error) {
+      if (error.response) {
+        console.error('Error response:', error.response);
+        showToast(
+          'error',
+          `Error ${error.response.status}: ${error.response.data?.message || 'Bad Request'
+          }`
+        );
+      } else {
+        console.error('API Error:', error);
+        showToast('error', 'Failed to update Shift Master.');
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -254,6 +304,7 @@ const ShiftMaster = () => {
       fromHour: '',
       toHour: '',
       timing: '',
+      active: true,
       orgId: orgId
     });
     setFieldErrors({
@@ -264,7 +315,7 @@ const ShiftMaster = () => {
       toHour: false,
       timing: false,
     });
-    setShiftMasterData([{ id: 1, timing: '' }]);
+    setShiftMasterData([{ id: 1, shiftTiming: '' }]);
     setShiftMasterErrors('');
     setEditId('');
   };
@@ -277,18 +328,18 @@ const ShiftMaster = () => {
 
     const newRow = {
       id: Date.now(),
-      timing: '',
+      shiftTiming: '',
     };
 
     setShiftMasterData([...shiftMasterData, newRow]);
-    setShiftMasterErrors([...shiftMasterErrors, { timing: '' }]);
+    setShiftMasterErrors([...shiftMasterErrors, { shiftTiming: '' }]);
   };
 
   const isLastRowEmpty = (table) => {
     const lastRow = table[table.length - 1];
     if (!lastRow) return false;
 
-    return !lastRow.timing;
+    return !lastRow.shiftTiming;
   };
 
   const displayRowError = (table) => {
@@ -296,12 +347,11 @@ const ShiftMaster = () => {
       const newErrors = [...prevErrors];
       newErrors[table.length - 1] = {
         ...newErrors[table.length - 1],
-        timing: !table[table.length - 1].timing ? 'Timing is required' : '',
+        shiftTiming: !table[table.length - 1].shiftTiming ? 'Timing is required' : '',
       };
       return newErrors;
     });
   };
-
 
   const handleDeleteRow = (id, table, setTable, errorTable = [], setErrorTable) => {
     if (!Array.isArray(table) || !Array.isArray(errorTable)) {
@@ -317,21 +367,6 @@ const ShiftMaster = () => {
       setTable(updatedData);
       setErrorTable(updatedErrors);
     }
-  };
-
-
-  const handleIndentChange = (row, index, event) => {
-    const value = event.target.value;
-    const selectedRole = roleList.find((role) => role.role === value);
-    shiftMasterData((prev) => prev.map((r) => (r.id === row.id ? { ...r, role: value, roleId: selectedRole.id } : r)));
-    setShiftMasterErrors((prev) => {
-      const newErrors = [...prev];
-      newErrors[index] = {
-        ...newErrors[index],
-        role: !value ? 'Role is required' : ''
-      };
-      return newErrors;
-    });
   };
 
   const handleView = () => {
@@ -358,12 +393,6 @@ const ShiftMaster = () => {
     toast.success("File uploded sucessfully")
     console.log('Submit clicked');
     handleBulkUploadClose();
-    // getAllData();
-  };
-
-  const handleDateChange = (name, date) => {
-    setFormData({ ...formData, [name]: date });
-    setFieldErrors({ ...fieldErrors, [name]: false });
   };
 
   return (
@@ -559,26 +588,26 @@ const ShiftMaster = () => {
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
-                                          value={row.timing}
+                                          value={row.shiftTiming}
                                           onChange={(e) => {
                                             const value = e.target.value;
-                                            shiftMasterData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, timing: value } : r))
+                                            setShiftMasterData((prev) =>
+                                              prev.map((r) => (r.id === row.id ? { ...r, shiftTiming: value } : r))
                                             );
                                             setShiftMasterErrors((prev) => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                timing: !value ? 'Timing is required' : ''
+                                                shiftTiming: !value ? 'Timing is required' : ''
                                               };
                                               return newErrors;
                                             });
                                           }}
-                                          className={shiftMasterErrors[index]?.timing ? 'error form-control' : 'form-control'}
+                                          className={shiftMasterErrors[index]?.shiftTiming ? 'error form-control' : 'form-control'}
                                         />
-                                        {shiftMasterErrors[index]?.timing && (
+                                        {shiftMasterErrors[index]?.shiftTiming && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {shiftMasterErrors[index].timing}
+                                            {shiftMasterErrors[index].shiftTiming}
                                           </div>
                                         )}
                                       </td>
@@ -601,7 +630,7 @@ const ShiftMaster = () => {
               data={listViewData}
               columns={listViewColumns}
               blockEdit={true}
-            // toEdit={getUserById} 
+              toEdit={getShiftMasterById}
             />
           )}
         </div>
