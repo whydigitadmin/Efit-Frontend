@@ -22,22 +22,19 @@ const Department = () => {
   const [docId, setDocId] = useState('');
 
   const [formData, setFormData] = useState({
-    docId: '',
     departmentCode: '',
     departmentName: '',
     active: true
   });
 
   const [fieldErrors, setFieldErrors] = useState({
-
-    docId: '',
     departmentCode: '',
     departmentName: '',
     active: true,
   });
   const [listView, setListView] = useState(false);
   const listViewColumns = [
-    { accessorKey: 'docId', header: ' Department ID', size: 140 },
+    { accessorKey: 'docId', header: ' Department No', size: 140 },
     { accessorKey: 'departmentCode', header: 'Department Code', size: 140 },
     { accessorKey: 'departmentName', header: 'Department Name', size: 140 },
     { accessorKey: 'active', header: 'Active', size: 140 }
@@ -47,6 +44,7 @@ const Department = () => {
 
   useEffect(() => {
     getAllDepartmentByOrgId();
+    getDepartmentDocId();
   }, []);
   const getAllDepartmentByOrgId = async () => {
     try {
@@ -62,28 +60,26 @@ const Department = () => {
       console.error('Error fetching data:', error);
     }
   };
-
-  // 
-
   const getDepartmentById = async (row) => {
     console.log('THE SELECTED COMPANY ID IS:', row.original.id);
     setEditId(row.original.id);
     try {
-      const response = await apiCalls('get', `efitmaster/getDepartmentById?id=${row.original.id}`);
+      const response = await apiCalls('get', `/efitmaster/getDepartmentById?id=${row.original.id}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
         setListView(false);
         const department = response.paramObjectsMap.departmentVO[0];
-        console.log('THE PARTICULAR COMPANY DETAILS ARE:', department);
+        console.log('THE PARTICULAR DEPARTMENT DETAILS ARE:', department);
 
         setFormData({
-          docId: department.docId,
+          // docId: department.docId,
           departmentName: department.departmentName,
           departmentCode: department.departmentCode,
           active: department.active === 'Active',
-          createdBy: loginUserName,
+          createdBy: loginUserName
         });
+        setDocId(department.docId)
       } else {
         console.error('API Error:', response);
       }
@@ -91,63 +87,66 @@ const Department = () => {
       console.error('Error fetching data:', error);
     }
   };
-
-
-
-  useEffect(() => {
-    getDepartmentDocId();
-  }, []);
-
-
   const getDepartmentDocId = async () => {
     try {
       const response = await apiCalls('get', `/efitmaster/getDepartmentDocId?orgId=${orgId}`);
-      setFormData((prevData) => ({
-        ...prevData,
-        docId: response.paramObjectsMap.departmentDocId,
-      }));
+      setDocId(response.paramObjectsMap.departmentDocId)
     } catch (error) {
       console.error('Error fetching departmentDocId:', error);
     }
   };
-
-  const handleInputChange = (event) => {
-    const { name, value, type, checked } = event.target;
-
-    // Create a copy of the current fieldErrors state
-    const newFieldErrors = { ...fieldErrors };
-
-    // Perform validation for text fields
-    if (name === 'departmentCode' || name === 'departmentName') {
-      // Example validation: Ensure the field is not empty
-      if (value.trim() === '') {
-        newFieldErrors[name] = `${name.replace(/([A-Z])/g, ' $1').toUpperCase()} is Required`;
-      } else {
-        newFieldErrors[name] = ''; // Clear the error if valid
-      }
+  const handleInputChange = (e) => {
+    const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
+  
+    const nameRegex = /^[A-Za-z]*$/;
+    const allRegex = /^[a-zA-Z0-9-]*$/;
+  
+    let errorMessage = '';
+  
+    // Validation logic
+    switch (name) {
+      case 'departmentName':
+        if (!nameRegex.test(value)) {
+          errorMessage = 'Invalid Format';
+        }
+        break;
+      case 'departmentCode':
+        if (!allRegex.test(value)) {
+          errorMessage = 'Invalid Format';
+        }
+        break;
+      default:
+        break;
     }
-
-    // Perform validation for checkbox (if needed)
-    if (name === 'active') {
-      // No specific validation for the checkbox in this case
+  
+    if (errorMessage) {
+      // Set field errors if validation fails
+      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
+    } else {
+      // Update formData and clear field errors
+      setFormData((prevState) => ({
+        ...prevState,
+        [name]: type === 'checkbox' ? checked : value.toUpperCase(),
+      }));
+      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: '' }));
     }
-
-    // Update the state with the new value and errors
-    setFormData((prevState) => ({
-      ...prevState,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
-
-    // Set the new field errors
-    setFieldErrors(newFieldErrors);
+  
+    // Preserve cursor position for text inputs
+    if (type === 'text' || type === 'textarea') {
+      setTimeout(() => {
+        const inputElement = document.getElementsByName(name)[0];
+        if (inputElement && inputElement.setSelectionRange) {
+          inputElement.setSelectionRange(selectionStart, selectionEnd);
+        }
+      }, 0);
+    }
   };
 
   const handleClear = () => {
     setFormData({
       departmentCode: '',
       departmentName: '',
-      active: true,
-      // docId:'',
+      active: false,
     });
     setFieldErrors({
       departmentCode: '',
@@ -166,7 +165,6 @@ const Department = () => {
       errors.departmentName = 'Department Name is Required';
     }
 
-
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
 
@@ -181,11 +179,11 @@ const Department = () => {
       console.log('DATA TO SAVE IS:', saveData);
 
       try {
-        const response = await apiCalls('put', 'efitmaster/createUpdateDepartment', saveData);
+        const response = await apiCalls('put', '/efitmaster/createUpdateDepartment', saveData);
         if (response.status === true) {
           console.log('Response:', response);
           showToast('success', editId ? 'Department values updated successfully' : 'Department values created successfully');
-          getAllDepartmentByOrgId(); //re 
+          getAllDepartmentByOrgId(); 
           handleClear();
           setIsLoading(false);
         } else {
@@ -222,7 +220,6 @@ const Department = () => {
             <CommonListViewTable
               data={listViewData}
               columns={listViewColumns}
-              // editCallback={editEmployee}
               blockEdit={true} // DISAPLE THE MODAL IF TRUE
               toEdit={getDepartmentById}
             />
@@ -238,11 +235,10 @@ const Department = () => {
                   size="small"
                   fullWidth
                   name="departmentId"
-                  value={formData.docId}
+                  value={docId}
                   disabled
                 />
               </div>
-
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Department Code"

@@ -94,40 +94,94 @@ const Gst = () => {
       console.error('Error fetching data:', error);
     }
   };
-
-  const handleInputChange = (event) => {
-    const { name, value, type, checked } = event.target;
-
-    if (name !== 'active' && name !== 'gstSlab' && isNaN(value)) {
-      return;
-    }
-
-    if (type === 'checkbox') {
-      setFormData((prevData) => ({
-        ...prevData,
-        [name]: checked,
-      }));
+  const handleInputChange = (e) => {
+    const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
+    const nameRegex = /^[A-Za-z0-9-%]*$/;
+    const numRegex = /^[0-9]*$/;
+    let errorMessage = '';
+  
+    if (name === 'gstSlab') {
+      if (nameRegex.test(value)) {
+        setFormData((prevState) => ({
+          ...prevState,
+          gstSlab: value,
+        }));
+  
+        if (!value) {
+          // Clear all fields when gstSlab is cleared
+          setFormData({
+            gstSlab: '',
+            gstPercentage: '',
+            igstPercentage: '',
+            cgstPercentage: '',
+            sgstPercentage: '',
+            active: true,
+          });
+          setFieldErrors({
+            gstSlab: '',
+            gstPercentage: '',
+            igstPercentage: '',
+            cgstPercentage: '',
+            sgstPercentage: '',
+          });
+          return;
+        }
+  
+        if (value.toUpperCase().startsWith('GST-') && value.includes('%')) {
+          const gstValueString = value.substring(4, value.length - 1); 
+          const gstValue = parseInt(gstValueString, 10);
+  
+          if (!isNaN(gstValue)) {
+            setFormData((prevState) => ({
+              ...prevState,
+              gstPercentage: gstValue,
+              igstPercentage: gstValue,
+              cgstPercentage: gstValue / 2,
+              sgstPercentage: gstValue / 2,
+            }));
+            setFieldErrors((prevErrors) => ({ ...prevErrors, gstSlab: '' }));
+            return;
+          } else {
+            errorMessage = 'Invalid GST value in GST Slab.';
+          }
+        }
+      } else {
+        errorMessage = 'Invalid GST Slab format.';
+      }
     } else {
-      setFormData((prevData) => ({
-        ...prevData,
-        [name]: value,
-      }));
+      switch (name) {
+        case 'gstPercentage':
+        case 'igstPercentage':
+        case 'cgstPercentage':
+        case 'sgstPercentage':
+          if (!numRegex.test(value)) {
+            errorMessage = 'Invalid Format';
+          }
+          break;
+        default:
+          break;
+      }
     }
-
-    if (value === '') {
-      setFieldErrors((prevErrors) => ({
-        ...prevErrors,
-        [name]: 'This field is Required.',
-      }));
+  
+    if (errorMessage) {
+      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
     } else {
-      setFieldErrors((prevErrors) => ({
-        ...prevErrors,
-        [name]: '',
+      setFormData((prevState) => ({
+        ...prevState,
+        [name]: type === 'checkbox' ? checked : value,
       }));
+      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: '' }));
+    }
+  
+    if (type === 'text' || type === 'textarea') {
+      setTimeout(() => {
+        const inputElement = document.getElementsByName(name)[0];
+        if (inputElement && inputElement.setSelectionRange) {
+          inputElement.setSelectionRange(selectionStart, selectionEnd);
+        }
+      }, 0);
     }
   };
-
-
   const handleClear = () => {
     setFormData({
       gstSlab: '',
@@ -165,8 +219,6 @@ const Gst = () => {
     if (!formData.sgstPercentage) {
       errors.sgstPercentage = 'SGST Percentage is Required';
     }
-
-
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
 
@@ -235,7 +287,7 @@ const Gst = () => {
             <div className="row">
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="GST Slab"
+                  label="GST Slab(Eg: GST-00%)"
                   variant="outlined"
                   size="small"
                   fullWidth
@@ -257,7 +309,7 @@ const Gst = () => {
                   onChange={handleInputChange}
                   error={!!fieldErrors.gstPercentage}
                   helperText={fieldErrors.gstPercentage}
-                // inputRef={gstPercentageRef}
+                  disabled
                 />
               </div>
               <div className="col-md-3 mb-3">
@@ -271,6 +323,7 @@ const Gst = () => {
                   onChange={handleInputChange}
                   error={!!fieldErrors.igstPercentage}
                   helperText={fieldErrors.igstPercentage}
+                  disabled
                 />
               </div>
               <div className="col-md-3 mb-3">
@@ -284,6 +337,7 @@ const Gst = () => {
                   onChange={handleInputChange}
                   error={!!fieldErrors.cgstPercentage}
                   helperText={fieldErrors.cgstPercentage}
+                  disabled
                 />
               </div>
               <div className="col-md-3 mb-3">
@@ -297,6 +351,7 @@ const Gst = () => {
                   onChange={handleInputChange}
                   error={!!fieldErrors.sgstPercentage}
                   helperText={fieldErrors.sgstPercentage}
+                  disabled
                 />
               </div>
               <div className="col-md-3 mb-3">

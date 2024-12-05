@@ -28,7 +28,7 @@ const MeasuringInstrument = () => {
     item: '',
     ranges: '',
     leastCount: '',
-    colourCode: '',
+    colorCode: '',
     instrumentCode: '',
     calibrationFrequence: '',
     remarks: '',
@@ -38,7 +38,7 @@ const MeasuringInstrument = () => {
     item: '',
     ranges: '',
     leastCount: '',
-    colourCode: '',
+    colorCode: '',
     instrumentCode: '',
     calibrationFrequence: '',
     remarks: '',
@@ -94,50 +94,108 @@ const MeasuringInstrument = () => {
       console.error('Error fetching gate passes:', error);
     }
   };
-
-
   const handleInputChange = (e) => {
-    const { name, value, checked, type } = e.target;
-
-    const numericRegex = /^[0-9]*$/;
-
-    let error = '';
-
-    if (name === 'ranges') {
-      if (!numericRegex.test(value)) {
-        error = 'Only numeric values are allowed.';
-      }
+    const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
+  
+    const nameRegex = /^[A-Za-z]*$/;
+    const allRegex = /^[a-zA-Z0-9-]*$/;
+    const numRegex = /^[0-9.]*$/;
+  
+    let errorMessage = '';
+  
+    switch (name) {
+      // case 'item':
+      //   if (!allRegex.test(value)) {
+      //     errorMessage = 'Invalid Format';
+      //   }
+      //   break;
+      case 'ranges':
+        if (!numRegex.test(value)) {
+          errorMessage = 'Invalid Format';
+        }
+      break;
+      case 'leastCount':
+        if (!numRegex.test(value)) {
+          errorMessage = 'Invalid Format';
+        }
+      break;
+      case 'instrumentCode':
+        if (!allRegex.test(value)) {
+          errorMessage = 'Invalid Format';
+        }
+      break;
+      case 'calibrationFrequence':
+        if (!numRegex.test(value)) {
+          errorMessage = 'Invalid Format';
+        }
+      break;
+      default:
+        break;
     }
-
-    if (error) {
-      setFieldErrors((prevErrors) => ({
-        ...prevErrors,
-        [name]: error,
-      }));
+  
+    if (errorMessage) {
+      // Set field errors if validation fails
+      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
     } else {
-      setFieldErrors((prevErrors) => ({
-        ...prevErrors,
-        [name]: '',
+      // Update formData and clear field errors
+      setFormData((prevState) => ({
+        ...prevState,
+        [name]: type === 'checkbox' ? checked : value.toUpperCase(),
       }));
-
-      let updatedValue = value;
-
-      if (type === 'checkbox') {
-        setFormData((prevFormData) => ({
-          ...prevFormData,
-          [name]: checked,
-        }));
-      } else {
-        setFormData((prevFormData) => ({
-          ...prevFormData,
-          [name]: updatedValue,
-        }));
-      }
-
+      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: '' }));
+    }
+  
+    // Preserve cursor position for text inputs
+    if (type === 'text' || type === 'textarea') {
+      setTimeout(() => {
+        const inputElement = document.getElementsByName(name)[0];
+        if (inputElement && inputElement.setSelectionRange) {
+          inputElement.setSelectionRange(selectionStart, selectionEnd);
+        }
+      }, 0);
     }
   };
 
+  // const handleInputChange = (e) => {
+  //   const { name, value, checked, type } = e.target;
 
+  //   const numericRegex = /^[0-9]*$/;
+
+  //   let error = '';
+
+  //   if (name === 'ranges') {
+  //     if (!numericRegex.test(value)) {
+  //       error = 'Only numeric values are allowed.';
+  //     }
+  //   }
+
+  //   if (error) {
+  //     setFieldErrors((prevErrors) => ({
+  //       ...prevErrors,
+  //       [name]: error,
+  //     }));
+  //   } else {
+  //     setFieldErrors((prevErrors) => ({
+  //       ...prevErrors,
+  //       [name]: '',
+  //     }));
+
+  //     let updatedValue = value;
+
+  //     if (type === 'checkbox') {
+  //       setFormData((prevFormData) => ({
+  //         ...prevFormData,
+  //         [name]: checked,
+  //       }));
+  //     } else {
+  //       setFormData((prevFormData) => ({
+  //         ...prevFormData,
+  //         [name]: updatedValue,
+  //       }));
+  //     }
+
+  //   }
+  // };
   const getMeasuringInstrumentId = async (row) => {
     try {
       const response = await apiCalls('get', `efitmaster/getMeasuringInstrumentById?id=${row.original.id}`);
@@ -156,7 +214,7 @@ const MeasuringInstrument = () => {
           item: particularInstrument.instrumentName,
           ranges: particularInstrument.ranges,
           leastCount: particularInstrument.leastCount,
-          colourCode: particularInstrument.colourCode,
+          colorCode: particularInstrument.colourCode,
           instrumentCode: particularInstrument.instrumentCode,
           calibrationFrequence: particularInstrument.calibrationFrequence,
           remarks: particularInstrument.remarks,
@@ -190,7 +248,7 @@ const MeasuringInstrument = () => {
       item: '',
       ranges: '',
       leastCount: '',
-      colourCode: '',
+      colorCode: '',
       instrumentCode: '',
       calibrationFrequence: '',
       remarks: ''
@@ -199,7 +257,7 @@ const MeasuringInstrument = () => {
       item: '',
       ranges: '',
       leastCount: '',
-      colourCode: '',
+      colorCode: '',
       instrumentCode: '',
       calibrationFrequence: '',
       remarks: '',
@@ -221,8 +279,8 @@ const MeasuringInstrument = () => {
     if (!formData.leastCount) {
       errors.leastCount = 'Least Count is required';
     }
-    if (!formData.colourCode) {
-      errors.colourCode = 'Color Code is required';
+    if (!formData.colorCode) {
+      errors.colorCode = 'Color Code is required';
     }
     if (!formData.instrumentCode) {
       errors.instrumentCode = 'Instrument Code is required';
@@ -248,11 +306,11 @@ const MeasuringInstrument = () => {
       createdBy: loginUserName,
       docId: formData.docId,
       instrumentName: formData.item,
-      ranges: formData.ranges,
-      leastCount: formData.leastCount,
-      colourCode: formData.colourCode,
+      ranges: parseFloat(formData.ranges),
+      leastCount: parseFloat(formData.leastCount),
+      colourCode: formData.colorCode,
       instrumentCode: formData.instrumentCode,
-      calibrationFrequence: formData.calibrationFrequence,
+      calibrationFrequence: parseFloat(formData.calibrationFrequence),
       remarks: formData.remarks,
     };
 
@@ -332,6 +390,7 @@ const MeasuringInstrument = () => {
                   name="docId"
                   value={docId}
                   onChange={handleInputChange}
+                  disabled
                 />
               </div>
 
@@ -412,9 +471,9 @@ const MeasuringInstrument = () => {
                 />
               </div>
 
-              <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.colourCode}>
-                  <InputLabel id="colourCode">Color Code</InputLabel>
+              {/* <div className="col-md-3 mb-3">
+                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.colorCode}>
+                  <InputLabel id="colorCode">Color Code</InputLabel>
                   <Select
                     labelId="colourCode"
                     id="colourCode"
@@ -428,6 +487,19 @@ const MeasuringInstrument = () => {
                   </Select>
                   {fieldErrors.colourCode && <FormHelperText>{fieldErrors.colourCode}</FormHelperText>}
                 </FormControl>
+              </div> */}
+              <div className="col-md-3 mb-3">
+                <TextField
+                  label="Color Code"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  name="colorCode"
+                  value={formData.colorCode}
+                  onChange={handleInputChange}
+                  error={!!fieldErrors.colorCode}
+                  helperText={fieldErrors.colorCode}
+                />
               </div>
 
               <div className="col-md-3 mb-3">

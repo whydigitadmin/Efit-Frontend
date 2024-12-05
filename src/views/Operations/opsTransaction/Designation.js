@@ -19,20 +19,19 @@ const Designation = () => {
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [editId, setEditId] = useState('');
+  const [designationId, setDesignationId] = useState('');
   const [formData, setFormData] = useState({
-    designationId: '',
     designation: '',
     active: true,
   });
 
   const [fieldErrors, setFieldErrors] = useState({
-    designationId: '',
     designation: '',
     active: true,
   });
   const [listView, setListView] = useState(false);
   const listViewColumns = [
-    { accessorKey: 'designationId', header: 'Designation Id', size: 140 },
+    { accessorKey: 'docid', header: 'Designation Id', size: 140 },
     { accessorKey: 'designation', header: 'Designation', size: 140 },
     { accessorKey: 'active', header: 'Active', size: 140 }
   ];
@@ -41,6 +40,7 @@ const Designation = () => {
 
   useEffect(() => {
     getDesignationByOrgId();
+    getDesignationId();
   }, []);
   const getDesignationByOrgId = async () => {
     try {
@@ -56,7 +56,6 @@ const Designation = () => {
       console.error('Error fetching data:', error);
     }
   };
-
   const getDesignationById = async (row) => {
     console.log('THE SELECTED COMPANY ID IS:', row.original.id);
     setEditId(row.original.id);
@@ -72,11 +71,12 @@ const Designation = () => {
         console.log('THE PARTICULAR DESIGNATION DETAILS ARE:', designa);
 
         setFormData({
+          // docId: designa.docid,
           designation: designa.designation,
-          active: designa.active === 'Active', 
-          createdon: designa.commonDate ? designa.commonDate.createdon : '',
-          modifiedon: designa.commonDate ? designa.commonDate.modifiedon : ''
+          active: designa.active === 'Active',
+          createdBy: loginUserName
         });
+        setDesignationId(designa.docid)
       } else {
         console.error('API Error:', response);
       }
@@ -84,51 +84,64 @@ const Designation = () => {
       console.error('Error fetching data:', error);
     }
   };
-
-  const handleInputChange = (event) => {
-    const { name, value, type, checked } = event.target;
-
-    const newFieldErrors = { ...fieldErrors };
-
-    if (name === 'designation') {
-      if (value.trim() === '') {
-        newFieldErrors[name] = 'Designation is Required';
-      } else {
-        newFieldErrors[name] = '';
-      }
+  const getDesignationId = async () => {
+    try {
+      const response = await apiCalls('get', `/efitmaster/getDesignationDocId?orgId=${orgId}`);
+      setDesignationId(response.paramObjectsMap.getDesignationDocId)
+    } catch (error) {
+      console.error('Error fetching DesignationId:', error);
     }
-    if (name === 'active') {
-      // No specific validation for the checkbox in this case
-    }
-
-    setFormData((prevState) => ({
-      ...prevState,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
-
-    setFieldErrors(newFieldErrors);
   };
 
+  const handleInputChange = (e) => {
+    const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
+    const nameRegex = /^[A-Za-z-]*$/;
+    let errorMessage = '';
+  
+    switch (name) {
+      case 'designation':
+        if (!nameRegex.test(value)) {
+          errorMessage = 'Invalid Format';
+        }
+        break;
+    }
+  
+    if (errorMessage) {
+      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
+    } else {
+      setFormData((prevState) => ({
+        ...prevState,
+        [name]: type === 'checkbox' ? checked : value.toUpperCase(),
+      }));
+      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: '' }));
+    }
+    // Preserve cursor position for text inputs
+    if (type === 'text' || type === 'textarea') {
+      setTimeout(() => {
+        const inputElement = document.getElementsByName(name)[0];
+        if (inputElement && inputElement.setSelectionRange) {
+          inputElement.setSelectionRange(selectionStart, selectionEnd);
+        }
+      }, 0);
+    }
+  };
   const handleClear = () => {
     setFormData({
-      designationId: '',
       designation: '',
       active: true,
     });
     setFieldErrors({
-      designationId: '',
       designation: '',
     });
+    getDesignationId();
     setEditId('');
   };
 
   const handleSave = async () => {
     const errors = {};
-
     if (!formData.designation) {
       errors.designation = 'Designation is Required';
     }
-
 
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
@@ -138,8 +151,7 @@ const Designation = () => {
         active: formData.active,
         orgId: orgId,
         createdBy: loginUserName,
-        designation: formData.designation,
-        docid: formData.designationId,
+        designation: formData.designation
       };
       console.log('DATA TO SAVE IS:', saveData);
 
@@ -147,8 +159,9 @@ const Designation = () => {
         const response = await apiCalls('put', '/efitmaster/updateCreateDesignation', saveData);
         if (response.status === true) {
           console.log('Response:', response);
-          showToast('success', editId ? 'Designation values updated successfully' : 'Designation values created successfully');
+          showToast('success', editId ? 'Designation updated successfully' : 'Designation created successfully');
           getDesignationByOrgId();
+          getDesignationId()
           handleClear();
           setIsLoading(false);
         } else {
@@ -200,13 +213,10 @@ const Designation = () => {
                   size="small"
                   fullWidth
                   name="designationId"
-                  value={formData.designationId}
-                  error={!!fieldErrors.designationId}
-                  helperText={fieldErrors.designationId}
+                  value={designationId}
                   disabled
                 />
               </div>
-
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Designation"
