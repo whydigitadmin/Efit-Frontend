@@ -24,15 +24,17 @@ const MeasuringInstrument = () => {
   const [itemName, setItemName] = useState([]);
   const [editId, setEditId] = useState('');
 
-  const [formData, setFormData] = useState([{
-    item: '',
-    ranges: '',
-    leastCount: '',
-    colorCode: '',
-    instrumentCode: '',
-    calibrationFrequence: '',
-    remarks: '',
-  }]);
+  const [formData, setFormData] = useState([
+    {
+      item: '',
+      ranges: '',
+      leastCount: '',
+      colorCode: '',
+      instrumentCode: '',
+      calibrationFrequence: '',
+      remarks: ''
+    }
+  ]);
 
   const [fieldErrors, setFieldErrors] = useState({
     item: '',
@@ -41,7 +43,7 @@ const MeasuringInstrument = () => {
     colorCode: '',
     instrumentCode: '',
     calibrationFrequence: '',
-    remarks: '',
+    remarks: ''
   });
   const [listView, setListView] = useState(false);
   const listViewColumns = [
@@ -52,25 +54,22 @@ const MeasuringInstrument = () => {
     { accessorKey: 'colourCode', header: 'Color Code', size: 140 },
     { accessorKey: 'instrumentCode', header: 'Instrument Code', size: 140 },
     { accessorKey: 'calibrationFrequence', header: 'Calibration Frequence', size: 140 },
-    { accessorKey: 'remarks', header: 'Remarks', size: 140 },
+    { accessorKey: 'remarks', header: 'Remarks', size: 140 }
   ];
 
   const [listViewData, setListViewData] = useState([]);
 
-
   useEffect(() => {
     getMeasuringInstrumentDocId();
     getAllMeasuringInstrument();
-    getAllInstrumentName(orgId)
+    getAllInstrumentName(orgId);
   }, []);
-
 
   const getAllInstrumentName = async (orgId) => {
     try {
       const response = await apiCalls('get', `efitmaster/getInstrumentNameFromItemMaster?orgId=${orgId}`);
       if (response.status === true) {
-        const instrumentData = response.paramObjectsMap.measuringInstrumentVO
-          .map(({ id, item }) => ({ id, item }));
+        const instrumentData = response.paramObjectsMap.measuringInstrumentVO.map(({ id, item }) => ({ id, item }));
         setItemName(instrumentData);
         return instrumentData;
       } else {
@@ -88,7 +87,7 @@ const MeasuringInstrument = () => {
       const response = await apiCalls('get', `/efitmaster/getMeasuringInstrumentsDocId?orgId=${orgId}`);
       setDocId(response.paramObjectsMap.MeasuringInstrumentsDocId);
       setFormData((prevFormData) => ({
-        ...prevFormData,
+        ...prevFormData
       }));
     } catch (error) {
       console.error('Error fetching gate passes:', error);
@@ -96,13 +95,13 @@ const MeasuringInstrument = () => {
   };
   const handleInputChange = (e) => {
     const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
-  
+
     const nameRegex = /^[A-Za-z]*$/;
     const allRegex = /^[a-zA-Z0-9-]*$/;
     const numRegex = /^[0-9.]*$/;
-  
+
     let errorMessage = '';
-  
+
     switch (name) {
       // case 'item':
       //   if (!allRegex.test(value)) {
@@ -113,26 +112,26 @@ const MeasuringInstrument = () => {
         if (!numRegex.test(value)) {
           errorMessage = 'Invalid Format';
         }
-      break;
+        break;
       case 'leastCount':
         if (!numRegex.test(value)) {
           errorMessage = 'Invalid Format';
         }
-      break;
+        break;
       case 'instrumentCode':
         if (!allRegex.test(value)) {
           errorMessage = 'Invalid Format';
         }
-      break;
+        break;
       case 'calibrationFrequence':
         if (!numRegex.test(value)) {
           errorMessage = 'Invalid Format';
         }
-      break;
+        break;
       default:
         break;
     }
-  
+
     if (errorMessage) {
       // Set field errors if validation fails
       setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
@@ -140,11 +139,11 @@ const MeasuringInstrument = () => {
       // Update formData and clear field errors
       setFormData((prevState) => ({
         ...prevState,
-        [name]: type === 'checkbox' ? checked : value.toUpperCase(),
+        [name]: type === 'text' || type === 'textarea' ? value.toUpperCase() : value
       }));
       setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: '' }));
     }
-  
+
     // Preserve cursor position for text inputs
     if (type === 'text' || type === 'textarea') {
       setTimeout(() => {
@@ -156,53 +155,13 @@ const MeasuringInstrument = () => {
     }
   };
 
-  // const handleInputChange = (e) => {
-  //   const { name, value, checked, type } = e.target;
-
-  //   const numericRegex = /^[0-9]*$/;
-
-  //   let error = '';
-
-  //   if (name === 'ranges') {
-  //     if (!numericRegex.test(value)) {
-  //       error = 'Only numeric values are allowed.';
-  //     }
-  //   }
-
-  //   if (error) {
-  //     setFieldErrors((prevErrors) => ({
-  //       ...prevErrors,
-  //       [name]: error,
-  //     }));
-  //   } else {
-  //     setFieldErrors((prevErrors) => ({
-  //       ...prevErrors,
-  //       [name]: '',
-  //     }));
-
-  //     let updatedValue = value;
-
-  //     if (type === 'checkbox') {
-  //       setFormData((prevFormData) => ({
-  //         ...prevFormData,
-  //         [name]: checked,
-  //       }));
-  //     } else {
-  //       setFormData((prevFormData) => ({
-  //         ...prevFormData,
-  //         [name]: updatedValue,
-  //       }));
-  //     }
-
-  //   }
-  // };
   const getMeasuringInstrumentId = async (row) => {
     try {
       const response = await apiCalls('get', `efitmaster/getMeasuringInstrumentById?id=${row.original.id}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
-        setEditId(row.original.id)
+        setEditId(row.original.id);
         setListView(false);
         const particularInstrument = response.paramObjectsMap.measuringInstrumentsVO[0];
         console.log('PARTICULAR Instrument IS:', particularInstrument);
@@ -217,7 +176,7 @@ const MeasuringInstrument = () => {
           colorCode: particularInstrument.colourCode,
           instrumentCode: particularInstrument.instrumentCode,
           calibrationFrequence: particularInstrument.calibrationFrequence,
-          remarks: particularInstrument.remarks,
+          remarks: particularInstrument.remarks
         }));
       } else {
         console.error('API Error:', response);
@@ -260,7 +219,7 @@ const MeasuringInstrument = () => {
       colorCode: '',
       instrumentCode: '',
       calibrationFrequence: '',
-      remarks: '',
+      remarks: ''
     });
     setEditId('');
     getMeasuringInstrumentDocId();
@@ -311,7 +270,7 @@ const MeasuringInstrument = () => {
       colourCode: formData.colorCode,
       instrumentCode: formData.instrumentCode,
       calibrationFrequence: parseFloat(formData.calibrationFrequence),
-      remarks: formData.remarks,
+      remarks: formData.remarks
     };
 
     console.log('Save Form Data:', saveFormData);
@@ -328,9 +287,7 @@ const MeasuringInstrument = () => {
         setFieldErrors({});
         getAllMeasuringInstrument();
       } else {
-        const errorMessage =
-          response.paramObjectsMap?.errorMessage ||
-          'An unknown error occurred.';
+        const errorMessage = response.paramObjectsMap?.errorMessage || 'An unknown error occurred.';
         showToast('error', errorMessage);
       }
     } catch (error) {
@@ -346,8 +303,6 @@ const MeasuringInstrument = () => {
     } finally {
       setIsLoading(false);
     }
-
-
   };
 
   const handleView = () => {
@@ -364,7 +319,14 @@ const MeasuringInstrument = () => {
             <ActionButton title="Search" icon={SearchIcon} onClick={() => console.log('Search Clicked')} />
             <ActionButton title="Clear" icon={ClearIcon} onClick={handleClear} />
             <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} />
-            <ActionButton title="Save" icon={SaveIcon} isLoading={isLoading} onClick={handleSave} margin="0 10px 0 10px" disabled={isLoading} />
+            <ActionButton
+              title="Save"
+              icon={SaveIcon}
+              isLoading={isLoading}
+              onClick={handleSave}
+              margin="0 10px 0 10px"
+              disabled={isLoading}
+            />
           </div>
         </div>
         {listView ? (
@@ -380,7 +342,6 @@ const MeasuringInstrument = () => {
         ) : (
           <>
             <div className="row">
-
               <div className="col-md-3 mb-3">
                 <TextField
                   label="Measuring Instrument ID"
@@ -421,11 +382,10 @@ const MeasuringInstrument = () => {
                     handleInputChange({
                       target: {
                         name: 'item',
-                        value: newValue ? newValue.item : '',
-                      },
+                        value: newValue ? newValue.item : ''
+                      }
                     });
                   }}
-
                   renderInput={(params) => (
                     <TextField
                       {...params}
@@ -435,7 +395,7 @@ const MeasuringInstrument = () => {
                       helperText={fieldErrors.item}
                       InputProps={{
                         ...params.InputProps,
-                        style: { height: 40 },
+                        style: { height: 40 }
                       }}
                     />
                   )}
