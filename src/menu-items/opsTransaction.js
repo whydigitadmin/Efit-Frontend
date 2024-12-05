@@ -82,6 +82,12 @@ const opsTransaction = {
           url: '/Operations/opsTransaction/RackMaster'
         },
         {
+          id: 'billOfMaterial',
+          title: 'Bill Of Material',
+          type: 'item',
+          url: '/Operations/opsTransaction/BillOfMaterial'
+        },
+        {
           id: 'stockLocation',
           title: 'Stock Location',
           type: 'item',

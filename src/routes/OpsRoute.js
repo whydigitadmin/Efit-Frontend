@@ -7,6 +7,7 @@ const DashboardDefault = Loadable(lazy(() => import('views/dashboard/Default')))
 const Department = Loadable(lazy(() => import('views/Operations/opsTransaction/Department')));
 const Designation = Loadable(lazy(() => import('views/Operations/opsTransaction/Designation')));
 const RackMaster = Loadable(lazy(() => import('views/Operations/opsTransaction/RackMaster')));
+const BillOfMaterial = Loadable(lazy(() => import('views/Operations/opsTransaction/BillOfMaterial')));
 const DrawingMaster = Loadable(lazy(() => import('views/Operations/opsTransaction/DrawingMaster')));
 const Gst = Loadable(lazy(() => import('views/Operations/opsTransaction/Gst')));
 const ItemMaster = Loadable(lazy(() => import('views/Operations/opsTransaction/ItemMaster')));
@@ -81,6 +82,10 @@ const OpsRoute = {
     {
       path: '/Operations/opsTransaction/RackMaster',
       element: <RackMaster />
+    },
+    {
+      path: '/Operations/opsTransaction/BillOfMaterial',
+      element: <BillOfMaterial />
     },
     {
       path: '/Operations/opsTransaction/DrawingMaster',

@@ -37,17 +37,35 @@ const RackMaster = () => {
 
   const [listViewData, setListViewData] = useState([]);
 
-  const getCompanyById = async (row) => {
-    console.log('THE SELECTED COMPANY ID IS:', row.original.id);
+  useEffect(() => {
+    getRackMasterByOrgId();
+  }, []);
+  const getRackMasterByOrgId = async () => {
+    try {
+      const response = await apiCalls('get', `/efitmaster/getRackMasterByOrgId?orgId=${orgId}`);
+      console.log('API Response:', response);
+
+      if (response.status === true) {
+        setListViewData(response.paramObjectsMap.rackMasterVO);
+      } else {
+        console.error('API Error:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const getRackMasterById = async (row) => {
+    console.log('THE SELECTED getRackMasterById ID IS:', row.original.id);
     setEditId(row.original.id);
     try {
-      const response = await apiCalls('get', `commonmaster/company/${row.original.id}`);
+      const response = await apiCalls('get', `efitmaster/getRackMasterById/${row.original.id}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
         setListView(false);
-        const particularCompany = response.paramObjectsMap.companyVO[0];
-        console.log('THE PARTICULAR COMPANY DETAILS ARE:', particularCompany);
+        const particularCompany = response.paramObjectsMap.rackMasterVO[0];
+        console.log('THE PARTICULAR getRackMasterById DETAILS ARE:', particularCompany);
 
         setFormData({
           rackLocation: particularCompany.rackLocation,
@@ -65,7 +83,7 @@ const RackMaster = () => {
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     const inputValue = type === 'checkbox' ? checked : value;
-    setFormData({ ...formData, [name]: inputValue });
+    setFormData({ ...formData, [name]: inputValue.toUpperCase() });
     setFieldErrors({ ...fieldErrors, [name]: false });
   };
 
@@ -97,26 +115,27 @@ const RackMaster = () => {
 
       const saveFormData = {
         ...(editId && { id: editId }),
-        rackLocation: formData.rackLocation,
-        rackNo: formData.rackNo,
         active: formData.active,
-        orgId: orgId
+        createdBy: loginUserName,
+        orgId: orgId,
+        rackLocation: formData.rackLocation,
+        rackNo: formData.rackNo
       };
       console.log('DATA TO SAVE IS:', saveFormData);
 
       try {
-        const response = await apiCalls('post', `commonmaster/state`, saveFormData);
+        const response = await apiCalls('put', `efitmaster/updateCreateRackMaster`, saveFormData);
         if (response.status === true) {
           setIsLoading(false);
           handleClear();
-          showToast('success', editId ? ' State Updated Successfully' : 'State created successfully');
+          showToast('success', editId ? ' Rack Master Updated Successfully' : 'Rack Master created successfully');
         } else {
-          showToast('error', response.paramObjectsMap.errorMessage || 'State creation failed');
+          showToast('error', response.paramObjectsMap.errorMessage || 'Rack Master creation failed');
           setIsLoading(false);
         }
       } catch (error) {
         console.error('Error:', error);
-        showToast('error', 'State creation failed');
+        showToast('error', 'Rack Master creation failed');
         setIsLoading(false);
       }
     } else {
@@ -145,8 +164,8 @@ const RackMaster = () => {
               data={listViewData}
               columns={listViewColumns}
               // editCallback={editEmployee}
-              blockEdit={true} // DISAPLE THE MODAL IF TRUE
-              toEdit={getCompanyById}
+              blockEdit={true}
+              toEdit={getRackMasterById}
             />
           </div>
         ) : (
@@ -165,7 +184,7 @@ const RackMaster = () => {
                     labelId="rackLocation"
                     id="rackLocation"
                     label="Rack Location"
-                    //   onChange={handleInputChange}
+                    onChange={handleInputChange}
                     name="rackLocation"
                     value={formData.rackLocation}
                   >
@@ -180,7 +199,11 @@ const RackMaster = () => {
 
               <div className="col-md-3 mb-3">
                 <TextField
-                  label="Rack No"
+                  label={
+                    <span>
+                      Rack No <span className="asterisk">*</span>
+                    </span>
+                  }
                   variant="outlined"
                   size="small"
                   fullWidth
