@@ -11,38 +11,36 @@ import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import apiCalls from 'apicall';
 import { useEffect, useState } from 'react';
+import { LocalizationProvider, TimePicker } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
 import 'react-tabs/style/react-tabs.css';
 import 'react-toastify/dist/ReactToastify.css';
 import ActionButton from 'utils/ActionButton';
-// import { getAllActiveBranches, getAllActiveRoles } from 'utils/CommonFunctions';
 import ToastComponent, { showToast } from 'utils/toast-component';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
-import { encryptPassword } from 'views/utilities/passwordEnc';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import CommonBulkUpload from 'utils/CommonBulkUpload';
-import { toast } from 'react-toastify';
+import { height } from '@mui/system';
 
 const ShiftMaster = () => {
   const [listViewData, setListViewData] = useState([]);
-  const [roleList, setRoleList] = useState([]);
   const [orgId, setOrgId] = useState(parseInt(localStorage.getItem('orgId')));
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [value, setValue] = useState(0);
   const [editId, setEditId] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [listView, setListView] = useState(false);
-  const [uploadOpen, setUploadOpen] = useState(false);
-  const [showForm, setShowForm] = useState(true)
+  const [branch, setBranch] = useState(localStorage.getItem('branch'));
+  const [branchCode, setBranchCode] = useState(localStorage.getItem('branchcode'));
+  const [finYear, setFinYear] = useState(localStorage.getItem('finYear'));
 
   const [formData, setFormData] = useState({
     shiftName: '',
     shiftType: '',
     shiftCode: '',
-    fromHour: '',
-    toHour: '',
+    fromHour: null,
+    toHour: null,
     timing: '',
-    active: true,
-    orgId: orgId
+    active: true
   });
 
   const [fieldErrors, setFieldErrors] = useState({
@@ -51,18 +49,13 @@ const ShiftMaster = () => {
     shiftCode: '',
     fromHour: '',
     toHour: '',
-    timing: '',
-    orgId: orgId
+    timing: ''
   });
 
   const listViewColumns = [
     { accessorKey: 'shiftName', header: 'Shift Name', size: 140 },
     { accessorKey: 'shiftType', header: 'Shift Type', size: 140 },
-    { accessorKey: 'shiftCode', header: 'Shift Code', size: 140 },
-    { accessorKey: 'fromHour', header: 'From Hour', size: 140 },
-    { accessorKey: 'toHour', header: 'To Hour', size: 140 },
-    { accessorKey: 'timing', header: 'Timing', size: 140 },
-    { accessorKey: 'active', header: 'Active', size: 140 },
+    { accessorKey: 'shiftCode', header: 'Shift Code', size: 140 }
   ];
 
   const [shiftMasterData, setShiftMasterData] = useState([
@@ -76,21 +69,93 @@ const ShiftMaster = () => {
       shiftTiming: '',
     }
   ]);
+  const calculateTimings = () => {
+    const { fromHour, toHour } = formData;
 
-  useEffect(() => {
-    getAllShiftMaster();
-    // getShiftById();
-  }, []);
+    if (!fromHour || !toHour) return;
 
-  const handleInputChange = (e) => {
-    const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
+    const fromTime = dayjs(fromHour);
+    const toTime = dayjs(toHour);
 
-    if (type === 'checkbox') {
-      setFormData({ ...formData, [name]: checked });
+    if (!fromTime.isValid() || !toTime.isValid() || toTime.isBefore(fromTime)) {
+      setFormData((prev) => ({ ...prev, timing: '' }));
+      setShiftMasterData([]);
+      return;
     }
 
-    setFieldErrors({ ...fieldErrors, [name]: '' });
+    const diffInHours = toTime.diff(fromTime, 'hour');
+    const childTableData = [];
 
+    for (let i = 0; i < diffInHours; i++) {
+      const start = fromTime.add(i, 'hour');
+      const end = start.add(1, 'hour');
+      childTableData.push({
+        id: i + 1,
+        shiftTiming: `${start.format('hh:mm A')} - ${end.format('hh:mm A')}`
+      });
+    }
+
+    setFormData((prev) => ({ ...prev, timing: `${diffInHours} hrs` }));
+    setShiftMasterData(childTableData);
+  };
+
+  useEffect(() => {
+    calculateTimings();
+  }, [formData.fromHour, formData.toHour]);
+  useEffect(() => {
+    getAllShiftMaster();
+  }, []);
+  const handleInputChange = (e) => {
+    const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
+  
+    const nameRegex = /^[A-Za-z- ]*$/;
+    const allRegex = /^[a-zA-Z0-9- ]*$/; 
+  
+    let errorMessage = '';
+  
+    switch (name) {
+      case 'shiftName':
+      case 'shiftType':
+      case 'shiftCode':
+        if (!nameRegex.test(value)) {
+          errorMessage = 'Invalid Format';
+        }
+        break;
+      case 'departmentCode':
+        if (!allRegex.test(value)) {
+          errorMessage = 'Invalid Format';
+        }
+        break;
+      case 'fromHour':
+      case 'toHour':
+        if (value && !dayjs(value, 'HH:mm', true).isValid()) {
+          errorMessage = 'Invalid time format (HH:mm expected)';
+        }
+        break;
+      default:
+        break;
+    }
+    if (errorMessage) {
+      setFieldErrors((prevErrors) => ({
+        ...prevErrors,
+        [name]: errorMessage,
+      }));
+    } else {
+      const transformedValue =
+        name === 'fromHour' || name === 'toHour'
+          ? value 
+          : typeof value === 'string'
+          ? value.toUpperCase() 
+          : value;
+      setFormData((prevState) => ({
+        ...prevState,
+        [name]: type === 'checkbox' ? checked : transformedValue,
+      }));
+      setFieldErrors((prevErrors) => ({
+        ...prevErrors,
+        [name]: '',
+      }));
+    }
     if (type === 'text' || type === 'textarea') {
       setTimeout(() => {
         const inputElement = document.getElementsByName(name)[0];
@@ -99,44 +164,7 @@ const ShiftMaster = () => {
         }
       }, 0);
     }
-    const inputValue = type === 'checkbox' ? checked : value;
-    setFormData({ ...formData, [name]: inputValue });
-    console.log(`Checkbox updated: ${name} = ${inputValue}`);
-    setFieldErrors({ ...fieldErrors, [name]: false });
   };
-
-  // const getShiftMasterById = async (row) => {
-  //   try {
-  //     const response = await apiCalls('get', `efitmaster/getShiftById?id=${row.original.id}`);
-  //     console.log('API Response:', response);
-
-  //     if (response.status === true) {
-  //       setEditId(row.original.id)
-  //       setListView(false);
-  //       const particularShift = response.paramObjectsMap.shiftVO[0];
-  //       console.log('PARTICULAR SHIFT IS:', particularShift);
-
-  //       setFormData((prevFormData) => ({
-  //         ...prevFormData,
-  //         orgId: particularShift.orgId,
-  //         shiftName: particularShift.shiftName,
-  //         shiftType: particularShift.shiftType,
-  //         shiftCode: particularShift.shiftCode,
-  //         fromHour: particularShift.fromHour,
-  //         toHour: particularShift.toHour,
-  //         timing: particularShift.timing,
-  //         active: particularShift.active === 'Active' || particularShift.active === true ? true : false
-
-  //       }));
-  //     } else {
-  //       console.error('API Error:', response);
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching data:', error);
-  //   }
-  // };
-
-
   const getShiftMasterById = async (row) => {
     console.log('Row selected:', row);
     try {
@@ -146,11 +174,10 @@ const ShiftMaster = () => {
         setEditId(row.original.id);
         setListView(false);
         const materType = response.paramObjectsMap.shiftVO[0];
+        console.log('Particular Shift data:',materType);
+        
         if (materType) {
-          // setEditId(row.original.id);
-          setFormData((prevFormData) => ({
-            ...prevFormData,
-            orgId: materType.orgId,
+          setFormData({
             shiftName: materType.shiftName,
             shiftType: materType.shiftType,
             shiftCode: materType.shiftCode,
@@ -158,11 +185,11 @@ const ShiftMaster = () => {
             toHour: materType.toHour,
             timing: materType.timing,
             active: materType.active === 'Active' || materType.active === true,
-          }));
+          });
           setShiftMasterData(
             materType.shiftDetailsVO?.map((row) => ({
               id: row.id,
-              shiftTiming: row.shiftTiming,
+              shiftTiming: row.timingInHours,
             })) || []
           );
         } else {
@@ -179,12 +206,11 @@ const ShiftMaster = () => {
 
   const getAllShiftMaster = async () => {
     try {
-      const response = await apiCalls('get', `efitmaster/getShiftByOrgId?orgId=${orgId}`);
+      const response = await apiCalls('get', `/efitmaster/getShiftByOrgId?orgId=${orgId}`);
 
       console.log('API Response:', response);
-
       if (response.status === true) {
-        setListViewData(response.paramObjectsMap.shiftVO.reverse());
+        setListViewData(response.paramObjectsMap.shiftVO);
       } else {
         console.error('API Error:', response);
       }
@@ -192,60 +218,39 @@ const ShiftMaster = () => {
       console.error('Error fetching data:', error);
     }
   };
-
-
   const handleSave = async () => {
+    // Validation for required fields
     const errors = {};
-
-    // Validation
-    if (!formData.shiftName) {
-      errors.shiftName = 'Shift Name is required';
-    }
-    if (!formData.shiftType) {
-      errors.shiftType = 'Shift Type is required';
-    }
-    if (!formData.shiftCode) {
-      errors.shiftCode = 'Shift Code is required';
-    }
-    if (!formData.fromHour) {
-      errors.fromHour = 'From hour is required';
-    }
-    if (!formData.toHour) {
-      errors.toHour = 'To Hour is required';
-    }
-    if (!formData.timing) {
-      errors.timing = 'Timing is required';
-    }
-
-    let shiftMasterDataValid = true;
-    if (!shiftMasterData || !Array.isArray(shiftMasterData) || shiftMasterData.length === 0) {
-      shiftMasterDataValid = false;
-      setShiftMasterErrors([{ general: 'Shift Master Data is Required' }]);
-    } else {
-      const newTableErrors = shiftMasterData.map((row, index) => {
-        const rowErrors = {};
-        if (!row.shiftTiming) {
-          rowErrors.shiftTiming = 'Timing is Required';
-          shiftMasterDataValid = false;
-        }
-
-        return rowErrors;
-      });
-      setShiftMasterErrors(newTableErrors);
-    }
-
-
-    // Check for errors
+    if (!formData.shiftName) errors.shiftName = 'Shift Name is required';
+    if (!formData.shiftType) errors.shiftType = 'Shift Type is required';
+    if (!formData.shiftCode) errors.shiftCode = 'Shift Code is required';
+    if (!formData.fromHour) errors.fromHour = 'From hour is required';
+    if (!formData.toHour) errors.toHour = 'To Hour is required';
+    if (!formData.timing) errors.timing = 'Timing is required';
+  
     if (Object.keys(errors).length > 0) {
-      console.log('Validation Errors:', errors);
       setFieldErrors(errors);
+      showToast('error', 'Please fix validation errors before saving.');
       return;
     }
-
-    // Prepare data for API
+  
+    // Validate shiftMasterData
+    if (!shiftMasterData || !shiftMasterData.length) {
+      showToast('error', 'Shift Timing Details are required.');
+      return;
+    }
+  
+    const invalidTimings = shiftMasterData.filter((row) => !row.shiftTiming);
+    if (invalidTimings.length) {
+      showToast('error', 'All timing rows must be filled.');
+      return;
+    }
+    const ShiftMasterVO = shiftMasterData.map((row) => ({
+      ...(editId && { id: row.id }),
+      timingInHours: row.shiftTiming,
+    }));
     const saveFormData = {
       ...(editId && { id: editId }),
-      userName: formData.userName || loginUserName,
       shiftName: formData.shiftName,
       shiftType: formData.shiftType,
       shiftCode: formData.shiftCode,
@@ -255,65 +260,47 @@ const ShiftMaster = () => {
       active: formData.active || false,
       orgId: orgId,
       createdBy: loginUserName,
-      shiftDetailsDTO: formData.shiftDetailsDTO || [],
-      message: formData.message || '',
+      // branch,
+      // branchCode,
+      finYear: finYear,
+      shiftDetailsDTO: ShiftMasterVO,
     };
-
+  
     console.log('Save Form Data:', saveFormData);
-
-    // API Call
     setIsLoading(true);
     try {
-      const response = await apiCalls('put', 'efitmaster/updateCreateShift', saveFormData);
-
-      if (response.status === true && response.statusFlag !== 'Error') {
-        showToast('success', 'Shift Master Created/Updated successfully');
-        setFormData({});
+      const response = await apiCalls('put', `/efitmaster/updateCreateShift`, saveFormData);
+      if (response.status === true) {
+        showToast('success', editId ? 'Shift Master Updated Successfully' : 'Shift Master Created Successfully');
+        await getAllShiftMaster();
         handleClear();
-        setFieldErrors({});
-        getAllShiftMaster();
       } else {
-        const errorMessage =
-          response.paramObjectsMap?.errorMessage ||
-          response.paramObjectsMap?.message ||
-          'An error occurred while creating/updating the Shift Master.';
-        showToast('error', errorMessage);
+        showToast('error', response.paramObjectsMap?.message || 'Save failed. Please try again.');
       }
     } catch (error) {
-      if (error.response) {
-        console.error('Error response:', error.response);
-        showToast(
-          'error',
-          `Error ${error.response.status}: ${error.response.data?.message || 'Bad Request'
-          }`
-        );
-      } else {
-        console.error('API Error:', error);
-        showToast('error', 'Failed to update Shift Master.');
-      }
+      console.error('Save Error:', error);
+      showToast('error', 'An error occurred while saving. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
-
   const handleClear = () => {
     setFormData({
+      shiftName: '',
+      shiftType: '',
+      shiftCode: '',
+      fromHour: null,
+      toHour: null,
+      timing: '',
+      active: true
+    });
+    setFieldErrors({
       shiftName: '',
       shiftType: '',
       shiftCode: '',
       fromHour: '',
       toHour: '',
       timing: '',
-      active: true,
-      orgId: orgId
-    });
-    setFieldErrors({
-      shiftName: false,
-      shiftType: false,
-      shiftCode: false,
-      fromHour: false,
-      toHour: false,
-      timing: false,
     });
     setShiftMasterData([{ id: 1, shiftTiming: '' }]);
     setShiftMasterErrors('');
@@ -325,23 +312,18 @@ const ShiftMaster = () => {
       displayRowError(shiftMasterData);
       return;
     }
-
     const newRow = {
       id: Date.now(),
       shiftTiming: '',
     };
-
     setShiftMasterData([...shiftMasterData, newRow]);
     setShiftMasterErrors([...shiftMasterErrors, { shiftTiming: '' }]);
   };
-
   const isLastRowEmpty = (table) => {
     const lastRow = table[table.length - 1];
     if (!lastRow) return false;
-
     return !lastRow.shiftTiming;
   };
-
   const displayRowError = (table) => {
     setShiftMasterErrors((prevErrors) => {
       const newErrors = [...prevErrors];
@@ -352,15 +334,8 @@ const ShiftMaster = () => {
       return newErrors;
     });
   };
-
-  const handleDeleteRow = (id, table, setTable, errorTable = [], setErrorTable) => {
-    if (!Array.isArray(table) || !Array.isArray(errorTable)) {
-      console.error("Invalid table or errorTable format. Both must be arrays.");
-      return;
-    }
-
+  const handleDeleteRow = (id, table, setTable, errorTable, setErrorTable) => {
     const rowIndex = table.findIndex((row) => row.id === id);
-
     if (rowIndex !== -1) {
       const updatedData = table.filter((row) => row.id !== id);
       const updatedErrors = errorTable.filter((_, index) => index !== rowIndex);
@@ -368,33 +343,12 @@ const ShiftMaster = () => {
       setErrorTable(updatedErrors);
     }
   };
-
   const handleView = () => {
     setListView(!listView);
   };
-
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
-
-  const handleBulkUploadOpen = () => {
-    setUploadOpen(true);
-  };
-
-  const handleBulkUploadClose = () => {
-    setUploadOpen(false);
-  };
-
-  const handleFileUpload = (event) => {
-    console.log(event.target.files[0]);
-  };
-
-  const handleSubmit = () => {
-    toast.success("File uploded sucessfully")
-    console.log('Submit clicked');
-    handleBulkUploadClose();
-  };
-
   return (
     <>
       <div>
@@ -411,6 +365,7 @@ const ShiftMaster = () => {
 
           {!listView ? (
             <>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
               <div className="row d-flex ml">
                 <div className="col-md-3 mb-3">
                   <TextField
@@ -424,7 +379,7 @@ const ShiftMaster = () => {
                     onChange={handleInputChange}
                     error={!!fieldErrors.shiftName}
                     helperText={fieldErrors.shiftName}
-                    inputProps={{ maxLength: 10 }}
+                    // inputProps={{ maxLength: 10 }}
                   />
                 </div>
                 <div className="col-md-3 mb-3">
@@ -439,7 +394,7 @@ const ShiftMaster = () => {
                     onChange={handleInputChange}
                     error={!!fieldErrors.shiftType}
                     helperText={fieldErrors.shiftType}
-                    inputProps={{ maxLength: 10 }}
+                    // inputProps={{ maxLength: 10 }}
                   />
                 </div>
                 <div className="col-md-3 mb-3">
@@ -454,52 +409,80 @@ const ShiftMaster = () => {
                     onChange={handleInputChange}
                     error={!!fieldErrors.shiftCode}
                     helperText={fieldErrors.shiftCode}
-                    inputProps={{ maxLength: 10 }}
+                    // inputProps={{ maxLength: 10 }}
                   />
                 </div>
-                <div className="col-md-3 mb-3">
-                  <TextField
-                    id="outlined-textarea-zip"
-                    label="From hour"
-                    variant="outlined"
-                    size="small"
-                    fullWidth
-                    name="fromHour"
+                {/* <div className="col-md-3 mb-3">
+                  <TimePicker
+                    label="From Hour"
                     value={formData.fromHour}
-                    onChange={handleInputChange}
-                    error={!!fieldErrors.fromHour}
-                    helperText={fieldErrors.fromHour}
-                    inputProps={{ maxLength: 10 }}
+                    onChange={(newValue) => handleInputChange({ target: { name: 'fromHour', value: newValue } })}
+                    ampm
+                    renderInput={(params) => (
+                      <input
+                      sx={{
+                        "& .MuiInputBase-input": {
+                        }
+                      }}
+                        {...params}
+                        si
+                        error={!formData.fromHour}
+                        className="form-control" 
+                        helperText={!formData.fromHour ? 'From hour is required' : ''}
+                      />
+                    )}
                   />
-                </div>
+                </div> */}
                 <div className="col-md-3 mb-3">
-                  <TextField
-                    id="outlined-textarea-zip"
+  <TimePicker
+    label="From Hour"
+    value={formData.fromHour}
+    onChange={(newValue) => handleInputChange({ target: { name: 'fromHour', value: newValue } })}
+    ampm
+    renderInput={(params) => (
+      <TextField
+        {...params}
+        sx={{
+          "& .MuiOutlinedInput-root": {
+            height: "16px", // Adjust the height of the input field
+          },
+          "& .MuiInputBase-input": {
+            padding: "10px 14px", // Adjust padding for better appearance
+            fontSize: "0.9rem", // Optional: Reduce font size
+          },
+        }}
+        error={!formData.fromHour}
+        className="form-control"
+        helperText={!formData.fromHour ? "From hour is required" : ""}
+        size="small" // Ensures the input looks smaller overall
+      />
+    )}
+  />
+</div>
+
+                <div className="col-md-3 mb-3">
+                  <TimePicker
                     label="To Hour"
-                    variant="outlined"
-                    size="small"
-                    fullWidth
-                    name="toHour"
                     value={formData.toHour}
-                    onChange={handleInputChange}
-                    error={!!fieldErrors.toHour}
-                    helperText={fieldErrors.toHour}
-                    inputProps={{ maxLength: 10 }}
+                    onChange={(newValue) => handleInputChange({ target: { name: 'toHour', value: newValue } })}
+                    ampm
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        size="small"
+                        error={!formData.toHour}
+                        helperText={!formData.toHour ? 'To hour is required' : ''}
+                      />
+                    )}
                   />
                 </div>
                 <div className="col-md-3 mb-3">
                   <TextField
-                    id="outlined-textarea-zip"
                     label="Timing"
-                    variant="outlined"
-                    size="small"
-                    fullWidth
-                    name="timing"
                     value={formData.timing}
-                    onChange={handleInputChange}
-                    error={!!fieldErrors.timing}
-                    helperText={fieldErrors.timing}
-                    inputProps={{ maxLength: 10 }}
+                    size="small"
+                    disabled
+                    fullWidth
                   />
                 </div>
                 <div className="col-md-3 mb-3">
@@ -529,22 +512,7 @@ const ShiftMaster = () => {
                       <div className="row d-flex ml">
                         <div className="mb-1">
                           <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} />
-                          <ActionButton icon={CloudUploadIcon} title='Upload' onClick={handleBulkUploadOpen} />
-
-                          {uploadOpen && (
-                            <CommonBulkUpload
-                              open={uploadOpen}
-                              handleClose={handleBulkUploadClose}
-                              title="Upload Files"
-                              uploadText="Upload file"
-                              downloadText="Sample File"
-                              onSubmit={handleSubmit}
-                              // sampleFileDownload={FirstData}
-                              handleFileUpload={handleFileUpload}
-                              apiUrl={`excelfileupload/excelUploadForSample`}
-                              screen="PutAway"
-                            />
-                          )}
+                          
                         </div>
                         <div className="row mt-2">
                           <div className="col-lg-8">
@@ -552,13 +520,13 @@ const ShiftMaster = () => {
                               <table className="table table-bordered ">
                                 <thead>
                                   <tr style={{ backgroundColor: '#673AB7' }}>
-                                    <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
+                                    <th className="px-2 py-2 text-white text-center" style={{ width: '50px' }}>
                                       Action
                                     </th>
                                     <th className="px-2 py-2 text-white text-center" style={{ width: '50px' }}>
                                       S.No
                                     </th>
-                                    <th className="px-4 py-2 text-white text-center" style={{ width: '700px' }} >
+                                    <th className="px-3 py-2 text-white text-center" style={{ width: '300px' }} >
                                       Timing
                                     </th>
                                   </tr>
@@ -584,33 +552,7 @@ const ShiftMaster = () => {
                                       <td className="text-center">
                                         <div className="pt-2">{index + 1}</div>
                                       </td>
-
-                                      <td className="border px-2 py-2">
-                                        <input
-                                          type="text"
-                                          value={row.shiftTiming}
-                                          onChange={(e) => {
-                                            const value = e.target.value;
-                                            setShiftMasterData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, shiftTiming: value } : r))
-                                            );
-                                            setShiftMasterErrors((prev) => {
-                                              const newErrors = [...prev];
-                                              newErrors[index] = {
-                                                ...newErrors[index],
-                                                shiftTiming: !value ? 'Timing is required' : ''
-                                              };
-                                              return newErrors;
-                                            });
-                                          }}
-                                          className={shiftMasterErrors[index]?.shiftTiming ? 'error form-control' : 'form-control'}
-                                        />
-                                        {shiftMasterErrors[index]?.shiftTiming && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {shiftMasterErrors[index].shiftTiming}
-                                          </div>
-                                        )}
-                                      </td>
+                                      <td className='text-center'>{row.shiftTiming}</td>
                                     </tr>
                                   ))}
                                 </tbody>
@@ -623,7 +565,7 @@ const ShiftMaster = () => {
                   )}
                 </Box>
               </div>
-
+              </LocalizationProvider>
             </>
           ) : (
             <CommonListViewTable
