@@ -41,11 +41,7 @@ const ProcessMaster = () => {
   const getProcessMasterDocId = async () => {
     try {
       const response = await apiCalls('get', `/efitmaster/getProcessMasterDocId?orgId=${orgId}`);
-
-      // Update state with the new docId
       setDocId(response.paramObjectsMap.processMasterDocId);
-
-      // Optionally update formData if docId is part of it
       setFormData((prevFormData) => ({
         ...prevFormData,
       }));
@@ -53,27 +49,30 @@ const ProcessMaster = () => {
       console.error('Error fetching gate passes:', error);
     }
   };
-
-
   const handleInputChange = (e) => {
     const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
-
     let error = '';
-
-    // Handle errors if validation fails
+    const nameRegex = /^[A-Za-z ]*$/;
+    switch (name) {
+      case 'processName':
+        if (!nameRegex.test(value)) {
+          error = 'Invalid Format';
+        }
+      break;
+      default:
+      break;
+      }
     if (error) {
       setFieldErrors((prevErrors) => ({
         ...prevErrors,
         [name]: error
       }));
     } else {
-      // Clear previous error if input is valid
       setFieldErrors((prevErrors) => ({
         ...prevErrors,
         [name]: ''
       }));
 
-      // Update the form data
       let updatedValue = value;
 
       if (name !== 'active') {
@@ -104,8 +103,6 @@ const ProcessMaster = () => {
         setListView(false);
         const particularProcess = response.paramObjectsMap.processMasterVO[0];
         console.log('PROCESS MASTER IS:', particularProcess);
-
-        // Update both docId and formData synchronously
         setDocId(particularProcess.docId);
         setFormData((prevFormData) => ({
           ...prevFormData,
@@ -122,10 +119,8 @@ const ProcessMaster = () => {
 
   const getAllProcessMaster = async () => {
     try {
-      const response = await apiCalls('get', `efitmaster/getAllProcessMasterByOrgId?orgId=${orgId}`);
-
+      const response = await apiCalls('get', `/efitmaster/getAllProcessMasterByOrgId?orgId=${orgId}`);
       console.log('API Response:', response);
-
       if (response.status === true) {
         setListViewData(response.paramObjectsMap.processMasterVO.reverse());
       } else {
@@ -153,8 +148,6 @@ const ProcessMaster = () => {
     if (!formData.processName) {
       errors.processName = 'Process Name is required';
     }
-
-
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
       const saveFormData = {
@@ -163,14 +156,7 @@ const ProcessMaster = () => {
         docDate: formData.docDate,
         processName: formData.processName,
         createdBy: loginUserName,
-        updatedBy: loginUserName,
-        cancelRemarks: formData.cancelRemarks,
-        screenCode: formData.screenCode,
-        screenName: formData.screenName,
-        commonDate: formData.commonDate,
-        active: formData.active,
-        cancel: formData.cancel,
-        message: formData.message
+        updatedBy: loginUserName
       };
       console.log('THE SAVE FORM DATA IS:', saveFormData);
 

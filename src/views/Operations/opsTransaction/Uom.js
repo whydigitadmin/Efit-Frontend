@@ -45,7 +45,7 @@ export const Uom = () => {
   const getAllUom = async () => {
     try {
       const result = await apiCalls('get', `/efitmaster/getUomByOrgId?orgId=${orgId}`);
-      setListViewData(result.paramObjectsMap.uomVO.reverse());
+      setListViewData(result.paramObjectsMap.uomVO);
     } catch (err) {
       console.error('Error fetching UOM data:', err);
     }
@@ -72,14 +72,54 @@ export const Uom = () => {
       console.error('Error fetching UOM by ID:', error);
     }
   };
-
-
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    const inputValue = type === 'checkbox' ? checked : value;
-    setFormData({ ...formData, [name]: inputValue });
-    setFieldErrors({ ...fieldErrors, [name]: false });
+    const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
+    const nameRegex = /^[A-Za-z ]*$/;
+    let errorMessage = '';
+  
+    // Validation logic
+    switch (name) {
+      case 'uomCode':
+        if (!nameRegex.test(value)) {
+          errorMessage = 'Invalid Format';
+        }
+        break;
+      case 'uomDesc':
+        if (!nameRegex.test(value)) {
+          errorMessage = 'Invalid Format';
+        }
+        break;
+      default:
+        break;
+    }
+  
+    if (errorMessage) {
+      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
+    } else {
+      setFormData((prevState) => ({
+        ...prevState,
+        [name]: type === 'checkbox' ? checked : value.toUpperCase(),
+      }));
+      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: '' }));
+    }
+  
+    // Preserve cursor position for text inputs
+    if (type === 'text' || type === 'textarea') {
+      setTimeout(() => {
+        const inputElement = document.getElementsByName(name)[0];
+        if (inputElement && inputElement.setSelectionRange) {
+          inputElement.setSelectionRange(selectionStart, selectionEnd);
+        }
+      }, 0);
+    }
   };
+
+  // const handleInputChange = (e) => {
+  //   const { name, value, type, checked } = e.target;
+  //   const inputValue = type === 'checkbox' ? checked : value;
+  //   setFormData({ ...formData, [name]: inputValue });
+  //   setFieldErrors({ ...fieldErrors, [name]: false });
+  // };
 
   const handleClear = () => {
     setFormData({

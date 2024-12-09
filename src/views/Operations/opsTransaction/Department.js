@@ -98,8 +98,8 @@ const Department = () => {
   const handleInputChange = (e) => {
     const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
   
-    const nameRegex = /^[A-Za-z]*$/;
-    const allRegex = /^[a-zA-Z0-9-]*$/;
+    const nameRegex = /^[A-Za-z ]*$/;
+    const allRegex = /^[a-zA-Z0-9- ]*$/;
   
     let errorMessage = '';
   

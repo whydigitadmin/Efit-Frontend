@@ -26,7 +26,7 @@ const RackMaster = () => {
   const [fieldErrors, setFieldErrors] = useState({
     rackLocation: '',
     rackNo: '',
-    active: ''
+    active: true
   });
   const [listView, setListView] = useState(false);
   const listViewColumns = [
@@ -59,7 +59,7 @@ const RackMaster = () => {
     console.log('THE SELECTED getRackMasterById ID IS:', row.original.id);
     setEditId(row.original.id);
     try {
-      const response = await apiCalls('get', `efitmaster/getRackMasterById/${row.original.id}`);
+      const response = await apiCalls('get', `/efitmaster/getRackMasterById?id=${row.original.id}`);
       console.log('API Response:', response);
 
       if (response.status === true) {
@@ -81,12 +81,38 @@ const RackMaster = () => {
   };
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
     const inputValue = type === 'checkbox' ? checked : value;
-    setFormData({ ...formData, [name]: inputValue.toUpperCase() });
-    setFieldErrors({ ...fieldErrors, [name]: false });
+    const rackNoRegex = /^[a-zA-Z0-9- ]*$/; 
+    let errorMessage = '';
+  
+    switch (name) {
+      case 'rackNo':
+        if (!rackNoRegex.test(value)) {
+          errorMessage = 'Invalid Format';
+        }
+        break;
+    }
+  
+    if (errorMessage) {
+      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
+    } else {
+      setFormData((prevState) => ({
+        ...prevState,
+        [name]: type === 'checkbox' ? checked : value.toUpperCase(),
+      }));
+      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: '' }));
+    }
+    // Preserve cursor position for text inputs
+    if (type === 'text' || type === 'textarea') {
+      setTimeout(() => {
+        const inputElement = document.getElementsByName(name)[0];
+        if (inputElement && inputElement.setSelectionRange) {
+          inputElement.setSelectionRange(selectionStart, selectionEnd);
+        }
+      }, 0);
+    }
   };
-
   const handleClear = () => {
     setFormData({
       rackLocation: '',
@@ -128,6 +154,7 @@ const RackMaster = () => {
         if (response.status === true) {
           setIsLoading(false);
           handleClear();
+          getRackMasterByOrgId();
           showToast('success', editId ? ' Rack Master Updated Successfully' : 'Rack Master created successfully');
         } else {
           showToast('error', response.paramObjectsMap.errorMessage || 'Rack Master creation failed');

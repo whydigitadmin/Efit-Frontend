@@ -96,7 +96,7 @@ const Gst = () => {
   };
   const handleInputChange = (e) => {
     const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
-    const nameRegex = /^[A-Za-z0-9-%]*$/;
+    const nameRegex = /^[A-Za-z0-9-% ]*$/;
     const numRegex = /^[0-9]*$/;
     let errorMessage = '';
   

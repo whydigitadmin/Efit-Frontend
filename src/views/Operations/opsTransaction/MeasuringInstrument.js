@@ -95,19 +95,11 @@ const MeasuringInstrument = () => {
   };
   const handleInputChange = (e) => {
     const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
-
-    const nameRegex = /^[A-Za-z]*$/;
-    const allRegex = /^[a-zA-Z0-9-]*$/;
+    const allRegex = /^[a-zA-Z0-9- ]*$/;
     const numRegex = /^[0-9.]*$/;
-
     let errorMessage = '';
 
     switch (name) {
-      // case 'item':
-      //   if (!allRegex.test(value)) {
-      //     errorMessage = 'Invalid Format';
-      //   }
-      //   break;
       case 'ranges':
         if (!numRegex.test(value)) {
           errorMessage = 'Invalid Format';

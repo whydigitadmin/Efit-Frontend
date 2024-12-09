@@ -95,7 +95,7 @@ const Designation = () => {
 
   const handleInputChange = (e) => {
     const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
-    const nameRegex = /^[A-Za-z-]*$/;
+    const nameRegex = /^[A-Za-z- ]*$/;
     let errorMessage = '';
   
     switch (name) {

@@ -2,9 +2,9 @@ import ClearIcon from '@mui/icons-material/Clear';
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import { Checkbox, FormControl, FormControlLabel, FormGroup, TextField } from '@mui/material';
+import {  FormControl, TextField } from '@mui/material';
 import apiCalls from 'apicall';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ActionButton from 'utils/ActionButton';
@@ -15,21 +15,9 @@ import Box from '@mui/material/Box';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { showToast } from 'utils/toast-component';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { FormHelperText } from '@mui/material';
-import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
-import InputLabel from '@mui/material/InputLabel';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import dayjs from 'dayjs';
-import CommonBulkUpload from 'utils/CommonBulkUpload';
-import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
 
 const MaterialType = () => {
   const [showForm, setShowForm] = useState(true);
-  const [data, setData] = useState([]);
   const [orgId, setOrgId] = useState(parseInt(localStorage.getItem('orgId'), 10));
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [value, setValue] = useState(0);
@@ -49,14 +37,12 @@ const MaterialType = () => {
   const [materialTypeData, setMaterialTypeData] = useState([
     {
       id: 1,
-      itemSubGroup: '',
-
+      itemSubGroup: ''
     }
   ]);
   const [materialDetailErrors, setMaterialDetailErrors] = useState([
     {
       itemSubGroup: '',
-
     }
   ]);
   const listViewColumns = [
@@ -80,7 +66,6 @@ const MaterialType = () => {
       console.error('Error fetching data:', error);
     }
   };
-
   const getMaterialTypeById = async (row) => {
     console.log('Row selected:', row);
     setShowForm(true);
@@ -107,72 +92,59 @@ const MaterialType = () => {
       console.error('Error fetching data:', error);
     }
   };
-
-
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    const inputValue = type === 'checkbox' ? checked : value;
-    setFormData({ ...formData, [name]: inputValue });
-    setFieldErrors({ ...fieldErrors, [name]: false });
-  };
+    const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
+    const allRegex = /^[a-zA-Z0-9- ]*$/;
+    let errorMessage = '';
 
-  const handleDateChange = (name, date) => {
-    setFormData({ ...formData, [name]: date });
-    setFieldErrors({ ...fieldErrors, [name]: false });
-  };
-
-  const handleBulkUploadOpen = () => {
-    setUploadOpen(true); // Open dialog
-  };
-
-  const handleBulkUploadClose = () => {
-    setUploadOpen(false); // Close dialog
-  };
-
-  const handleFileUpload = (event) => {
-    console.log(event.target.files[0]);
-  };
-
-  const handleSubmit = () => {
-    console.log('Submit clicked');
-    handleBulkUploadClose();
-    toast.success("File uploded sucessfully")
-    console.log('Submit clicked');
-    handleBulkUploadClose();
-    // getAllData();
-  };
-
-  const handleKeyDown = (e, row, table) => {
-
-    if (e.key === 'Tab' && row.id === table[table.length - 1].id) {
-      e.preventDefault();
-
-
-      if (isLastRowEmpty(table)) {
-        displayRowError(table);
-      } else {
-
-        handleAddRow();
-      }
+    switch (name) {
+      case 'materialType':
+        if (!allRegex.test(value)) {
+          errorMessage = 'Invalid Format';
+        }
+      break;
+      case 'itemGroup':
+        if (!allRegex.test(value)) {
+          errorMessage = 'Invalid Format';
+        }
+      break;
+      case 'itemSubGroup':
+        if (!allRegex.test(value)) {
+          errorMessage = 'Invalid Format';
+        }
+      break;
+      default:
+      break;
+    }
+    if (errorMessage) {
+      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
+    } else {
+      setFormData((prevState) => ({
+        ...prevState,
+        [name]: type === 'text' || type === 'textarea' ? value.toUpperCase() : value
+      }));
+      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: '' }));
+    }
+    // Preserve cursor position for text inputs
+    if (type === 'text' || type === 'textarea') {
+      setTimeout(() => {
+        const inputElement = document.getElementsByName(name)[0];
+        if (inputElement && inputElement.setSelectionRange) {
+          inputElement.setSelectionRange(selectionStart, selectionEnd);
+        }
+      }, 0);
     }
   };
-
   const handleAddRow = () => {
-
     if (isLastRowEmpty(materialTypeData)) {
       displayRowError(materialTypeData);
       return;
     }
-
     const newRow = {
       id: Date.now(),
       itemSubGroup: '',
     };
-
-
     setMaterialTypeData((prevData) => [...prevData, newRow]);
-
-
     setMaterialDetailErrors((prevErrors) => [
       ...prevErrors,
       { itemSubGroup: '', }
@@ -181,12 +153,9 @@ const MaterialType = () => {
   const isLastRowEmpty = (table) => {
     const lastRow = table[table.length - 1];
     if (!lastRow) return false;
-
     return !lastRow.itemSubGroup;
   };
-
   const displayRowError = (table) => {
-    // Check if the table is materialTypeData
     if (table === materialTypeData) {
       setMaterialDetailErrors((prevErrors) => {
         const newErrors = [...prevErrors];
@@ -206,8 +175,6 @@ const MaterialType = () => {
     setMaterialTypeData(updatedData);
     setMaterialDetailErrors(updatedErrors);
   };
-
-
   const handleClear = () => {
     setFormData({
       materialType: '',
@@ -272,7 +239,7 @@ const MaterialType = () => {
         const response = await apiCalls('put', '/efitmaster/createUpdateMaterialType', saveFormData);
         if (response.status === true) {
           console.log('Response:', response);
-          showToast('success', editId ? 'List of values updated successfully' : 'Material Type values created successfully');
+          showToast('success', editId ? 'Material Type updated successfully' : 'Material Type values created successfully');
           getAllMaterialTypeByOrgId();
           handleClear();
           setIsLoading(false);
@@ -296,7 +263,6 @@ const MaterialType = () => {
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
-
   return (
     <div>
       <ToastContainer />
@@ -349,9 +315,7 @@ const MaterialType = () => {
                   />
                 </FormControl>
               </div>
-
             </div>
-
             <div className="row mt-2">
               <Box sx={{ width: '100%' }}>
                 <Tabs
@@ -370,21 +334,6 @@ const MaterialType = () => {
                     <div className="row d-flex ml">
                       <div className="mb-1">
                         <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} />
-                        <ActionButton icon={CloudUploadIcon} title='Upload' onClick={handleBulkUploadOpen} />
-                        {uploadOpen && (
-                          <CommonBulkUpload
-                            open={uploadOpen}
-                            handleClose={handleBulkUploadClose}
-                            title="Upload Files"
-                            uploadText="Upload file"
-                            downloadText="Sample File"
-                            onSubmit={handleSubmit}
-                            // sampleFileDownload={FirstData}
-                            handleFileUpload={handleFileUpload}
-                            apiUrl={`excelfileupload/excelUploadForSample`}
-                            screen="PutAway"
-                          />
-                        )}
                       </div>
                       <div className="row mt-2">
                         <div className="col-lg-7">
@@ -392,14 +341,14 @@ const MaterialType = () => {
                             <table className="table table-bordered ">
                               <thead>
                                 <tr style={{ backgroundColor: '#673AB7' }}>
-                                  <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
+                                  <th className="px-2 py-2 text-white text-center" style={{ width: '50px' }}>
                                     Action
                                   </th>
                                   <th className="px-2 py-2 text-white text-center" style={{ width: '50px' }}>
                                     S.No
                                   </th>
-                                  <th className="px-2 py-2 text-white text-center" style={{ width: '150px' }}>
-                                    item Sub Group
+                                  <th className="px-2 py-2 text-white text-center" style={{ width: '100px' }}>
+                                    Item Sub Group
                                   </th>
                                 </tr>
                               </thead>
@@ -410,11 +359,41 @@ const MaterialType = () => {
                                       <ActionButton
                                         title="Delete"
                                         icon={DeleteIcon}
-                                        onClick={() => handleDeleteRow(row.id)} // Call delete on click
+                                        onClick={() => handleDeleteRow(row.id)} 
                                       />
                                     </td>
                                     <td className="text-center">{index + 1}</td>
                                     <td className="border px-2 py-2">
+  <input
+    type="text"
+    value={row.itemSubGroup}
+    onChange={(e) => {
+      let value = e.target.value.toUpperCase(); 
+      value = value.replace(/[^A-Za-z0-9 -]/g, '');
+
+      setMaterialTypeData((prev) =>
+        prev.map((r) => (r.id === row.id ? { ...r, itemSubGroup: value } : r))
+      );
+
+      setMaterialDetailErrors((prev) => {
+        const newErrors = [...prev];
+        newErrors[index] = {
+          ...newErrors[index],
+          itemSubGroup: !value ? 'Item Sub Group is Required' : '',
+        };
+        return newErrors;
+      });
+    }}
+    className={materialDetailErrors[index]?.itemSubGroup ? 'error form-control' : 'form-control'}
+  />
+  {materialDetailErrors[index]?.itemSubGroup && (
+    <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+      {materialDetailErrors[index].itemSubGroup}
+    </div>
+  )}
+</td>
+
+                                    {/* <td className="border px-2 py-2">
                                       <input
                                         type="text"
                                         value={row.itemSubGroup}
@@ -437,7 +416,7 @@ const MaterialType = () => {
                                           {materialDetailErrors[index].itemSubGroup}
                                         </div>
                                       )}
-                                    </td>
+                                    </td> */}
                                   </tr>
                                 ))}
                               </tbody>
