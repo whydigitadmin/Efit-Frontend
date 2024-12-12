@@ -2,42 +2,40 @@ import ClearIcon from '@mui/icons-material/Clear';
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import { FormControl, InputLabel, Autocomplete, MenuItem, Select } from '@mui/material';
+import { FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import TextField from '@mui/material/TextField';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, FormHelperText } from '@mui/material';
-import Draggable from 'react-draggable';
-import CommonBulkUpload from 'utils/CommonBulkUpload';
-import Paper from '@mui/material/Paper';
+import { Button, FormHelperText } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import 'react-tabs/style/react-tabs.css';
 import 'react-toastify/dist/ReactToastify.css';
 import ActionButton from 'utils/ActionButton';
-import Checkbox from '@mui/material/Checkbox';
-import ToastComponent, { showToast } from 'utils/toast-component';
 import CommonTable from 'views/basicMaster/CommonTable';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
-import Box from '@mui/material/Box';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
-import apiCalls from 'apicall';
+import {Modal, Box, Typography } from '@mui/material';
+import { FaCloudUploadAlt, FaEye } from 'react-icons/fa';
+import apiCalls from 'apicall'; 
+import { showToast } from 'utils/toast-component';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import sampleFile from '../../../assets/sample-files/sample_data_buyerorder.xls';
 import CommonListViewTable from '../../basicMaster/CommonListViewTable';
 
-function PaperComponent(props) {
-  return (
-    <Draggable handle="#draggable-dialog-title" cancel={'[class*="MuiDialogContent-root"]'}>
-      <Paper {...props} />
-    </Draggable>
-  );
-}
-const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
+const VisuallyHiddenInput = ({ ...props }) => {
+  return <input type="file" style={{ display: 'none' }} {...props} />;
+};
 
-const MachineMaster = () => {
+const dummyImageURL = 'https://t3.ftcdn.net/jpg/04/62/93/66/240_F_462936689_BpEEcxfgMuYPfTaIAOC1tCDurmsno7Sp.jpg';
+
+
+function MachineMaster() {
+  const [selectedPartImgFiles, setSelectedPartImgFiles] = useState([]);
+  const [partImgUploadedFiles, setPartImgUploadedFiles] = useState([]);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [openPreviewModal, setOpenPreviewModal] = useState(false);
   const [showForm, setShowForm] = useState(true);
   const [data, setData] = useState(true);
   const [branch, setBranch] = useState(localStorage.getItem('branch'));
@@ -48,12 +46,13 @@ const MachineMaster = () => {
   const [value, setValue] = useState(0);
   const [editId, setEditId] = useState('');
   const [allAccountName, setAllAccountName] = useState([]);
+  const [department, setDepartment] = useState([]);
   const [currencies, setCurrencies] = useState([]);
   const [docId, setDocId] = useState('');
   const [selectedRows, setSelectedRows] = useState([]);
   const [formData, setFormData] = useState({
     docDate: dayjs(),
-    department:'',
+    departmentName:'',
     type:'',
     machineNo:'',
     machineName:'',
@@ -75,19 +74,18 @@ const MachineMaster = () => {
     remarks:'',
     //3rd Tab
     instrumentName:''
-    // imgAttachement:''
   });
 
   const [fieldErrors, setFieldErrors] = useState({
     docDate: dayjs(),
-    department:'',
+    departmentName:'',
     type:'',
     machineNo:'',
     machineName:'',
     calibrationRequired:'',
     location:'',
     processNo:'',
-    machinecategory:'',
+    machineCategory:'',
     section:'',
     model:'',
     serialNo:'',
@@ -101,16 +99,13 @@ const MachineMaster = () => {
     pmCheckListNo:'',
     remarks:'',
     //3rd Tab
-    instrumentName:'',
-    imgAttachement:''
+    instrumentName:''
   });
 
   const listViewColumns = [
-    { accessorKey: 'adjustmentType', header: 'Adjustment Type', size: 140 },
-    { accessorKey: 'currency', header: 'Currency', size: 140 },
-    { accessorKey: 'exRate', header: 'Ex.Rate', size: 140 },
-    { accessorKey: 'refNo', header: 'Ref No', size: 140 },
-    { accessorKey: 'docId', header: 'document No', size: 140 }
+    { accessorKey: 'docDate', header: 'Date', size: 140 },
+    { accessorKey: 'docId', header: 'Document No', size: 140 },
+    { accessorKey: 'department', header: 'Department', size: 140 }
   ];
 
   const [detailsTableData1, setDetailsTableData1] = useState([
@@ -128,7 +123,7 @@ const MachineMaster = () => {
       cussionTonnage:'',
       machineType:'',
       hourlyRate:'',
-      instrumentRate:'',
+      instrumentWt:'',
       uom:'',
       warrentyStartDate:'',
       warrentyEndDate:'',
@@ -156,7 +151,7 @@ const MachineMaster = () => {
       cussionTonnage:'',
       machineType:'',
       hourlyRate:'',
-      instrumentRate:'',
+      instrumentWt:'',
       uom:'',
       warrentyStartDate:'',
       warrentyEndDate:'',
@@ -192,40 +187,32 @@ const MachineMaster = () => {
     }
   ]);
   const [file, setFile] = useState('');
-  const [uploadOpen, setUploadOpen] = useState(false);
   const [listView, setListView] = useState(false);
   const [listViewData, setListViewData] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectAll, setSelectAll] = useState(false);
   const handleCloseModal = () => {
     setModalOpen(false);
   };
- 
-  const handleFileChange = (event) => {
-    setFile(event.target.files[0]);
-  };
 
-  const handleSaveSelectedRows = async () => {}
-  const handleSelectAll = () => {}
-  const getMachineMasterById = () => {}
   useEffect(() => {
-    
-    // getAdjustmentJournalDocId();
-    // getAllAdjustmentJournalByOrgId();
+    getMachineMasterDocId();
+    getAllMachineMasterByOrgId();
+    getMachineMasterDepartment();
     // getAllAccountName();
   }, []);
 
   const handleClear = () => {
+    setFile('')
     setFormData({
       docDate: dayjs(),
-      department:'',
+      departmentName:'',
       type:'',
       machineNo:'',
       machineName:'',
       calibrationRequired:'',
       location:'',
       processNo:'',
-      machinecategory:'',
+      machineCategory:'',
       section:'',
       model:'',
       serialNo:'',
@@ -239,12 +226,11 @@ const MachineMaster = () => {
       pmCheckListNo:'',
       remarks:'',
       //3rd Tab
-      instrumentName:'',
-      imgAttachement:''
+      instrumentName:''
     });
     setFieldErrors({
       docDate: dayjs(),
-      department:'',
+      departmentName:'',
       type:'',
       machineNo:'',
       machineName:'',
@@ -265,8 +251,7 @@ const MachineMaster = () => {
       pmCheckListNo:'',
       remarks:'',
       //3rd Tab
-      instrumentName:'',
-      imgAttachement:''
+      instrumentName:''
     });
     setDetailsTableData1([
       { id: 1,
@@ -282,7 +267,7 @@ const MachineMaster = () => {
         cussionTonnage:'',
         machineType:'',
         hourlyRate:'',
-        instrumentRate:'',
+        instrumentWt:'',
         uom:'',
         warrentyStartDate:'',
         warrentyEndDate:'',
@@ -306,37 +291,87 @@ const MachineMaster = () => {
     ]);
     setDetailsTableErrors2('');
     setEditId('');
-    getAdjustmentJournalDocId();
+    setSelectedPartImgFiles([]);
+    getMachineMasterDocId();
   };
-
   const handleInputChange = (e) => {
-    const { name, value, selectionStart, selectionEnd, type } = e.target;
+    const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
+    const codeRegex = /^[a-zA-Z0-9#_\-\/\\ ]*$/;
+    const numRegex = /^[0-9- ]*$/;
+    const nameRegex = /^[a-zA-Z- ]*$/;
     let errorMessage = '';
 
-    
-    setFieldErrors((prevErrors) => ({
-      ...prevErrors,
-      [name]: errorMessage
-    }));
-
-    if (!errorMessage) {
-      setFormData((prevFormData) => ({
-        ...prevFormData,
+    switch (name) {
+      case 'machineNo':
+      case 'machineName':
+      case 'calibrationRequired':
+      case 'location':
+      case 'processNo':
+      case 'machineCategory':
+      case 'model':
+      case 'serialNo':
+      case 'status':
+      case 'manufacturedBy':
+      case 'madeIn':
+      case 'purchasedFrom':
+      case 'modeOfPurchase':
+      case 'machineIncharge':
+      case 'machineUsedFor':
+      case 'pmCheckListNo':
+      case 'remarks':
+      case 'instrumentName':
+      case 'itemDescription ':
+      case 'unit':
+      case 'bedSizeMM':
+      case 'cussionTonnage':
+      case 'machineType':
+      case 'uom':
+      case 'year':
+      case 'frequencyOfCalibration':
+        if (!codeRegex.test(value)) {
+          errorMessage = 'Invalid Format';
+        }
+      break;
+      case 'section':
+      case 'powerConsumption':
+      case 'consumption':
+      case 'powerProduced':
+      case 'capacity':
+      case 'currentInAMPS':
+      case 'voltage':
+      case 'hourlyRate':
+      case 'instrumentWt':
+      case 'ProdQTYHr':
+      case 'piece':
+      case 'errorAllowed':
+      case 'range':
+        if (!numRegex.test(value)) {
+          errorMessage = 'Invalid Format';
+        }
+      break;
+      default:
+      break;
+    }
+    if (errorMessage) {
+      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
+    } else {
+      setFormData((prevState) => ({
+        ...prevState,
         [name]: type === 'text' || type === 'textarea' ? value.toUpperCase() : value
       }));
-
-      // Preserve cursor position for text inputs
-      if (type === 'text' || type === 'textarea') {
-        setTimeout(() => {
-          const inputElement = document.getElementsByName(name)[0];
-          if (inputElement && inputElement.setSelectionRange) {
-            inputElement.setSelectionRange(selectionStart, selectionEnd);
-          }
-        }, 0);
-      }
+      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: '' }));
     }
-  };
-
+    // Preserve cursor position for text inputs
+    if (type === 'text' || type === 'textarea') {
+      setTimeout(() => {
+        const inputElement = document.getElementsByName(name)[0];
+        if (inputElement && inputElement.setSelectionRange) {
+          inputElement.setSelectionRange(selectionStart, selectionEnd);
+        }
+      }, 0);
+    }
+  }; 
+ 
   const handleDateChange = (field, date) => {
     const formattedDate = dayjs(date);
     console.log('formattedDate', formattedDate);
@@ -366,7 +401,7 @@ const MachineMaster = () => {
       cussionTonnage:'',
       machineType:'',
       hourlyRate:'',
-      instrumentRate:'',
+      instrumentWt:'',
       uom:'',
       warrentyStartDate:'',
       warrentyEndDate:'',
@@ -393,7 +428,7 @@ const MachineMaster = () => {
         cussionTonnage:'',
         machineType:'',
         hourlyRate:'',
-        instrumentRate:'',
+        instrumentWt:'',
         uom:'',
         warrentyStartDate:'',
         warrentyEndDate:'',
@@ -425,7 +460,7 @@ const MachineMaster = () => {
         !lastRow.cussionTonnage ||
         !lastRow.machineType ||
         !lastRow.hourlyRate ||
-        !lastRow.instrumentRate ||
+        !lastRow.instrumentWt ||
         !lastRow.uom ||
         !lastRow.warrentyStartDate ||
         !lastRow.warrentyEndDate ||
@@ -447,29 +482,29 @@ const MachineMaster = () => {
         const newErrors = [...prevErrors];
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
-          installationDate: !table[table.length - 1].installationDate ? 'installationDate is required' : '',
-          powerConsumption: !table[table.length - 1].powerConsumption ? 'powerConsumption is required' : '',
-          consumption: !table[table.length - 1].consumption ? 'consumption is required' : '',
-          powerProduced: !table[table.length - 1].powerProduced ? 'powerProduced is required' : '',
-          capacity: !table[table.length - 1].capacity ? 'capacity is required' : '',
-          unit: !table[table.length - 1].unit ? 'unit is required' : '',
-          bedSizeMM: !table[table.length - 1].bedSizeMM ? 'bedSizeMM is required' : '',
-          currentInAMPS: !table[table.length - 1].currentInAMPS ? 'currentInAMPS is required' : '',
-          voltage: !table[table.length - 1].voltage ? 'voltage is required' : '',
-          cussionTonnage: !table[table.length - 1].cussionTonnage ? 'cussionTonnage is required' : '',
-          machineType: !table[table.length - 1].machineType ? 'machineType is required' : '',
-          hourlyRate: !table[table.length - 1].hourlyRate ? 'hourlyRate is required' : '',
-          instrumentRate: !table[table.length - 1].instrumentRate ? 'instrumentRate is required' : '',
-          uom: !table[table.length - 1].uom ? 'uom is required' : '',
-          warrentyStartDate: !table[table.length - 1].warrentyStartDate ? 'warrentyStartDate is required' : '',
-          warrentyEndDate: !table[table.length - 1].warrentyEndDate ? 'warrentyEndDate is required' : '',
-          lastCalibratedDate: !table[table.length - 1].lastCalibratedDate ? 'lastCalibratedDate is required' : '',
-          nextDueDate: !table[table.length - 1].nextDueDate ? 'nextDueDate is required' : '',
-          year: !table[table.length - 1].year ? 'year is required' : '',
-          range: !table[table.length - 1].range ? 'range is required' : '',
-          errorAllowed: !table[table.length - 1].errorAllowed ? 'errorAllowed is required' : '',
-          frequencyOfCalibration: !table[table.length - 1].frequencyOfCalibration ? 'frequencyOfCalibration is required' : '',
-          maintananceDate: !table[table.length - 1].maintananceDate ? 'maintananceDate is required' : '',
+          installationDate: !table[table.length - 1].installationDate ? 'InstallationDate is required' : '',
+          powerConsumption: !table[table.length - 1].powerConsumption ? 'Power Consumption is required' : '',
+          consumption: !table[table.length - 1].consumption ? 'Consumption is required' : '',
+          powerProduced: !table[table.length - 1].powerProduced ? 'Power Produced is required' : '',
+          capacity: !table[table.length - 1].capacity ? 'Capacity is required' : '',
+          unit: !table[table.length - 1].unit ? 'Unit is required' : '',
+          bedSizeMM: !table[table.length - 1].bedSizeMM ? 'Bed Size MM is required' : '',
+          currentInAMPS: !table[table.length - 1].currentInAMPS ? 'Current In AMPS is required' : '',
+          voltage: !table[table.length - 1].voltage ? 'Voltage is required' : '',
+          cussionTonnage: !table[table.length - 1].cussionTonnage ? 'Cussion Tonnage is required' : '',
+          machineType: !table[table.length - 1].machineType ? 'Machine Type is required' : '',
+          hourlyRate: !table[table.length - 1].hourlyRate ? 'Hourly Rate is required' : '',
+          instrumentWt: !table[table.length - 1].instrumentWt ? 'Instrument Wt is required' : '',
+          uom: !table[table.length - 1].uom ? 'UOM is required' : '',
+          warrentyStartDate: !table[table.length - 1].warrentyStartDate ? 'Warrenty Start Date is required' : '',
+          warrentyEndDate: !table[table.length - 1].warrentyEndDate ? 'Warrenty End Date is required' : '',
+          lastCalibratedDate: !table[table.length - 1].lastCalibratedDate ? 'Last Calibrated Date is required' : '',
+          nextDueDate: !table[table.length - 1].nextDueDate ? 'Next Due Date is required' : '',
+          year: !table[table.length - 1].year ? 'Year is required' : '',
+          range: !table[table.length - 1].range ? 'Range is required' : '',
+          errorAllowed: !table[table.length - 1].errorAllowed ? 'Error Allowed is required' : '',
+          frequencyOfCalibration: !table[table.length - 1].frequencyOfCalibration ? 'Frequency Of Calibration is required' : '',
+          maintananceDate: !table[table.length - 1].maintananceDate ? 'Maintanance Date is required' : '',
         };
         return newErrors;
       });
@@ -513,8 +548,7 @@ const MachineMaster = () => {
         !lastRow.piece ||
         !lastRow.ProdQTYHr ||
         !lastRow.operationName ||
-        !lastRow.remarks 
-        // !lastRow.debitBase
+        !lastRow.remarks
       );
     }
     return false;
@@ -526,12 +560,12 @@ const MachineMaster = () => {
         const newErrors = [...prevErrors];
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
-          itemId: !table[table.length - 1].itemId ? 'itemId is required' : '',
-          itemDescription: !table[table.length - 1].itemDescription ? 'itemDescription is required' : '',
-          piece: !table[table.length - 1].piece ? 'piece is required' : '',
-          ProdQTYHr: !table[table.length - 1].ProdQTYHr ? 'ProdQTYHr is required' : '',
-          operationName: !table[table.length - 1].operationName ? 'operationName is required' : '',
-          remarks: !table[table.length - 1].remarks ? 'remarks is required' : ''
+          itemId: !table[table.length - 1].itemId ? 'Item Id is required' : '',
+          itemDescription: !table[table.length - 1].itemDescription ? 'Item Description is required' : '',
+          piece: !table[table.length - 1].piece ? 'Piece is required' : '',
+          ProdQTYHr: !table[table.length - 1].ProdQTYHr ? 'Prod QTY Hr is required' : '',
+          operationName: !table[table.length - 1].operationName ? 'Operation Name is required' : '',
+          remarks: !table[table.length - 1].remarks ? 'Remarks is required' : ''
         };
         return newErrors;
       });
@@ -554,8 +588,8 @@ const MachineMaster = () => {
 
   const handleSave = async () => {
     const errors = {};
-    if (!formData.department) {
-      errors.department = 'Department is required';
+    if (!formData.departmentName) {
+      errors.departmentName = 'Department is required';
     }
     if (!formData.type) {
       errors.type = 'Type is required';
@@ -570,98 +604,112 @@ const MachineMaster = () => {
       errors.madeIn = 'Made In is required';
     }
     
-
-    let detailTableDataValid1 = true;
-    const newTableErrors1 = detailsTableData1.map((row) => {
-      const rowErrors = {};
-      if (!row.accountName) {
-        rowErrors.accountName = 'Account Name is required';
-        detailTableDataValid1 = false;
-      }
-      if (!row.subLedgerCode) {
-        rowErrors.subLedgerCode = 'Sub Ledger Code is required';
-        detailTableDataValid1 = false;
-      }
-      if (!row.subledgerName) {
-        rowErrors.subledgerName = 'Sub ledger Name is required';
-        detailTableDataValid1 = false;
-      }
-      if (!row.debitAmount) {
-        rowErrors.debitAmount = 'Debit Amount is required';
-        detailTableDataValid1 = false;
-      }
-      if (!row.creditAmount) {
-        rowErrors.creditAmount = 'Credit Amount is required';
-        detailTableDataValid1 = false;
-      }
-      if (!row.creditBase) {
-        rowErrors.creditBase = 'Credit Base is required';
-        detailTableDataValid1 = false;
-      }
-      if (!row.debitBase) {
-        rowErrors.debitBase = 'Debit Base is required';
-        detailTableDataValid1 = false;
-      }
-      return rowErrors;
-    });
-    let detailTableDataValid2 = true;
-    const newTableErrors2 = detailsTableData1.map((row) => {
-      const rowErrors = {};
-      if (!row.accountName) {
-        rowErrors.accountName = 'Account Name is required';
-        detailTableDataValid2 = false;
-      }
-      if (!row.subLedgerCode) {
-        rowErrors.subLedgerCode = 'Sub Ledger Code is required';
-        detailTableDataValid2 = false;
-      }
-      if (!row.subledgerName) {
-        rowErrors.subledgerName = 'Sub ledger Name is required';
-        detailTableDataValid2 = false;
-      }
-      if (!row.debitAmount) {
-        rowErrors.debitAmount = 'Debit Amount is required';
-        detailTableDataValid2 = false;
-      }
-      if (!row.creditAmount) {
-        rowErrors.creditAmount = 'Credit Amount is required';
-        detailTableDataValid2 = false;
-      }
-      if (!row.creditBase) {
-        rowErrors.creditBase = 'Credit Base is required';
-        detailTableDataValid2 = false;
-      }
-      if (!row.debitBase) {
-        rowErrors.debitBase = 'Debit Base is required';
-        detailTableDataValid2 = false;
-      }
-      return rowErrors;
-    });
+    // let detailTableDataValid1 = true;
+    // const newTableErrors1 = detailsTableData1.map((row) => {
+    //   const rowErrors = {};
+    //   if (!row.accountName) {
+    //     rowErrors.accountName = 'Account Name is required';
+    //     detailTableDataValid1 = false;
+    //   }
+    //   if (!row.subLedgerCode) {
+    //     rowErrors.subLedgerCode = 'Sub Ledger Code is required';
+    //     detailTableDataValid1 = false;
+    //   }
+    //   if (!row.subledgerName) {
+    //     rowErrors.subledgerName = 'Sub ledger Name is required';
+    //     detailTableDataValid1 = false;
+    //   }
+    //   if (!row.debitAmount) {
+    //     rowErrors.debitAmount = 'Debit Amount is required';
+    //     detailTableDataValid1 = false;
+    //   }
+    //   if (!row.creditAmount) {
+    //     rowErrors.creditAmount = 'Credit Amount is required';
+    //     detailTableDataValid1 = false;
+    //   }
+    //   if (!row.creditBase) {
+    //     rowErrors.creditBase = 'Credit Base is required';
+    //     detailTableDataValid1 = false;
+    //   }
+    //   if (!row.debitBase) {
+    //     rowErrors.debitBase = 'Debit Base is required';
+    //     detailTableDataValid1 = false;
+    //   }
+    //   return rowErrors;
+    // });
+    // let detailTableDataValid2 = true;
+    // const newTableErrors2 = detailsTableData1.map((row) => {
+    //   const rowErrors = {};
+    //   if (!row.accountName) {
+    //     rowErrors.accountName = 'Account Name is required';
+    //     detailTableDataValid2 = false;
+    //   }
+    //   if (!row.subLedgerCode) {
+    //     rowErrors.subLedgerCode = 'Sub Ledger Code is required';
+    //     detailTableDataValid2 = false;
+    //   }
+    //   if (!row.subledgerName) {
+    //     rowErrors.subledgerName = 'Sub ledger Name is required';
+    //     detailTableDataValid2 = false;
+    //   }
+    //   if (!row.debitAmount) {
+    //     rowErrors.debitAmount = 'Debit Amount is required';
+    //     detailTableDataValid2 = false;
+    //   }
+    //   if (!row.creditAmount) {
+    //     rowErrors.creditAmount = 'Credit Amount is required';
+    //     detailTableDataValid2 = false;
+    //   }
+    //   if (!row.creditBase) {
+    //     rowErrors.creditBase = 'Credit Base is required';
+    //     detailTableDataValid2 = false;
+    //   }
+    //   if (!row.debitBase) {
+    //     rowErrors.debitBase = 'Debit Base is required';
+    //     detailTableDataValid2 = false;
+    //   }
+    //   return rowErrors;
+    // });
     setFieldErrors(errors);
-    setDetailsTableErrors1(newTableErrors1);
-    setDetailsTableErrors2(newTableErrors2);
+    // setDetailsTableErrors1(newTableErrors1);
+    // setDetailsTableErrors2(newTableErrors2);
 
-    if (Object.keys(errors).length === 0 && (detailTableDataValid2 && detailTableDataValid1) ) {
-          const AdjustmentVO = detailsTableData1.map((row) => ({
+    if (Object.keys(errors).length === 0) {
+          const MachineMasterVO1 = detailsTableData1.map((row) => ({
             ...(editId && { id: row.id }),
-            accountsName: row.accountName,
-            creditAmount: parseInt(row.creditAmount),
-            debitAmount: parseInt(row.debitAmount),
-            debitBase: parseInt(row.debitBase),
-            creditBase: parseInt(row.creditBase),
-            subLedgerCode: row.subLedgerCode,
-            subledgerName: row.subledgerName
-      }));
-      const AdjustmentJournalVO = detailsTableData2.map((row) => ({
+            bedSize: row.bedSizeMM,
+            capacity: parseInt(row.capacity),
+            consumption: parseInt(row.consumption),
+            currentInAmps: parseInt(row.currentInAMPS),
+            hourlyRate: parseInt(row.hourlyRate),
+            instrumentWt: parseInt(row.instrumentWt),
+            powerConsumption: parseInt(row.powerConsumption),
+            powerProduced: parseInt(row.powerProduced),
+            voltage: parseInt(row.voltage),
+            installationDate: dayjs(row.installationDate).format('YYYY-MM-DD'),
+            lastCalibratedDate: dayjs(row.lastCalibratedDate).format('YYYY-MM-DD'),
+            maintenanceDate: dayjs(row.maintananceDate).format('YYYY-MM-DD'),
+            nextDueDate: dayjs(row.nextDueDate).format('YYYY-MM-DD'),
+            warrantyEndDate: dayjs(row.warrentyEndDate).format('YYYY-MM-DD'),
+            warrantyStDate: dayjs(row.warrentyStartDate).format('YYYY-MM-DD'),
+            cushionTonnage: row.cussionTonnage,
+            errorAllowed: row.errorAllowed,
+            frequenceOfCalibration: row.frequencyOfCalibration,
+            machineType: row.machineType,
+            rangeInfo: row.range,
+            unit: row.unit,
+            uom: row.uom,
+            lifeCycle: row.year
+    }));
+      const MachineMasterVO2 = detailsTableData2.map((row) => ({
         ...(editId && { id: row.id }),
-        accountsName: row.accountName,
-        creditAmount: parseInt(row.creditAmount),
-        debitAmount: parseInt(row.debitAmount),
-        debitBase: parseInt(row.debitBase),
-        creditBase: parseInt(row.creditBase),
-        subLedgerCode: row.subLedgerCode,
-        subledgerName: row.subledgerName
-  }));
+        cycleTime: row.piece,
+        prodQtyHr: parseInt(row.ProdQTYHr),
+        itemDescription: row.itemDescription,
+        itemId: row.itemId,
+        operationName: row.operationName,
+        remarks: row.remarks,
+      }));
       const saveFormData = {
         ...(editId && { id: editId }),
         branch: branch,
@@ -669,96 +717,176 @@ const MachineMaster = () => {
               createdBy: loginUserName,
               finYear: finYear,
               orgId: orgId,
-              accountParticularsDTO: AdjustmentJournalVO,
-              adjustmentType: formData.adjustmentType,
-              currency: formData.currency,
-              exRate: parseInt(formData.exRate),
-              refDate: dayjs(formData.refDate).format('YYYY-MM-DD'),
-              refNo: formData.refNo,
-              suppRefDate: dayjs(formData.suppRefDate).format('YYYY-MM-DD'),
-              suppRefNo: formData.suppRefNo,
-              remarks: formData.remarks
+              machineMasterDTO1: MachineMasterVO1,
+              machineMasterDTO2: MachineMasterVO2,
+              calibrationRequired: formData.calibrationRequired === "yes" ? true : false,
+              department: formData.departmentName,
+              // refDate: dayjs(formData.refDate).format('YYYY-MM-DD'),
+              location: formData.location,
+              // suppRefDate: dayjs(formData.suppRefDate).format('YYYY-MM-DD'),
+              machineCategory: formData.machineCategory,
+              machineIncharge: formData.machineIncharge,
+              machineName: formData.machineName,
+              machineNo: formData.machineNo,
+              machineUsedFor: formData.machineUsedFor,
+              madeIn: formData.madeIn,
+              manufacturedBy: formData.manufacturedBy,
+              modeOfPurchase: formData.modeOfPurchase,
+              model: formData.model,
+              pmCheckListNo: formData.pmCheckListNo,
+              processNo: formData.processNo,
+              purchasedFrom: formData.purchasedFrom,
+              remarks: formData.remarks,
+              section: parseInt(formData.section),
+              serialNo: formData.serialNo,
+              status: formData.status,
+              type: formData.type,
+              instrumentName: formData.instrumentName
+              
       };
       console.log('DATA TO SAVE IS:', saveFormData);
       try {
-              const response = await apiCalls('put', `transaction/updateCreateAdjustmentJournal`, saveFormData);
+              const response = await apiCalls('put', `/machinemaster/updateCreateMachineMaster`, saveFormData);
               if (response.status === true) {
                 console.log('Response:', response);
-                showToast('success', editId ? 'Adjustment Journal Updated Successfully' : 'Adjustment Journal Created successfully');
-                getAllAdjustmentJournalByOrgId();
+                showToast('success', editId ? 'Machine Master Updated Successfully' : 'Machine Master Created successfully');
+                // Extract the generated ID
+                const generatedId = response.paramObjectsMap.machineMasterVO.id;
+                console.log('Id',response.paramObjectsMap.machineMasterVO.id);
+                if (generatedId && selectedPartImgFiles.length > 0) {
+                  console.log('Generated ID:', generatedId);
+
+                  // Wait for the file upload to complete
+                  await handleFileUpload(generatedId);
+                } else {
+                  console.log('handleFileUpload failed');
+                } 
+                getAllMachineMasterByOrgId();
                 handleClear();
               } else {
-                showToast('error', response.paramObjectsMap.message || 'Adjustment Journal creation failed');
+                showToast('error', response.paramObjectsMap.message || 'Machine Master creation failed');
               }
             } catch (error) {
               console.error('Error:', error);
-              showToast('error', 'Adjustment Journal creation failed');
+              showToast('error', 'Machine Master creation failed');
             }
     } else {
       setFieldErrors(errors);
     }
   };
-  const getAdjustmentJournalDocId = async () => {
+  const getMachineMasterDocId = async () => {
     try {
       const response = await apiCalls(
         'get',
-        `/transaction/getAdjustmentJournalDocId?branchCode=${branchCode}&branch=${branch}&finYear=${finYear}&orgId=${orgId}`
+        `/machinemaster/getMachineMasterDocId?orgId=${orgId}`
       );
-      setDocId(response.paramObjectsMap.adjustmentJournalDocId);
+      setDocId(response.paramObjectsMap.machineMasterDocId);
+    } catch (error) {
+      console.error('Error fetching in Machine Master Doc Id :', error);
+    }
+  };
+
+  const getMachineMasterDepartment = async () => {
+    try {
+      const response = await apiCalls(
+        'get',
+        `/issuetosubcontractor/getDepartmentName?orgId=${orgId}`
+      );
+      setDepartment(response.paramObjectsMap.routeCardVO);
     } catch (error) {
       console.error('Error fetching gate passes:', error);
     }
   };
 
-  const getAllAdjustmentJournalByOrgId = async () => {
+  const getAllMachineMasterByOrgId = async () => {
     try {
-      const result = await apiCalls('get', `/transaction/getAllAdjustmentJournalByOrgId?orgId=${orgId}`);
-      setData(result.paramObjectsMap.adjustmentJournalVO || []);
+      const result = await apiCalls('get', `/machinemaster/getAllMachineMasterByOrgId?orgId=${orgId}`);
+      setData(result.paramObjectsMap.machineMasterVO || []);
       // showForm(true);
-      console.log('adjustmentJournalVO', result);
+      console.log('machineMasterVO', result);
     } catch (err) {
       console.log('error', err);
     }
   };
 
-  const getAllAdjustmentJournalById = async (row) => {
+  const getAllMachineMasterById = async (row) => {
     console.log('first', row);
     setShowForm(true);
     try {
-      const result = await apiCalls('get', `/transaction/getAdjustmentJournalById?id=${row.original.id}`);
+      const result = await apiCalls('get', `/machinemaster/getAllMachineMasterById?id=${row.original.id}`);
 
       if (result) {
-        const adVO = result.paramObjectsMap.adjustmentJournalVO[0];
+        const mmVO = result.paramObjectsMap.machineMasterVO;
+        console.log("Machine Master VO",result.paramObjectsMap.machineMasterVO);
         setEditId(row.original.id);
-        setDocId(adVO.docId);
+        setDocId(mmVO.docId);
         setFormData({
-          docDate: adVO.docDate ? dayjs(adVO.docDate, 'YYYY-MM-DD') : dayjs(),
-          adjustmentType: adVO.adjustmentType,
-          currency: adVO.currency,
-          exRate: adVO.exRate,
-          refNo: adVO.refNo,
-          refDate: adVO.refDate ? dayjs(adVO.refDate, 'YYYY-MM-DD') : dayjs(),
-          suppRefNo: adVO.suppRefNo,
-          suppRefDate: adVO.suppRefDate ? dayjs(adVO.refDate, 'YYYY-MM-DD') : dayjs(),
-          remarks: adVO.remarks,
-          orgId: adVO.orgId,
-          totalDebitAmount: adVO.totalDebitAmount,
-          totalCreditAmount: adVO.totalCreditAmount
+          docDate: mmVO.docDate ? dayjs(mmVO.docDate, 'YYYY-MM-DD') : dayjs(),
+          calibrationRequired: mmVO.calibrationRequired,
+          departmentName: mmVO.department,
+          location: mmVO.location,
+          machineCategory: mmVO.machineCategory,
+          machineIncharge: mmVO.machineIncharge,
+          orgId: mmVO.orgId,
+          machineName: mmVO.machineName,
+          machineNo: mmVO.machineNo,
+          machineUsedFor: mmVO.machineUsedFor,
+          madeIn: mmVO.madeIn,
+          manufacturedBy: mmVO.manufacturedBy,
+          modeOfPurchase: mmVO.modeOfPurchase,
+          model: mmVO.model,
+          pmCheckListNo: mmVO.pmCheckListNo,
+          processNo: mmVO.processNo,
+          purchasedFrom: mmVO.purchasedFrom,
+          remarks: mmVO.remarks,
+          section: mmVO.section,
+          serialNo: mmVO.serialNo,
+          status: mmVO.status,
+          type: mmVO.type,
+          instrumentName: mmVO.instrumentName,
+          selectedPartImgFiles: mmVO.attachements
         });
         setDetailsTableData1(
-          adVO.accountParticularsVO.map((row) => ({
+          mmVO.machineMasterVO1.map((row) => ({
             id: row.id,
-            accountName: row.accountsName,
-            creditAmount: row.creditAmount,
-            debitAmount: row.debitAmount,
-            debitBase: row.debitBase,
-            creditBase: row.creditBase,
-            subLedgerCode: row.subLedgerCode,
-            subledgerName: row.subledgerName
+            bedSizeMM: row.bedSize,
+            capacity: row.capacity,
+            consumption: row.consumption ,
+            currentInAMPS: row.currentInAmps,
+            cussionTonnage: row.cushionTonnage,
+            errorAllowed: row.errorAllowed,
+            frequencyOfCalibration: row.frequenceOfCalibration,
+            hourlyRate: row.hourlyRate,
+            installationDate: row.installationDate,
+            instrumentWt: row.instrumentWt,
+            lastCalibratedDate: row.lastCalibratedDate,
+            year: row.lifeCycle,
+            machineType: row.machineType,
+            maintananceDate: row.maintenanceDate,
+            nextDueDate: row.nextDueDate,
+            powerConsumption: row.powerConsumption,
+            powerProduced: row.powerProduced,
+            range: row.rangeInfo,
+            unit: row.unit,
+            uom: row.uom,
+            voltage: row.voltage,
+            warrentyEndDate: row.warrantyEndDate,
+            warrentyStartDate: row.warrantyStDate
           }))
         );
-
-        console.log('DataToEdit', adVO);
+        setDetailsTableData2(
+          mmVO.machineMasterVO2.map((row) => ({
+            id: row.id,
+            piece: row.cycleTime,
+            itemDescription: row.itemDescription,
+            itemId: row.itemId ,
+            operationName: row.operationName,
+            ProdQTYHr: row.prodQtyHr,
+            remarks: row.remarks
+          }))
+        );
+        
+        console.log('DataToEdit', mmVO);
       } else {
         // Handle erro
       }
@@ -767,42 +895,66 @@ const MachineMaster = () => {
     }
   };
 
+  const handleFileUpload = async (generatedId) => {
+    if (!generatedId) {
+      console.warn('Generated ID is missing');
+      showToast('error', 'Generated ID is required');
+      return;
+    }
 
-  const handleBulkUploadOpen = () => {
-    setUploadOpen(true); // Open dialog
+    // Prepare FormData
+    const formData = new FormData();
+    for (let i = 0; i < partImgUploadedFiles.length; i++) {
+      formData.append('file', partImgUploadedFiles[i]);
+    }
+
+    try {
+      // Make the API call using the apiCalls helper function
+      const response = await apiCalls(
+        'post',
+        `/machinemaster/uploadMachineAttachementsInBloob?id=${generatedId}`,
+        formData,
+        {},
+        { 'Content-Type': 'multipart/form-data' } 
+      );
+
+      console.log('File Upload Response:', response);
+
+      if (response.status === true) {
+        showToast('success', response.message || 'File uploaded successfully!');
+      } else {
+        console.warn('File upload failed:', response);
+        showToast('error', 'File upload failed');
+      }
+    } catch (error) {
+      console.error('File Upload Error:', error);
+      showToast('error', 'Failed to upload file');
+    }
   };
 
-  const handleBulkUploadClose = () => {
-    setUploadOpen(false); // Close dialog
-  };
-  const handleBulkUploadOpen1 = () => {
-    setUploadOpen(true); // Open dialog
-  };
-
-  const handleBulkUploadClose1 = () => {
-    setUploadOpen(false); // Close dialog
-  };
-
-  const handleFileUpload = (event) => {
-    console.log(event.target.files[0]);
-  };
-  const handleFileUpload1 = (event) => {
-    console.log(event.target.files[0]);
+  const handlePartImgFileUpload = (files) => {
+    console.log('Test');
+    setPartImgUploadedFiles(files);
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+    }
+    const fileNames = Array.from(files).map((file) => file.name);
+    setSelectedPartImgFiles(fileNames);
   };
 
-  const handleSubmit = () => {
-    console.log('Submit clicked');
-    handleBulkUploadClose();
-  };
-  const handleSubmit1 = () => {
-    console.log('Submit clicked');
-    handleBulkUploadClose();
+  const handlePreview = (file) => {
+    setSelectedFile(file);
+    setOpenPreviewModal(true);
   };
 
+  // const handleCloseModal = () => {
+  //   setOpenPreviewModal(false);
+  //   setSelectedFile(null);
+  // };
   return (
     <>
       <div>
-        <ToastComponent />
+        {/* <ToastComponent /> */}
       </div>
       <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px' }}>
         <div className="row d-flex ml">
@@ -812,7 +964,6 @@ const MachineMaster = () => {
             <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} />
             <ActionButton title="Save" icon={SaveIcon} onClick={handleSave} />
           </div>
-
           {showForm ? (
             <>
               <div className="row d-flex ml">
@@ -832,7 +983,6 @@ const MachineMaster = () => {
                     </LocalizationProvider>
                   </FormControl>
                 </div>
-
                 <div className="col-md-3 mb-3">
                   <TextField
                     id="docId"
@@ -848,29 +998,29 @@ const MachineMaster = () => {
                   />
                 </div>
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.department}>
-                    <InputLabel id="department">
+                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.departmentName}>
+                    <InputLabel id="departmentName">
                       {
                         <span>
-                          Department <span className="asterisk">*</span>
+                          Department<span className="asterisk">*</span>
                         </span>
                       }
                     </InputLabel>
                     <Select
-                      labelId="department"
-                      id="department"
-                      label="department"
+                      labelId="departmentName"
+                      label="Department"
+                      id="departmentName"
                       onChange={handleInputChange}
-                      name="department"
-                      value={formData.department}
+                      name="departmentName"
+                      value={formData.departmentName}
                     >
-                      {currencies.map((item) => (
-                        <MenuItem key={item.id} value={item.department}>
-                          {item.department}
+                      {department.map((item) => (
+                        <MenuItem key={item.id} value={item.departmentName}>
+                          {item.departmentName}
                         </MenuItem>
                       ))}
                     </Select>
-                    {fieldErrors.department && <FormHelperText style={{ color: 'red' }}>Department is required</FormHelperText>}
+                    {fieldErrors.departmentName && <FormHelperText style={{ color: 'red' }}>Department is required</FormHelperText>}
                   </FormControl>
                 </div>
                 <div className="col-md-3 mb-3">
@@ -885,17 +1035,18 @@ const MachineMaster = () => {
                     <Select
                       labelId="type"
                       id="type"
-                      label="type"
+                      label="Type"
                       onChange={handleInputChange}
                       name="type"
                       value={formData.type}
                     >
-                      {currencies.map((item) => (
-                        <MenuItem key={item.id} value={item.type}>
-                          {item.type}
-                        </MenuItem>
-                      ))}
-                    </Select>
+                      <MenuItem key="cnc" value="CNC">
+                        CNC
+                      </MenuItem>
+                      <MenuItem key="vmc" value="VMC">
+                        VMC
+                      </MenuItem>
+                    </Select> 
                     {fieldErrors.type && <FormHelperText style={{ color: 'red' }}>Type is required</FormHelperText>}
                   </FormControl>
                 </div>
@@ -1205,27 +1356,12 @@ const MachineMaster = () => {
                       <div className="row d-flex ml">
                         <div className="mb-1">
                           <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow1} />
-                          <ActionButton title="Upload" icon={CloudUploadIcon} onClick={handleBulkUploadOpen} />
                         </div>
-                        {uploadOpen && (
-          <CommonBulkUpload
-            open={uploadOpen}
-            handleClose={handleBulkUploadClose}
-            title="Upload Files"
-            uploadText="Upload file"
-            downloadText="Sample File"
-            onSubmit={handleSubmit}
-            sampleFileDownload={sampleFile}
-            handleFileUpload={handleFileUpload}
-            // apiUrl={`buyerOrder/ExcelUploadForBuyerOrder?branch=${loginBranch}&branchCode=${loginBranchCode}&client=${loginClient}&createdBy=${loginUserName}&customer=${loginCustomer}&finYear=${loginFinYear}&orgId=${orgId}&type=DOC&warehouse=${loginWarehouse}`}
-            screen="Machine Master"
-          ></CommonBulkUpload>
-        )}
-        {listView ? (
-          <div className="mt-4">
-            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getMachineMasterById} />
-          </div>
-          ) : (
+                        {listView ? (
+                          <div className="mt-4">
+                            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getAllMachineMasterById} />
+                          </div>
+                          ) : (
                         <div className="row mt-2">
                           <div className="col-lg-12">
                             <div className="table-responsive">
@@ -1284,6 +1420,7 @@ const MachineMaster = () => {
                                         <input
                                           type="date"
                                           value={row.installationDate}
+                                          style={{ width: '200px' }}
                                           onChange={(e) => {
                                             const date = e.target.value;
 
@@ -1314,6 +1451,7 @@ const MachineMaster = () => {
                                       <td className="border px-2 py-2">
                                         <input
                                           value={row.powerConsumption}
+                                          style={{ width: '150px' }}
                                           onChange={(e) => {
                                             const value = e.target.value;
                                             setDetailsTableData1((prev) =>
@@ -1339,6 +1477,7 @@ const MachineMaster = () => {
                                       <td className="border px-2 py-2">
                                         <input
                                           value={row.consumption}
+                                          style={{ width: '150px' }}
                                           onChange={(e) => {
                                             const value = e.target.value;
                                             setDetailsTableData1((prev) =>
@@ -1364,6 +1503,7 @@ const MachineMaster = () => {
                                       <td className="border px-2 py-2">
                                         <input
                                           value={row.powerProduced}
+                                          style={{ width: '150px' }}
                                           onChange={(e) => {
                                             const value = e.target.value;
                                             setDetailsTableData1((prev) =>
@@ -1389,6 +1529,7 @@ const MachineMaster = () => {
                                       <td className="border px-2 py-2">
                                         <input
                                           value={row.capacity}
+                                          style={{ width: '150px' }}
                                           onChange={(e) => {
                                             const value = e.target.value;
                                             setDetailsTableData1((prev) =>
@@ -1413,6 +1554,7 @@ const MachineMaster = () => {
                                       </td><td className="border px-2 py-2">
                                         <input
                                           value={row.unit}
+                                          style={{ width: '150px' }}
                                           onChange={(e) => {
                                             const value = e.target.value;
                                             setDetailsTableData1((prev) =>
@@ -1437,6 +1579,7 @@ const MachineMaster = () => {
                                       </td><td className="border px-2 py-2">
                                         <input
                                           value={row.bedSizeMM}
+                                          style={{ width: '150px' }}
                                           onChange={(e) => {
                                             const value = e.target.value;
                                             setDetailsTableData1((prev) =>
@@ -1461,6 +1604,7 @@ const MachineMaster = () => {
                                       </td><td className="border px-2 py-2">
                                         <input
                                           value={row.currentInAMPS}
+                                          style={{ width: '150px' }}
                                           onChange={(e) => {
                                             const value = e.target.value;
                                             setDetailsTableData1((prev) =>
@@ -1485,6 +1629,7 @@ const MachineMaster = () => {
                                       </td><td className="border px-2 py-2">
                                         <input
                                           value={row.voltage}
+                                          style={{ width: '150px' }}
                                           onChange={(e) => {
                                             const value = e.target.value;
                                             setDetailsTableData1((prev) =>
@@ -1509,6 +1654,7 @@ const MachineMaster = () => {
                                       </td><td className="border px-2 py-2">
                                         <input
                                           value={row.cussionTonnage}
+                                          style={{ width: '150px' }}
                                           onChange={(e) => {
                                             const value = e.target.value;
                                             setDetailsTableData1((prev) =>
@@ -1533,6 +1679,7 @@ const MachineMaster = () => {
                                       </td><td className="border px-2 py-2">
                                         <input
                                           value={row.machineType}
+                                          style={{ width: '150px' }}
                                           onChange={(e) => {
                                             const value = e.target.value;
                                             setDetailsTableData1((prev) =>
@@ -1557,6 +1704,7 @@ const MachineMaster = () => {
                                       </td><td className="border px-2 py-2">
                                         <input
                                           value={row.hourlyRate}
+                                          style={{ width: '150px' }}
                                           onChange={(e) => {
                                             const value = e.target.value;
                                             setDetailsTableData1((prev) =>
@@ -1580,31 +1728,33 @@ const MachineMaster = () => {
                                         )}
                                       </td><td className="border px-2 py-2">
                                         <input
-                                          value={row.instrumentRate}
+                                          value={row.instrumentWt}
+                                          style={{ width: '150px' }}
                                           onChange={(e) => {
                                             const value = e.target.value;
                                             setDetailsTableData1((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, instrumentRate: value } : r))
+                                              prev.map((r) => (r.id === row.id ? { ...r, instrumentWt: value } : r))
                                             );
                                             setDetailsTableErrors1((prev) => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                instrumentRate: !value ? 'Instrument Rate is required' : ''
+                                                instrumentWt: !value ? 'Instrument Wt is required' : ''
                                               };
                                               return newErrors;
                                             });
                                           }}
-                                          className={detailsTableErrors1[index]?.instrumentRate ? 'error form-control' : 'form-control'}
+                                          className={detailsTableErrors1[index]?.instrumentWt ? 'error form-control' : 'form-control'}
                                         />
-                                        {detailsTableErrors1[index]?.instrumentRate && (
+                                        {detailsTableErrors1[index]?.instrumentWt && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors1[index].instrumentRate}
+                                            {detailsTableErrors1[index].instrumentWt}
                                           </div>
                                         )}
                                       </td><td className="border px-2 py-2">
                                         <input
                                           value={row.uom}
+                                          style={{ width: '150px' }}
                                           onChange={(e) => {
                                             const value = e.target.value;
                                             setDetailsTableData1((prev) =>
@@ -1630,6 +1780,7 @@ const MachineMaster = () => {
                                       <td>
                                         <input
                                           type="date"
+                                          style={{ width: '200px' }}
                                           value={row.warrentyStartDate}
                                           onChange={(e) => {
                                             const date = e.target.value;
@@ -1662,6 +1813,7 @@ const MachineMaster = () => {
                                       <td>
                                         <input
                                           type="date"
+                                          style={{ width: '200px' }}
                                           value={row.warrentyEndDate}
                                           onChange={(e) => {
                                             const date = e.target.value;
@@ -1693,6 +1845,7 @@ const MachineMaster = () => {
                                       </td> <td>
                                         <input
                                           type="date"
+                                          style={{ width: '200px' }}
                                           value={row.lastCalibratedDate}
                                           onChange={(e) => {
                                             const date = e.target.value;
@@ -1724,6 +1877,7 @@ const MachineMaster = () => {
                                       </td> <td>
                                         <input
                                           type="date"
+                                          style={{ width: '200px' }}
                                           value={row.nextDueDate}
                                           onChange={(e) => {
                                             const date = e.target.value;
@@ -1757,6 +1911,7 @@ const MachineMaster = () => {
                                       <td className="border px-2 py-2">
                                         <input
                                           value={row.year}
+                                          style={{ width: '150px' }}
                                           onChange={(e) => {
                                             const value = e.target.value;
                                             setDetailsTableData1((prev) =>
@@ -1781,6 +1936,7 @@ const MachineMaster = () => {
                                       </td><td className="border px-2 py-2">
                                         <input
                                           value={row.range}
+                                          style={{ width: '150px' }}
                                           onChange={(e) => {
                                             const value = e.target.value;
                                             setDetailsTableData1((prev) =>
@@ -1805,6 +1961,7 @@ const MachineMaster = () => {
                                       </td><td className="border px-2 py-2">
                                         <input
                                           value={row.errorAllowed}
+                                          style={{ width: '150px' }}
                                           onChange={(e) => {
                                             const value = e.target.value;
                                             setDetailsTableData1((prev) =>
@@ -1829,6 +1986,7 @@ const MachineMaster = () => {
                                       </td><td className="border px-2 py-2">
                                         <input
                                           value={row.frequencyOfCalibration}
+                                          style={{ width: '150px' }}
                                           onChange={(e) => {
                                             const value = e.target.value;
                                             setDetailsTableData1((prev) =>
@@ -1854,6 +2012,7 @@ const MachineMaster = () => {
                                       <td>
                                         <input
                                           type="date"
+                                          style={{ width: '200px' }}
                                           value={row.maintananceDate}
                                           onChange={(e) => {
                                             const date = e.target.value;
@@ -1899,28 +2058,13 @@ const MachineMaster = () => {
                     <>
                     <div className="row d-flex ml">
                       <div className="mb-1">
-                        <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow1} />
-                        <ActionButton title="Upload" icon={CloudUploadIcon} onClick={handleBulkUploadOpen1} />
+                        <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow2} />
                       </div>
-                      {uploadOpen && (
-          <CommonBulkUpload
-            open={uploadOpen}
-            handleClose={handleBulkUploadClose1}
-            title="Upload Files"
-            uploadText="Upload file"
-            downloadText="Sample File"
-            onSubmit={handleSubmit1}
-            sampleFileDownload={sampleFile}
-            handleFileUpload={handleFileUpload1}
-            // apiUrl={`buyerOrder/ExcelUploadForBuyerOrder?branch=${loginBranch}&branchCode=${loginBranchCode}&client=${loginClient}&createdBy=${loginUserName}&customer=${loginCustomer}&finYear=${loginFinYear}&orgId=${orgId}&type=DOC&warehouse=${loginWarehouse}`}
-            screen="Machine Master"
-          ></CommonBulkUpload>
-        )}
-        {listView ? (
-          <div className="mt-4">
-            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getMachineMasterById} />
-          </div>
-          ) : (
+                      {listView ? (
+                        <div className="mt-4">
+                          <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getAllMachineMasterById} />
+                        </div>
+                        ) : (
                       <div className="row mt-2">
                         <div className="col-lg-12">
                           <div className="table-responsive">
@@ -1931,7 +2075,7 @@ const MachineMaster = () => {
                                   <th className="table-header">S.No</th>
                                   <th className="table-header">Item Id</th>
                                   <th className="table-header">Item Description</th>
-                                  <th className="table-header">Piece</th>
+                                  <th className="table-header">Cycle Time / Piece</th>
                                   <th className="table-header">Prod QTY Hr</th>
                                   <th className="table-header">Operation Name</th>
                                   <th className="table-header">Remarks</th>
@@ -1961,6 +2105,7 @@ const MachineMaster = () => {
                                     <td className="border px-2 py-2">
                                       <input
                                         value={row.itemId}
+                                        style={{ width: '150px' }}
                                         onChange={(e) => {
                                           const value = e.target.value;
                                           setDetailsTableData2((prev) =>
@@ -1986,6 +2131,7 @@ const MachineMaster = () => {
                                     <td className="border px-2 py-2">
                                       <input
                                         value={row.itemDescription}
+                                        style={{ width: '150px' }}
                                         onChange={(e) => {
                                           const value = e.target.value;
                                           setDetailsTableData2((prev) =>
@@ -2011,6 +2157,7 @@ const MachineMaster = () => {
                                     <td className="border px-2 py-2">
                                       <input
                                         value={row.piece}
+                                        style={{ width: '150px' }}
                                         onChange={(e) => {
                                           const value = e.target.value;
                                           setDetailsTableData2((prev) =>
@@ -2036,6 +2183,7 @@ const MachineMaster = () => {
                                     <td className="border px-2 py-2">
                                       <input
                                         value={row.ProdQTYHr}
+                                        style={{ width: '150px' }}
                                         onChange={(e) => {
                                           const value = e.target.value;
                                           setDetailsTableData2((prev) =>
@@ -2061,6 +2209,7 @@ const MachineMaster = () => {
                                     <td className="border px-2 py-2">
                                       <input
                                         value={row.operationName}
+                                        style={{ width: '150px' }}
                                         onChange={(e) => {
                                           const value = e.target.value;
                                           setDetailsTableData2((prev) =>
@@ -2086,6 +2235,7 @@ const MachineMaster = () => {
                                     <td className="border px-2 py-2">
                                       <input
                                         value={row.remarks}
+                                        style={{ width: '150px' }}
                                         onChange={(e) => {
                                           const value = e.target.value;
                                           setDetailsTableData2((prev) =>
@@ -2127,10 +2277,6 @@ const MachineMaster = () => {
                         <>
                           <div className="row">
                             <div className="col-md-3 mb-3">
-                              <input type="file" onChange={handleFileChange} />
-                              
-                            </div>
-                            <div className="col-md-3 mb-3">
                               <TextField
                                 label="Instrument Name"
                                 variant="outlined"
@@ -2143,6 +2289,77 @@ const MachineMaster = () => {
                                 helperText={fieldErrors.instrumentName}
                               />
                             </div>
+                            <div className="col-md-3 mb-3">
+                                      {formData.attachments ? (
+                                        <>
+                                          <div>
+                                            <Button
+                                              variant="contained"
+                                              color="secondary"
+                                              startIcon={<FaEye />}
+                                              onClick={() => handlePreview(formData.attachments)}
+                                              style={{ textTransform: 'none' }}
+                                            >
+                                              Preview
+                                            </Button>
+                                          </div>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <div className="d-flex justify-content-center mb-2">
+                                            <Button
+                                              component="label"
+                                              variant="contained"
+                                              color="secondary"
+                                              startIcon={<FaCloudUploadAlt />}
+                                              style={{ textTransform: 'none', padding: '6px 12px' }}
+                                            >
+                                              Upload File
+                                              <VisuallyHiddenInput onChange={(e) => handlePartImgFileUpload(e.target.files)} />
+                                            </Button>
+                                          </div>
+                                          {selectedPartImgFiles.length > 0 && (
+                                            <div className="d-flex justify-content-center uploaded-files mt-2">
+                                              <Typography variant="body2">Uploaded Files:</Typography>
+                                              {selectedPartImgFiles.map((fileName, index) => (
+                                                <div key={index}>{fileName}</div>
+                                              ))}
+                                            </div>
+                                          )}
+                                        </>
+                                      )}
+
+                                      {/* Modal for file preview */}
+                                      <Modal open={openPreviewModal} onClose={handleCloseModal}>
+                                        <Box
+                                          sx={{
+                                            position: 'absolute',
+                                            // top: '50%',
+                                            // left: '50%',
+                                            transform: 'translate(-50%, -50%)',
+                                            width: '50%',
+                                            bgcolor: 'background.paper',
+                                            boxShadow: 24,
+                                            p: 4,
+                                            overflow: 'auto'
+                                          }}
+                                        >
+                                          {selectedFile ? (
+                                            <img
+                                              src={`data:image/jpeg;base64,${selectedFile}`}
+                                              alt="Preview"
+                                              style={{ width: '100%', height: 'auto' }}
+                                            />
+                                          ) : (
+                                            <Typography>No preview available</Typography>
+                                          )}
+                                          <Button color="secondary" onClick={handleCloseModal} style={{ marginTop: '20px' }} variant="outlined">
+                                            Close
+                                          </Button>
+                                        </Box>
+                                      </Modal>
+                                    
+                            </div>
                           </div>
                         </>
                         </div>
@@ -2153,97 +2370,11 @@ const MachineMaster = () => {
               </div>
             </>
           ) : (
-            <CommonTable data={data} columns={listViewColumns} blockEdit={true} toEdit={getAllAdjustmentJournalById} />
+            <CommonTable data={data} columns={listViewColumns} blockEdit={true} toEdit={getAllMachineMasterById} />
           )}
         </div>
-        <Dialog
-                open={modalOpen}
-                maxWidth={'md'}
-                fullWidth={true}
-                onClose={handleCloseModal}
-                PaperComponent={PaperComponent}
-                aria-labelledby="draggable-dialog-title"
-              >
-                <DialogTitle textAlign="center" style={{ cursor: 'move' }} id="draggable-dialog-title">
-                  <h6>Grid Details</h6>
-                </DialogTitle>
-                <DialogContent className="pb-0">
-                  <div className="row">
-                    <div className="col-lg-12">
-                      <div className="table-responsive">
-                        <table className="table table-bordered">
-                          <thead>
-                            <tr style={{ backgroundColor: '#673AB7' }}>
-                              <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
-                                <Checkbox checked={selectAll} onChange={handleSelectAll}  sx={{
-                                  color: 'white', // Unchecked color
-                                  '&.Mui-checked': {
-                                    color: 'white' // Checked color
-                                  }}} />
-                              </th>
-                              <th className="px-2 py-2 text-white text-center" style={{ width: '50px' }}>
-                                S.No
-                              </th>
-                              <th className="px-2 py-2 text-white text-center">Part No *</th>
-                              <th className="px-2 py-2 text-white text-center">Part Desc</th>
-                              <th className="px-2 py-2 text-white text-center">SKU</th>
-                              <th className="px-2 py-2 text-white text-center">Batch No</th>
-                              {/* <th className="px-2 py-2 text-white text-center">Qty *</th> */}
-                              <th className="px-2 py-2 text-white text-center">Avl. Qty</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {detailsTableData1.map((row, index) => (
-                              <tr key={index}>
-                                <td className="border p-0 text-center">
-                                  <Checkbox
-                                    checked={selectedRows.includes(index)}
-                                    onChange={(e) => {
-                                      const isChecked = e.target.checked;
-                                      setSelectedRows((prev) => (isChecked ? [...prev, index] : prev.filter((i) => i !== index)));
-                                      
-                                    }}
-                                  />
-                                </td>
-                                <td className="text-center p-0">
-                                  <div style={{ paddingTop: 12 }}>{index + 1}</div>
-                                </td>
-                                <td className="border text-center pb-0 ps-0 pe-0" style={{ paddingTop: 12 }}>
-                                  {row.partNo}
-                                </td>
-                                <td className="border text-center pb-0 ps-0 pe-0" style={{ paddingTop: 12 }}>
-                                  {row.partDesc}
-                                </td>
-                                <td className="border text-center pb-0 ps-0 pe-0" style={{ paddingTop: 12 }}>
-                                  {row.sku}
-                                </td>
-                                <td className="border text-center pb-0 ps-0 pe-0" style={{ paddingTop: 12 }}>
-                                  {row.batchNo}
-                                </td>
-                                {/* <td className="border text-center pb-0 ps-0 pe-0" style={{ paddingTop: 12 }}>
-                                  {row.qty}
-                                </td> */}
-                                <td className="border text-center pb-0 ps-0 pe-0" style={{ paddingTop: 12 }}>
-                                  {row.availQty}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  </div>
-                </DialogContent>
-                <DialogActions sx={{ p: '1.25rem' }} className="pt-0">
-                  <Button onClick={handleCloseModal}>Cancel</Button>
-                  <Button color="secondary" onClick={handleSaveSelectedRows} variant="contained">
-                    Proceed
-                  </Button>
-                </DialogActions>
-              </Dialog>
       </div>
     </>
   );
 };
-
 export default MachineMaster;
