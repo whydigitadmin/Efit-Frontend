@@ -33,12 +33,12 @@ const Inventory = {
           type: 'item',
           url: '/Inventory/Putaway'
         },
-        // {
-        //   id: 'thirdPartyReportDetails',
-        //   title: 'Third Party Report Details',
-        //   type: 'item',
-        //   url: '/Inventory/Third-Party-Report-Details'
-        // },
+        {
+          id: 'thirdPartyReportDetails',
+          title: 'Third Party Report Details',
+          type: 'item',
+          url: '/Inventory/Third-Party-Report-Details'
+        },
         {
           id: 'routeCardEntry',
           title: 'Route Card Entry',
