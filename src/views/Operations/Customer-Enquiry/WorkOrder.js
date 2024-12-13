@@ -47,77 +47,67 @@ function WorkOrder() {
   const [editId, setEditId] = useState('');
   const [customerNameData, setCustomerNameData] = useState([]);
   const [item, setItem] = useState([]);
-  const [customer, setCustomer] = useState([]);
-  const [quotationNo, setQuotationNo] = useState([]);
-  const [productionManager, setProductionManager] = useState([]);
   const [allAccountName, setAllAccountName] = useState([]);
   const [currencies, setCurrencies] = useState([]);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [listView, setListView] = useState(false);
+  const [listViewData, setListViewData] = useState([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectAll, setSelectAll] = useState(false);
+  const [partyList, setPartyList] = useState([]);
+  const [quotationList, setQuotationList] = useState([]);
+  const [partNoList, setPartNoList] = useState([]); 
   const [docId, setDocId] = useState('');
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+  };
   const [selectedRows, setSelectedRows] = useState([]);
   const [formData, setFormData] = useState({
-    docDate: dayjs(),
-    customer: '',
-    customerPoNo: '',
-    quotationNo: '',
-    currency: '',
-    customerDueDate: dayjs(),
-    vapDueDate: dayjs(),
-    productionMgr: '',
-
-    // 2nd table
-    grossAmount: '',
-    netAmount: '',
-    totalDiscount: '',
-    narration: '',
-    amtInWords: ''
-  });
-
-  const [fieldErrors, setFieldErrors] = useState({
+    woNo:'',
     docDate: dayjs(),
     customerName: '',
     customerPoNo: '',
+    customerCode: '',
+    customerId: '',
     quotationNo: '',
     currency: '',
     customerDueDate: dayjs(),
     vapDueDate: dayjs(),
-    productionMgr: '',
-
+    productionManager: '',
     // 2nd table
-    grossAmount: '',
-    netAmount: '',
-    totalDiscount: '',
-    narration: '',
-    amtInWords: ''
+    customerSpecialRequirement: ''
+  });
+
+  const [fieldErrors, setFieldErrors] = useState({
+    woNo:'',
+    docDate: dayjs(),
+    customerName: '',
+    customerPoNo: '',
+    customerCode: '',
+    quotationNo: '',
+    currency: '',
+    customerDueDate: dayjs(),
+    vapDueDate: dayjs(),
+    productionManager: '',
+    // 2nd table
+    customerSpecialRequirement: ''
   });
 
   const listViewColumns = [
+    { accessorKey: 'docId', header: 'Document ID', size: 140 },
     { accessorKey: 'customerName', header: 'Customer Name', size: 140 },
     { accessorKey: 'customerPoNo', header: 'Customer PO No', size: 140 },
     { quotationNo: 'quotationNo', header: 'Quotation No', size: 140 },
     { currency: 'currency', header: 'Currency', size: 140 },
     { currency: 'customerDueDate', header: 'Customer Due Date', size: 140 },
     { currency: 'vapDueDate', header: 'Vap Due Date', size: 140 },
-    { currency: 'productionMgr', header: 'Production Mgr', size: 140 },
+    { currency: 'productionManager', header: 'Production Mgr', size: 140 },
   ];
   const [companyList, setCustomerList] = useState([]);
   const [fillGridData, setFillGridData] = useState([]);
 
-  const [quotationDetails, setQuotationDetails] = useState([
-    {
-      id: 1,
-      partNo: '',
-      partName: '',
-      drawingNo: '',
-      revisionNo: '',
-      uom: '',
-      ordQty: '',
-      freeQty: '',
-      availableStockQty: '',
-      requiredQty: ''
-
-    }
-  ]);
-  const [quotationDetailsTableErrors, setQuotationDetailsTableErrors] = useState([
+  const [itemParticularsData, setItemParticularsData] = useState([
     {
       id: 1,
       partNo: '',
@@ -131,103 +121,48 @@ function WorkOrder() {
       requiredQty: ''
     }
   ]);
-  const [attachmentData, setAttachmentData] = useState([
+  const [itemParticularsErrors, setItemParticularsErrors] = useState([
     {
       id: 1,
-      fileName: '',
-      attachments: ''
+      partNo: '',
+      partName: '',
+      drawingNo: '',
+      revisionNo: '',
+      uom: '',
+      ordQty: '',
+      freeQty: '',
+      availableStockQty: '',
+      requiredQty: ''
     }
   ]);
-  const [attachmentTableErrors, setAttachmentTableErrors] = useState([
+  const [termsandConditionsData, setTermsandConditionsData] = useState([
     {
-      fileName: '',
-      attachments: ''
+      id: 1,
+      template: '',
+      description: ''
     }
   ]);
-  // const [file, setFile] = useState('');
-  const [uploadOpen, setUploadOpen] = useState(false);
-  const [listView, setListView] = useState(false);
-  const [listViewData, setListViewData] = useState([]);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectAll, setSelectAll] = useState(false);
-  const handleCloseModal = () => {
-    setModalOpen(false);
-  };
+  const [termsandConditionsErrors, setTermsandConditionsErrors] = useState([
+    {
+      id: 1,
+      template: '',
+      description: ''
+    }
+  ]);
 
-  const handleFileChange = (event) => {
-    attachmentData.attachments(event.target.files[0]);
-  };
+  const getAvailablePartNos = (currentRowId) => {
 
+    const selectedPartNos = termsandConditionsData
+      .filter((row) => row.id !== currentRowId)
+      .map((row) => row.partCode);
+
+    return partNoList.filter((part) => !selectedPartNos.includes(part.partCode));
+  };
   const handleSaveSelectedRows = async () => { }
   const handleSelectAll = () => { }
   const getMachineMasterById = () => { }
 
-  useEffect(() => {
-    getAllCompany();
 
-    getAllProductionManager(orgId);
-    getAllAdjustmentJournalByOrgId();
-
-  }, []);
-
-  // getAllCompany
-  const getAllCompany = async () => {
-    try {
-      const response = await apiCalls('get', `/customerenquiry/getCustomerNameAndCode?orgId=${orgId}`);
-      console.log('All Company :', response);
-
-      if (response.status === true) {
-        setCustomerList(response.paramObjectsMap.partymasterVO);
-      } else {
-        console.error('API Error:', response);
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  };
-
-
-  // quotationNo api
-
-  const getAllQuotationNo = async (customerr) => {
-
-    console.log("formData", customerr)
-    try {
-      const response = await apiCalls('get', `/customerenquiry/getQuotationNumber?orgId=${orgId}&customerName=${customerr}`);
-      if (response.status === true) {
-        const quotationNoData = response.paramObjectsMap.quotationVO
-          .map(({ id, quotationNo }) => ({ id, quotationNo }));
-        setQuotationNo(quotationNoData);
-        return quotationNoData;
-      } else {
-        console.error('API Error:', response);
-        return response;
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      return error;
-    }
-  };
-
-  // Production Manager api
-
-  const getAllProductionManager = async (orgId) => {
-    try {
-      const response = await apiCalls('get', `customerenquiry/getProductionManager?orgId=${orgId}`);
-      if (response.status === true) {
-        const productionManagerData = response.paramObjectsMap.employeeVO
-          .map(({ id, productionManager }) => ({ id, productionManager }));
-        setProductionManager(productionManagerData);
-        return productionManagerData;
-      } else {
-        console.error('API Error:', response);
-        return response;
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      return error;
-    }
-  };
 
 
 
@@ -238,35 +173,25 @@ function WorkOrder() {
       customerPoNo: '',
       quotationNo: '',
       currency: '',
+      productionManager: '',
       customerDueDate: dayjs(),
       vapDueDate: dayjs(),
-      productionMgr: '',
-
       // 2nd table
-      grossAmount: '',
-      netAmount: '',
-      totalDiscount: '',
-      narration: '',
-      amtInWords: ''
+      customerSpecialRequirement: ''
     });
+    // getWorkOrderDocId();
     setFieldErrors({
-      docDate: dayjs(),
       customerName: '',
       customerPoNo: '',
       quotationNo: '',
       currency: '',
+      productionManager: '',
       customerDueDate: dayjs(),
       vapDueDate: dayjs(),
-      productionMgr: '',
-
       // 2nd table
-      grossAmount: '',
-      netAmount: '',
-      totalDiscount: '',
-      narration: '',
-      amtInWords: ''
+      customerSpecialRequirement: ''
     });
-    setQuotationDetails([
+    setItemParticularsData([
       {
         id: 1,
         partNo: '',
@@ -280,45 +205,28 @@ function WorkOrder() {
         requiredQty: ''
       }
     ]);
-    setQuotationDetailsTableErrors('');
-    setAttachmentData([
+    setItemParticularsErrors('');
+    setTermsandConditionsData([
       {
         id: 1,
-        fileName: '',
-        attachments: ''
+        template: '',
+        description: ''
       }
     ]);
-    setAttachmentTableErrors('');
+    setTermsandConditionsErrors('');
     setEditId('');
   };
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    const inputValue = type === 'checkbox' ? checked : value;
-    setFormData({ ...formData, [name]: inputValue });
-    setFieldErrors({ ...fieldErrors, [name]: false });
-    let errorMessage = '';
-    const alphaNumericRegex = /^[A-Za-z0-9]*$/;
+    const { name, value } = e.target;
 
+    let errorMessage = '';
 
     if (errorMessage) {
-      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
+      setFieldErrors({ ...fieldErrors, [name]: errorMessage });
     } else {
-      if (name === 'customer') {
-        const selectedCustomer = companyList.find((scr) => scr.customer === value);
-
-        console.log("customer", selectedCustomer)
-
-        if (selectedCustomer) {
-          setFormData((prevData) => ({
-            ...prevData,
-            currency: selectedCustomer.currency,
-            customer: selectedCustomer.customer
-          }));
-          getAllQuotationNo(selectedCustomer.customer);
-        }
-      }
-      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: '' }));
+      setFormData({ ...formData, [name]: value });
+      setFieldErrors({ ...fieldErrors, [name]: '' });
     }
   };
 
@@ -334,8 +242,8 @@ function WorkOrder() {
   };
 
   const handleAddRowQuotation = () => {
-    if (isLastRowEmptyQuotation(quotationDetails)) {
-      displayRowErrorQuotation(quotationDetails);
+    if (isLastRowEmptyQuotation(itemParticularsData)) {
+      displayRowErrorQuotation(itemParticularsData);
       return;
     }
     const newRow = {
@@ -350,9 +258,9 @@ function WorkOrder() {
       availableStockQty: '',
       requiredQty: ''
     };
-    setQuotationDetails([...quotationDetails, newRow]);
-    setQuotationDetailsTableErrors([
-      ...quotationDetailsTableErrors,
+    setItemParticularsData([...itemParticularsData, newRow]);
+    setItemParticularsErrors([
+      ...itemParticularsErrors,
       {
         partNo: '',
         partName: '',
@@ -371,7 +279,7 @@ function WorkOrder() {
     const lastRow = table[table.length - 1];
     if (!lastRow) return false;
 
-    if (table === quotationDetails) {
+    if (table === itemParticularsData) {
       return (
         !lastRow.partNo ||
         !lastRow.partName ||
@@ -388,8 +296,8 @@ function WorkOrder() {
   };
 
   const displayRowErrorQuotation = (table) => {
-    if (table === quotationDetails) {
-      setQuotationDetailsTableErrors((prevErrors) => {
+    if (table === itemParticularsData) {
+      setItemParticularsErrors((prevErrors) => {
         const newErrors = [...prevErrors];
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
@@ -411,21 +319,21 @@ function WorkOrder() {
   };
 
   const handleAddRowAttachment = () => {
-    if (isLastRowEmptyAttachment(attachmentData)) {
-      displayRowErrorAttachment(attachmentData);
+    if (isLastRowEmptyAttachment(termsandConditionsData)) {
+      displayRowErrorAttachment(termsandConditionsData);
       return;
     }
     const newRow = {
       id: Date.now(),
-      fileName: '',
-      attachments: ''
+      template: '',
+      description: ''
     };
-    setAttachmentData([...attachmentData, newRow]);
-    setAttachmentTableErrors([
-      ...attachmentTableErrors,
+    setTermsandConditionsData([...termsandConditionsData, newRow]);
+    setTermsandConditionsErrors([
+      ...termsandConditionsErrors,
       {
-        fileName: '',
-        attachments: ''
+        template: '',
+        description: ''
       }
     ]);
   };
@@ -434,23 +342,23 @@ function WorkOrder() {
     const lastRow = table[table.length - 1];
     if (!lastRow) return false;
 
-    if (table === attachmentData) {
+    if (table === termsandConditionsData) {
       return (
-        !lastRow.fileName ||
-        !lastRow.attachments
+        !lastRow.template ||
+        !lastRow.description
       );
     }
     return false;
   };
 
   const displayRowErrorAttachment = (table) => {
-    if (table === attachmentData) {
-      setAttachmentTableErrors((prevErrors) => {
+    if (table === termsandConditionsData) {
+      setTermsandConditionsErrors((prevErrors) => {
         const newErrors = [...prevErrors];
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
-          fileName: !table[table.length - 1].fileName ? 'File Name is required' : '',
-          attachments: !table[table.length - 1].attachments ? 'Attachments is required' : ''
+          template: !table[table.length - 1].template ? 'Template is required' : '',
+          description: !table[table.length - 1].description ? 'Description is required' : ''
         };
         return newErrors;
       });
@@ -471,6 +379,49 @@ function WorkOrder() {
     setShowForm(!showForm);
   };
 
+  // Customer Name
+  useEffect(() => {
+    getCustomerNameAndCode();
+  }, [])
+  const getCustomerNameAndCode = async () => {
+    try {
+      const result = await apiCalls('get', `/customerenquiry/getCustomerNameAndCode?orgId=${orgId}`);
+      setPartyList(result.paramObjectsMap.partymasterVO || []);
+    } catch (err) {
+      console.log('error', err);
+    }
+  };
+  // QuotationNumber
+  const getQuotationNumber = async (customerName) => {
+    try {
+      const result = await apiCalls('get', `/customerenquiry/getQuotationNumber?customerId=${customerName}&orgId=${orgId}`);
+      setQuotationList(result.paramObjectsMap.quotationVO || []);
+    } catch (err) {
+      console.log('error', err);
+    }
+  };
+  // PartNo
+  const getWorkOrderPartNo = async (customerId, quotationNo) => {
+    try {
+      const result = await apiCalls('get', `/customerenquiry/getWorkOrderPartNo?customerId=${customerId}&docId=${quotationNo}&orgId=${orgId}`);
+      console.log("Customer ID:", customerId);
+      setPartNoList(result.paramObjectsMap.quotationVO || []);
+    } catch (err) {
+      console.log('error', err);
+    }
+  }; 
+  useEffect(() => {
+    getWorkOrderDocId();
+  },[])
+  const getWorkOrderDocId = async () => {
+    try {
+      const response = await apiCalls('get', `/customerenquiry/getWorkOrderDocId?orgId=${orgId}`);
+      setDocId(response.paramObjectsMap.workOrderDocId)
+    } catch (error) {
+      console.error('Error fetching departmentDocId:', error);
+    }
+  };
+
   const handleSave = async () => {
     const errors = {};
     if (!formData.customerName) {
@@ -484,38 +435,17 @@ function WorkOrder() {
     }
     if (!formData.currency) {
       errors.currency = 'Currency is required';
+    }  
+    if (!formData.productionManager) {
+      errors.productionManager = 'Production Mgr  is required';
     }
-    if (!formData.customerDueDate) {
-      errors.customerDueDate = 'Customer Due Date  is required';
-    }
-    if (!formData.vapDueDate) {
-      errors.vapDueDate = 'Vap Due Date  is required';
-    }
-    if (!formData.productionMgr) {
-      errors.productionMgr = 'Production Mgr  is required';
-    }
-
-
-    // 2nd table
-    if (!formData.grossAmount) {
-      errors.grossAmount = 'Gross Amount is required';
-    }
-    if (!formData.netAmount) {
-      errors.netAmount = 'Net Amount is required';
-    }
-    if (!formData.totalDiscount) {
-      errors.totalDiscount = 'Total Discount is required';
-    }
-    if (!formData.narration) {
-      errors.narration = 'Narration  is required';
-    }
-    if (!formData.amtInWords) {
-      errors.amtInWords = 'Amount In Words is required';
-    }
-
+ 
+    if (!formData.customerSpecialRequirement) {
+      errors.customerSpecialRequirement = 'Customer Special Requirement is required';
+    } 
 
     let quotationTableDataValid = true;
-    const newQuotationTableErrors = quotationDetails.map((row) => {
+    const newQuotationTableErrors = itemParticularsData.map((row) => {
       const rowErrors = {};
       if (!row.partNo) {
         rowErrors.partNo = 'Part No is required';
@@ -549,68 +479,74 @@ function WorkOrder() {
         rowErrors.availableStockQty = 'Available Stock Qty is required';
         quotationTableDataValid = false;
       }
+      if (!row.requiredQty) {
+        rowErrors.requiredQty = 'Required Qty Qty is required';
+        quotationTableDataValid = false;
+      }
       return rowErrors;
     });
+
     let detailTableDataValid2 = true;
-    const newAttachmentTableErrors = quotationDetails.map((row) => {
+    const newAttachmentTableErrors = itemParticularsData.map((row) => {
       const rowErrors = {};
-      if (!row.fileName) {
-        rowErrors.fileName = 'File Name is required';
+      if (!row.template) {
+        rowErrors.template = 'Template Name is required';
         detailTableDataValid2 = false;
       }
-      if (!row.attachments) {
-        rowErrors.attachments = 'Attachment is required';
+      if (!row.description) {
+        rowErrors.description = 'Description is required';
         detailTableDataValid2 = false;
       }
       return rowErrors;
     });
     setFieldErrors(errors);
-    setQuotationDetailsTableErrors(newQuotationTableErrors);
-    setAttachmentTableErrors(newAttachmentTableErrors);
+    setItemParticularsErrors(newQuotationTableErrors);
+    setTermsandConditionsErrors(newAttachmentTableErrors);
 
     if (Object.keys(errors).length === 0 && (detailTableDataValid2 && quotationTableDataValid)) {
-      const AdjustmentVO = quotationDetails.map((row) => ({
-        ...(editId && { id: row.id }),
-        accountsName: row.accountName,
-        creditAmount: parseInt(row.creditAmount),
-        debitAmount: parseInt(row.debitAmount),
-        debitBase: parseInt(row.debitBase),
-        creditBase: parseInt(row.creditBase),
-        subLedgerCode: row.subLedgerCode,
-        subledgerName: row.subledgerName
+      const itemParticularsVO = itemParticularsData.map((row) => ({
+        ...(editId && { id: row.id }),  
+        //creditBase: parseInt(row.creditBase),
+
+          availableStockQty: parseInt(row.availableStockQty),
+          drawingNo: row.drawingNo,
+          freeQty: parseInt(row.freeQty),
+          ordQty: parseInt(row.ordQty),
+          partName: row.partName,
+          partNo: row.partNo,
+          revisionNo: row.revisionNo,
+          uom: row.uom,
       }));
-      const AdjustmentJournalVO = attachmentData.map((row) => ({
+      const termsAndConditionsVO = termsandConditionsData.map((row) => ({
         ...(editId && { id: row.id }),
-        accountsName: row.accountName,
-        creditAmount: parseInt(row.creditAmount),
-        debitAmount: parseInt(row.debitAmount),
-        debitBase: parseInt(row.debitBase),
-        creditBase: parseInt(row.creditBase),
-        subLedgerCode: row.subLedgerCode,
-        subledgerName: row.subledgerName
+        template: row.template,
+        description: row.description,
       }));
       const saveFormData = {
         ...(editId && { id: editId }),
+        active: formData.active,
         createdBy: loginUserName,
-        finYear: finYear,
-        orgId: orgId,
-        accountParticularsDTO: AdjustmentJournalVO,
-        adjustmentType: formData.adjustmentType,
         currency: formData.currency,
-        exRate: parseInt(formData.exRate),
-        refDate: dayjs(formData.refDate).format('YYYY-MM-DD'),
-        refNo: formData.refNo,
-        suppRefDate: dayjs(formData.suppRefDate).format('YYYY-MM-DD'),
-        suppRefNo: formData.suppRefNo,
-        remarks: formData.remarks
+        customerCode: formData.customerCode,
+        customerDueDate: dayjs(formData.customerDueDate).format('YYYY-MM-DD'),
+        customerName: formData.customerName,
+        customerPoNo: formData.customerPoNo,
+        customerSpecialRequirement: formData.customerSpecialRequirement,
+        orgId: parseInt(formData.orgId),
+        productionMgr: formData.productionManager,
+        quotationNo: formData.quotationNo,
+        vapDueDate: dayjs(formData.vapDueDate).format('YYYY-MM-DD'),
+        // Table
+        itemParticularsDTO: itemParticularsVO,
+        termsAndConditionsDTO: termsAndConditionsVO,
       };
       console.log('DATA TO SAVE IS:', saveFormData);
       try {
-        const response = await apiCalls('put', `transaction/updateCreateAdjustmentJournal`, saveFormData);
+        const response = await apiCalls('put', `/customerenquiry/createUpdateWorkOrder`, saveFormData);
         if (response.status === true) {
           console.log('Response:', response);
           showToast('success', editId ? 'Work Order Updated Successfully' : 'Work Order Created successfully');
-          getAllAdjustmentJournalByOrgId();
+          // getAllAdjustmentJournalByOrgId();
           handleClear();
         } else {
           showToast('error', response.paramObjectsMap.message || 'Work Order creation failed');
@@ -619,63 +555,54 @@ function WorkOrder() {
         console.error('Error:', error);
         showToast('error', 'Work Order creation failed');
       }
-    } else {
+    }else {
       setFieldErrors(errors);
     }
   };
 
-  const getAllAdjustmentJournalByOrgId = async () => {
-    try {
-      const result = await apiCalls('get', `/transaction/getAllAdjustmentJournalByOrgId?orgId=${orgId}`);
-      setData(result.paramObjectsMap.adjustmentJournalVO || []);
-      // showForm(true);
-      console.log('adjustmentJournalVO', result);
-    } catch (err) {
-      console.log('error', err);
-    }
-  };
+
 
   const getAllAdjustmentJournalById = async (row) => {
     console.log('first', row);
     setShowForm(true);
-    try {
-      const result = await apiCalls('get', `/transaction/getAdjustmentJournalById?id=${row.original.id}`);
+    // try {
+    //   const result = await apiCalls('get', `/transaction/getAdjustmentJournalById?id=${row.original.id}`);
 
-      if (result) {
-        const adVO = result.paramObjectsMap.adjustmentJournalVO[0];
-        setEditId(row.original.id);
-        setDocId(adVO.docId);
-        setFormData({
-          docDate: adVO.docDate ? dayjs(adVO.docDate, 'YYYY-MM-DD') : dayjs(),
-          customerName: adVO.customerName,
-          customerPoNo: adVO.customerPoNo,
-          quotationNo: adVO.quotationNo,
-          currency: adVO.currency,
-          customerDueDate: adVO.customerDueDate ? dayjs(adVO.customerDueDate, 'YYYY-MM-DD') : dayjs(),
-          vapDueDate: adVO.vapDueDate ? dayjs(adVO.vapDueDate, 'YYYY-MM-DD') : dayjs(),
-          productionMgr: adVO.productionMgr,
-          orgId: adVO.orgId,
-        });
-        setQuotationDetails(
-          adVO.accountParticularsVO.map((row) => ({
-            id: row.id,
-            accountName: row.accountsName,
-            creditAmount: row.creditAmount,
-            debitAmount: row.debitAmount,
-            debitBase: row.debitBase,
-            creditBase: row.creditBase,
-            subLedgerCode: row.subLedgerCode,
-            subledgerName: row.subledgerName
-          }))
-        );
+    //   if (result) {
+    //     const adVO = result.paramObjectsMap.adjustmentJournalVO[0];
+    //     setEditId(row.original.id);
+    //     setDocId(adVO.docId);
+    //     setFormData({
+    //       docDate: adVO.docDate ? dayjs(adVO.docDate, 'YYYY-MM-DD') : dayjs(),
+    //       customerName: adVO.customerName,
+    //       customerPoNo: adVO.customerPoNo,
+    //       quotationNo: adVO.quotationNo,
+    //       currency: adVO.currency,
+    //       customerDueDate: adVO.customerDueDate ? dayjs(adVO.customerDueDate, 'YYYY-MM-DD') : dayjs(),
+    //       vapDueDate: adVO.vapDueDate ? dayjs(adVO.vapDueDate, 'YYYY-MM-DD') : dayjs(),
+    //       productionManager: adVO.productionManager,
+    //       orgId: adVO.orgId,
+    //     });
+    //     setItemParticularsData(
+    //       adVO.accountParticularsVO.map((row) => ({
+    //         id: row.id,
+    //         accountName: row.accountsName,
+    //         creditAmount: row.creditAmount,
+    //         debitAmount: row.debitAmount,
+    //         debitBase: row.debitBase,
+    //         creditBase: row.creditBase,
+    //         subLedgerCode: row.subLedgerCode,
+    //         subledgerName: row.subledgerName
+    //       }))
+    //     );
 
-        console.log('DataToEdit', adVO);
-      } else {
-        // Handle erro
-      }
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
+    //     console.log('DataToEdit', adVO);
+    //   } else {
+    //     // Handle erro
+    //   }
+    // } catch (error) {
+    //   console.error('Error fetching data:', error);
+    // }
   };
 
 
@@ -716,16 +643,14 @@ function WorkOrder() {
                 {/* WO No */}
                 <div className="col-md-3 mb-3">
                   <TextField
-                    id="docId"
-                    label=" WO No"
+                    id="woNo"
+                    label="WO No"
                     variant="outlined"
                     size="small"
                     fullWidth
-                    name="docId"
+                    name="woNo"
                     value={docId}
-                    onChange={handleInputChange}
                     disabled
-                    inputProps={{ maxLength: 10 }}
                   />
                 </div>
                 {/* Docdate */}
@@ -733,7 +658,7 @@ function WorkOrder() {
                   <FormControl fullWidth variant="filled" size="small">
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <DatePicker
-                        label="Docdate"
+                        label="WO No"
                         value={formData.docDate}
                         onChange={(date) => handleDateChange('docDate', date)}
                         disabled
@@ -747,48 +672,39 @@ function WorkOrder() {
                 </div>
                 {/* Customer Name */}
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.customer}>
-                    <InputLabel id="customer">Customer Name</InputLabel>
-                    <Select
-                      labelId="customer"
-                      label="customer"
-                      value={formData.customer}
-                      onChange={handleInputChange}
-                      name="customer"
-                    >
-                      {companyList?.map((row) => (
-                        <MenuItem key={row.id} value={row.customer}>
-                          {row.customer}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    {fieldErrors.customer && <FormHelperText>{fieldErrors.customer}</FormHelperText>}
-                  </FormControl>
-                </div>
-                {/* <div className="col-md-3 mb-3">
                   <Autocomplete
                     disablePortal
-                    options={customer}
-                    getOptionLabel={(option) => option.customer || ''}
+                    options={partyList}
+                    getOptionLabel={(option) => option?.customer || ''}
                     sx={{ width: '100%' }}
                     size="small"
-                    value={formData.customer ? customer.find((c) => c.item === formData.customer) : null}
+                    value={partyList.find((c) => c.customer === formData.customerName) || null}
                     onChange={(event, newValue) => {
-                      handleInputChange({
-                        target: {
-                          name: 'customer',
-                          value: newValue ? newValue.customer : '',
-                        },
-                      });
-                    }}
+                      console.log("Selected Value:", newValue);
 
+                      if (newValue) {
+                        setFormData({
+                          ...formData,
+                          currency: newValue.currency,
+                          customerName: newValue.customer,
+                          customerCode: newValue.customerCode,
+                        });
+                        getQuotationNumber(newValue.customerCode);
+                      } else {
+                        setFormData({
+                          ...formData,
+                          currency: '',
+                          customerName: '',
+                        });
+                      }
+                    }}
                     renderInput={(params) => (
                       <TextField
                         {...params}
                         label="Customer Name"
-                        name="customer"
-                        error={!!fieldErrors.customer}
-                        helperText={fieldErrors.customer}
+                        name="customerName"
+                        error={!!fieldErrors.customerName}
+                        helperText={fieldErrors.customerName}
                         InputProps={{
                           ...params.InputProps,
                           style: { height: 40 },
@@ -796,8 +712,7 @@ function WorkOrder() {
                       />
                     )}
                   />
-                </div> */}
-                {/* Customer PO No */}
+                </div>
                 <div className="col-md-3 mb-3">
                   <TextField
                     id="customerPoNo"
@@ -813,38 +728,62 @@ function WorkOrder() {
                     error={!!fieldErrors.customerPoNo}
                   />
                 </div>
+                <div className="col-md-3 mb-3">
+                  <TextField
+                    id="customerCode"
+                    label='Customer Code'
+                    variant="outlined"
+                    disabled
+                    size="small"
+                    fullWidth
+                    name="customerCode"
+                    value={formData.customerCode}
+                    onChange={handleInputChange}
+                    helperText={<span style={{ color: 'red' }}>{fieldErrors.customerCode ? fieldErrors.customerCode : ''}</span>}
+                    inputProps={{ maxLength: 40 }}
+                    error={!!fieldErrors.customerCode}
+                  />
+                </div>
                 {/* Quotation No */}
                 <div className="col-md-3 mb-3">
-                  <Autocomplete
-                    disablePortal
-                    options={quotationNo}
-                    getOptionLabel={(option) => option.quotationNo || ''}
-                    sx={{ width: '100%' }}
-                    size="small"
-                    value={formData.quotationNo ? quotationNo.find((c) => c.quotationNo === formData.quotationNo) : null}
-                    onChange={(event, newValue) => {
-                      handleInputChange({
-                        target: {
-                          name: 'quotationNo',
-                          value: newValue ? newValue.quotationNo : '',
-                        },
-                      });
-                    }}
-
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Quotation No"
-                        name="quotationNo"
-                        error={!!fieldErrors.quotationNo}
-                        helperText={fieldErrors.quotationNo}
-                        InputProps={{
-                          ...params.InputProps,
-                          style: { height: 40 },
-                        }}
-                      />
-                    )}
-                  />
+                  {quotationList && (
+                    <Autocomplete
+                      disablePortal
+                      options={quotationList.map((option, index) => ({ ...option, key: index }))}
+                      getOptionLabel={(option) => option.quotationNo || ''}
+                      sx={{ width: '100%' }}
+                      size="small"
+                      value={quotationList.find((qu) => qu.quotationNo === formData.quotationNo) || null}
+                      onChange={(event, newValue) => {
+                        console.log("Selected Quotation:", newValue);
+                        if (newValue) {
+                          setFormData({
+                            ...formData,
+                            quotationNo: newValue.quotationNo,
+                          });
+                          getWorkOrderPartNo(formData.customerCode, newValue.quotationNo);
+                        } else {
+                          setFormData({
+                            ...formData,
+                            quotationNo: '',
+                          });
+                        }
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Quotation No"
+                          name="quotationNo"
+                          error={!!fieldErrors.quotationNo}
+                          helperText={fieldErrors.quotationNo}
+                          InputProps={{
+                            ...params.InputProps,
+                            style: { height: 40 },
+                          }}
+                        />
+                      )}
+                    />
+                  )}
                 </div>
                 {/* Currency */}
                 <div className="col-md-3 mb-3">
@@ -904,35 +843,16 @@ function WorkOrder() {
 
                 {/* Production Mgr */}
                 <div className="col-md-3 mb-3">
-                  <Autocomplete
-                    disablePortal
-                    options={productionManager}
-                    getOptionLabel={(option) => option.productionManager || ''}
-                    sx={{ width: '100%' }}
+                  <TextField
+                    label="ProductionManager"
+                    variant="outlined"
                     size="small"
-                    value={formData.productionManager ? productionManager.find((c) => c.productionManager === formData.productionManager) : null}
-                    onChange={(event, newValue) => {
-                      handleInputChange({
-                        target: {
-                          name: 'productionManager',
-                          value: newValue ? newValue.productionManager : '',
-                        },
-                      });
-                    }}
-
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Production Manager"
-                        name="productionManager"
-                        error={!!fieldErrors.productionManager}
-                        helperText={fieldErrors.productionManager}
-                        InputProps={{
-                          ...params.InputProps,
-                          style: { height: 40 },
-                        }}
-                      />
-                    )}
+                    fullWidth
+                    name="productionManager"
+                    value={formData.productionManager}
+                    onChange={handleInputChange}
+                    error={!!fieldErrors.productionManager}
+                    helperText={fieldErrors.productionManager}
                   />
                 </div>
               </div>
@@ -945,8 +865,8 @@ function WorkOrder() {
                     indicatorColor="secondary"
                     aria-label="secondary tabs example"
                   >
-                    <Tab value={0} label="Quotation Details" />
-                    <Tab value={1} label="Attachment" />
+                    <Tab value={0} label="Item Particulars" />
+                    <Tab value={1} label="Terms and Conditions" />
                     <Tab value={2} label="Summary" />
                   </Tabs>
                 </Box>
@@ -1011,7 +931,7 @@ function WorkOrder() {
                                     </tr>
                                   </thead>
                                   <tbody>
-                                    {quotationDetails.map((row, index) => (
+                                    {itemParticularsData.map((row, index) => (
                                       <tr key={row.id}>
                                         <td className="col-md-1 border px-2 py-2 text-center">
                                           <ActionButton
@@ -1021,10 +941,10 @@ function WorkOrder() {
                                             onClick={() =>
                                               handleDeleteRow(
                                                 row.id,
-                                                quotationDetails,
-                                                setQuotationDetails,
-                                                quotationDetailsTableErrors,
-                                                setQuotationDetailsTableErrors
+                                                itemParticularsData,
+                                                setItemParticularsData,
+                                                itemParticularsErrors,
+                                                setItemParticularsErrors
                                               )
                                             }
                                           />
@@ -1033,28 +953,60 @@ function WorkOrder() {
                                           <div className="pt-2">{index + 1}</div>
                                         </td>
                                         <td className="border px-2 py-2">
-                                          <input
-                                            style={{ width: '150px' }}
-                                            value={row.partNo}
+                                          <select
+                                            value={row.partNo || ""}
+                                            style={{ width: "150px" }}
+                                            className={
+                                              itemParticularsErrors[index]?.partNo ? "error form-control" : "form-control"
+                                            }
                                             onChange={(e) => {
-                                              const value = e.target.value;
-                                              setQuotationDetails((prev) =>
-                                                prev.map((r) => (r.id === row.id ? { ...r, partNo: value } : r))
+                                              const selectedPartNo = e.target.value;
+
+                                              // Find details for the selected part
+                                              const selectedPartDetails = partNoList.find(
+                                                (item) => item.partCode === selectedPartNo
                                               );
-                                              setQuotationDetailsTableErrors((prev) => {
+
+                                              // Update partNo and related fields
+                                              setItemParticularsData((prev) =>
+                                                prev.map((r, i) =>
+                                                  i === index
+                                                    ? {
+                                                      ...r,
+                                                      partNo: selectedPartDetails?.partCode || "",
+                                                      partName: selectedPartDetails?.partDescription || "",
+                                                      drawingNo: selectedPartDetails?.drawingNo || "",
+                                                      uom: selectedPartDetails?.uom || "",
+                                                      ordQty: selectedPartDetails?.orderQty || "",
+                                                      revisionNo: selectedPartDetails?.revisionNo || "",
+                                                      qtyOffered: selectedPartDetails?.qtyOffered || "",
+                                                      productionManager: selectedPartDetails?.productionManager || "",
+                                                    }
+                                                    : r
+                                                )
+                                              );
+
+                                              // Update validation errors
+                                              setItemParticularsErrors((prev) => {
                                                 const newErrors = [...prev];
                                                 newErrors[index] = {
                                                   ...newErrors[index],
-                                                  partNo: !value ? 'Part No is required' : ''
+                                                  partNo: !selectedPartNo ? "Part No is required" : "",
                                                 };
                                                 return newErrors;
                                               });
                                             }}
-                                            className={quotationDetailsTableErrors[index]?.partNo ? 'error form-control' : 'form-control'}
-                                          />
-                                          {quotationDetailsTableErrors[index]?.partNo && (
-                                            <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                              {quotationDetailsTableErrors[index].partNo}
+                                          >
+                                            <option value="">-- Select --</option>
+                                            {getAvailablePartNos(row.id).map((item) => (
+                                              <option key={item.id} value={item.partCode}>
+                                                {item.partCode}
+                                              </option>
+                                            ))}
+                                          </select>
+                                          {itemParticularsErrors[index]?.partNo && (
+                                            <div className="mt-2" style={{ color: "red", fontSize: "12px" }}>
+                                              {itemParticularsErrors[index].partNo}
                                             </div>
                                           )}
                                         </td>
@@ -1064,10 +1016,10 @@ function WorkOrder() {
                                             value={row.partName}
                                             onChange={(e) => {
                                               const value = e.target.value;
-                                              setQuotationDetails((prev) =>
+                                              setItemParticularsData((prev) =>
                                                 prev.map((r) => (r.id === row.id ? { ...r, partName: value } : r))
                                               );
-                                              setQuotationDetailsTableErrors((prev) => {
+                                              setItemParticularsErrors((prev) => {
                                                 const newErrors = [...prev];
                                                 newErrors[index] = {
                                                   ...newErrors[index],
@@ -1076,11 +1028,11 @@ function WorkOrder() {
                                                 return newErrors;
                                               });
                                             }}
-                                            className={quotationDetailsTableErrors[index]?.partName ? 'error form-control' : 'form-control'}
+                                            className={itemParticularsErrors[index]?.partName ? 'error form-control' : 'form-control'}
                                           />
-                                          {quotationDetailsTableErrors[index]?.partName && (
+                                          {itemParticularsErrors[index]?.partName && (
                                             <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                              {quotationDetailsTableErrors[index].partName}
+                                              {itemParticularsErrors[index].partName}
                                             </div>
                                           )}
                                         </td>
@@ -1090,10 +1042,10 @@ function WorkOrder() {
                                             value={row.drawingNo}
                                             onChange={(e) => {
                                               const value = e.target.value;
-                                              setQuotationDetails((prev) =>
+                                              setItemParticularsData((prev) =>
                                                 prev.map((r) => (r.id === row.id ? { ...r, drawingNo: value } : r))
                                               );
-                                              setQuotationDetailsTableErrors((prev) => {
+                                              setItemParticularsErrors((prev) => {
                                                 const newErrors = [...prev];
                                                 newErrors[index] = {
                                                   ...newErrors[index],
@@ -1102,11 +1054,11 @@ function WorkOrder() {
                                                 return newErrors;
                                               });
                                             }}
-                                            className={quotationDetailsTableErrors[index]?.drawingNo ? 'error form-control' : 'form-control'}
+                                            className={itemParticularsErrors[index]?.drawingNo ? 'error form-control' : 'form-control'}
                                           />
-                                          {quotationDetailsTableErrors[index]?.drawingNo && (
+                                          {itemParticularsErrors[index]?.drawingNo && (
                                             <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                              {quotationDetailsTableErrors[index].drawingNo}
+                                              {itemParticularsErrors[index].drawingNo}
                                             </div>
                                           )}
                                         </td>
@@ -1117,10 +1069,10 @@ function WorkOrder() {
                                             value={row.revisionNo}
                                             onChange={(e) => {
                                               const value = e.target.value;
-                                              setQuotationDetails((prev) =>
+                                              setItemParticularsData((prev) =>
                                                 prev.map((r) => (r.id === row.id ? { ...r, revisionNo: value } : r))
                                               );
-                                              setQuotationDetailsTableErrors((prev) => {
+                                              setItemParticularsErrors((prev) => {
                                                 const newErrors = [...prev];
                                                 newErrors[index] = {
                                                   ...newErrors[index],
@@ -1129,11 +1081,11 @@ function WorkOrder() {
                                                 return newErrors;
                                               });
                                             }}
-                                            className={quotationDetailsTableErrors[index]?.revisionNo ? 'error form-control' : 'form-control'}
+                                            className={itemParticularsErrors[index]?.revisionNo ? 'error form-control' : 'form-control'}
                                           />
-                                          {quotationDetailsTableErrors[index]?.revisionNo && (
+                                          {itemParticularsErrors[index]?.revisionNo && (
                                             <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                              {quotationDetailsTableErrors[index].revisionNo}
+                                              {itemParticularsErrors[index].revisionNo}
                                             </div>
                                           )}
                                         </td><td className="border px-2 py-2">
@@ -1142,10 +1094,10 @@ function WorkOrder() {
                                             value={row.uom}
                                             onChange={(e) => {
                                               const value = e.target.value;
-                                              setQuotationDetails((prev) =>
+                                              setItemParticularsData((prev) =>
                                                 prev.map((r) => (r.id === row.id ? { ...r, uom: value } : r))
                                               );
-                                              setQuotationDetailsTableErrors((prev) => {
+                                              setItemParticularsErrors((prev) => {
                                                 const newErrors = [...prev];
                                                 newErrors[index] = {
                                                   ...newErrors[index],
@@ -1154,11 +1106,11 @@ function WorkOrder() {
                                                 return newErrors;
                                               });
                                             }}
-                                            className={quotationDetailsTableErrors[index]?.uom ? 'error form-control' : 'form-control'}
+                                            className={itemParticularsErrors[index]?.uom ? 'error form-control' : 'form-control'}
                                           />
-                                          {quotationDetailsTableErrors[index]?.uom && (
+                                          {itemParticularsErrors[index]?.uom && (
                                             <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                              {quotationDetailsTableErrors[index].uom}
+                                              {itemParticularsErrors[index].uom}
                                             </div>
                                           )}
                                         </td>
@@ -1168,10 +1120,10 @@ function WorkOrder() {
                                             value={row.ordQty}
                                             onChange={(e) => {
                                               const value = e.target.value;
-                                              setQuotationDetails((prev) =>
+                                              setItemParticularsData((prev) =>
                                                 prev.map((r) => (r.id === row.id ? { ...r, ordQty: value } : r))
                                               );
-                                              setQuotationDetailsTableErrors((prev) => {
+                                              setItemParticularsErrors((prev) => {
                                                 const newErrors = [...prev];
                                                 newErrors[index] = {
                                                   ...newErrors[index],
@@ -1180,11 +1132,11 @@ function WorkOrder() {
                                                 return newErrors;
                                               });
                                             }}
-                                            className={quotationDetailsTableErrors[index]?.ordQty ? 'error form-control' : 'form-control'}
+                                            className={itemParticularsErrors[index]?.ordQty ? 'error form-control' : 'form-control'}
                                           />
-                                          {quotationDetailsTableErrors[index]?.ordQty && (
+                                          {itemParticularsErrors[index]?.ordQty && (
                                             <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                              {quotationDetailsTableErrors[index].ordQty}
+                                              {itemParticularsErrors[index].ordQty}
                                             </div>
                                           )}
                                         </td>
@@ -1194,10 +1146,10 @@ function WorkOrder() {
                                             value={row.freeQty}
                                             onChange={(e) => {
                                               const value = e.target.value;
-                                              setQuotationDetails((prev) =>
+                                              setItemParticularsData((prev) =>
                                                 prev.map((r) => (r.id === row.id ? { ...r, freeQty: value } : r))
                                               );
-                                              setQuotationDetailsTableErrors((prev) => {
+                                              setItemParticularsErrors((prev) => {
                                                 const newErrors = [...prev];
                                                 newErrors[index] = {
                                                   ...newErrors[index],
@@ -1206,11 +1158,11 @@ function WorkOrder() {
                                                 return newErrors;
                                               });
                                             }}
-                                            className={quotationDetailsTableErrors[index]?.freeQty ? 'error form-control' : 'form-control'}
+                                            className={itemParticularsErrors[index]?.freeQty ? 'error form-control' : 'form-control'}
                                           />
-                                          {quotationDetailsTableErrors[index]?.freeQty && (
+                                          {itemParticularsErrors[index]?.freeQty && (
                                             <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                              {quotationDetailsTableErrors[index].freeQty}
+                                              {itemParticularsErrors[index].freeQty}
                                             </div>
                                           )}
                                         </td>
@@ -1220,10 +1172,10 @@ function WorkOrder() {
                                             value={row.availableStockQty}
                                             onChange={(e) => {
                                               const value = e.target.value;
-                                              setQuotationDetails((prev) =>
+                                              setItemParticularsData((prev) =>
                                                 prev.map((r) => (r.id === row.id ? { ...r, availableStockQty: value } : r))
                                               );
-                                              setQuotationDetailsTableErrors((prev) => {
+                                              setItemParticularsErrors((prev) => {
                                                 const newErrors = [...prev];
                                                 newErrors[index] = {
                                                   ...newErrors[index],
@@ -1232,11 +1184,11 @@ function WorkOrder() {
                                                 return newErrors;
                                               });
                                             }}
-                                            className={quotationDetailsTableErrors[index]?.availableStockQty ? 'error form-control' : 'form-control'}
+                                            className={itemParticularsErrors[index]?.availableStockQty ? 'error form-control' : 'form-control'}
                                           />
-                                          {quotationDetailsTableErrors[index]?.availableStockQty && (
+                                          {itemParticularsErrors[index]?.availableStockQty && (
                                             <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                              {quotationDetailsTableErrors[index].availableStockQty}
+                                              {itemParticularsErrors[index].availableStockQty}
                                             </div>
                                           )}
                                         </td>
@@ -1246,10 +1198,10 @@ function WorkOrder() {
                                             value={row.requiredQty}
                                             onChange={(e) => {
                                               const value = e.target.value;
-                                              setQuotationDetails((prev) =>
+                                              setItemParticularsData((prev) =>
                                                 prev.map((r) => (r.id === row.id ? { ...r, requiredQty: value } : r))
                                               );
-                                              setQuotationDetailsTableErrors((prev) => {
+                                              setItemParticularsErrors((prev) => {
                                                 const newErrors = [...prev];
                                                 newErrors[index] = {
                                                   ...newErrors[index],
@@ -1258,11 +1210,11 @@ function WorkOrder() {
                                                 return newErrors;
                                               });
                                             }}
-                                            className={quotationDetailsTableErrors[index]?.requiredQty ? 'error form-control' : 'form-control'}
+                                            className={itemParticularsErrors[index]?.requiredQty ? 'error form-control' : 'form-control'}
                                           />
-                                          {quotationDetailsTableErrors[index]?.requiredQty && (
+                                          {itemParticularsErrors[index]?.requiredQty && (
                                             <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                              {quotationDetailsTableErrors[index].requiredQty}
+                                              {itemParticularsErrors[index].requiredQty}
                                             </div>
                                           )}
                                         </td>
@@ -1304,7 +1256,7 @@ function WorkOrder() {
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {attachmentData.map((row, index) => (
+                                  {termsandConditionsData.map((row, index) => (
                                     <tr key={row.id}>
                                       <td className="border px-2 py-2 text-center">
                                         <ActionButton
@@ -1313,10 +1265,10 @@ function WorkOrder() {
                                           onClick={() =>
                                             handleDeleteRow(
                                               row.id,
-                                              attachmentData,
-                                              setAttachmentData,
-                                              attachmentTableErrors,
-                                              setAttachmentTableErrors
+                                              termsandConditionsData,
+                                              setTermsandConditionsData,
+                                              termsandConditionsErrors,
+                                              setTermsandConditionsErrors
                                             )
                                           }
                                         />
@@ -1325,57 +1277,44 @@ function WorkOrder() {
                                         <div className="pt-2">{index + 1}</div>
                                       </td>
                                       <td className="border px-2 py-2">
-                                        <input
-                                          // style={{ width: '150px' }}
-                                          type="text"
-                                          value={row.fileName}
-                                          onChange={(e) => {
-                                            const value = e.target.value;
-                                            setAttachmentData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, fileName: value } : r))
-                                            );
-                                            setAttachmentTableErrors((prev) => {
-                                              const newErrors = [...prev];
-                                              newErrors[index] = {
-                                                ...newErrors[index],
-                                                fileName: !value ? 'File Name is required' : ''
-                                              };
-                                              return newErrors;
-                                            });
-                                          }}
-                                          className={attachmentTableErrors[index]?.fileName ? 'error form-control' : 'form-control'}
-                                        />
-                                        {attachmentTableErrors[index]?.fileName && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {attachmentTableErrors[index].fileName}
-                                          </div>
-                                        )}
+                                        <FormControl fullWidth size="small">
+                                          <InputLabel id="template">Template</InputLabel>
+                                          <Select
+                                            labelId="template"
+                                            id="template"
+                                            label="Template"
+                                            onChange={handleInputChange}
+                                            name="template"
+                                            value={formData.template}
+                                          >
+                                            <MenuItem value="INTRA">---</MenuItem>
+                                            <MenuItem value="INTRA">INTRA</MenuItem>
+                                            <MenuItem value="INTER">INTER</MenuItem>
+                                          </Select>
+                                          {fieldErrors.template && <FormHelperText style={{ color: 'red' }}>{fieldErrors.template}</FormHelperText>}
+                                        </FormControl>
                                       </td>
-                                      <td className="border px-2 py-2" onClick={handleBulkUploadOpen}>
+                                      <td className="border px-2 py-2">
                                         <input
                                           type="text"
-                                          value={row.attachments}
-                                          onChange={(e) => {
+                                          value={row.description}
+                                          className="form-control"
+                                          onChange = {(e) => {
                                             const value = e.target.value;
-                                            setAttachmentData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, attachments: value } : r))
+                                            setTermsandConditionsData((prev) =>
+                                                prev.map((r) => (r.id === row.id ? { ...r, description: value } : r))
                                             );
-                                            setAttachmentTableErrors((prev) => {
-                                              const newErrors = [...prev];
-                                              newErrors[index] = {
-                                                ...newErrors[index],
-                                                attachments: !value ? 'Attachment is required' : ''
-                                              };
-                                              return newErrors;
+                                            setTermsandConditionsErrors((prev) => {
+                                                const newErrors = [...prev];
+                                                newErrors[index] = {
+                                                    ...newErrors[index],
+                                                    description: !value ? 'Description is required' : ''
+                                                };
+                                                return newErrors;
                                             });
-                                          }}
-                                          className={attachmentTableErrors[index]?.attachments ? 'error form-control' : 'form-control'}
+                                        }}
+                                          style={{ width: "150px" }} 
                                         />
-                                        {attachmentTableErrors[index]?.attachments && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {attachmentTableErrors[index].attachments}
-                                          </div>
-                                        )}
                                       </td>
                                     </tr>
                                   ))}
@@ -1399,11 +1338,11 @@ function WorkOrder() {
                                   variant="outlined"
                                   size="small"
                                   fullWidth
-                                  name="grossAmount"
-                                  value={formData.grossAmount}
+                                  name="customerSpecialRequirement"
+                                  value={formData.customerSpecialRequirement}
                                   onChange={handleInputChange}
-                                  error={!!fieldErrors.grossAmount}
-                                  helperText={fieldErrors.grossAmount}
+                                  error={!!fieldErrors.customerSpecialRequirement}
+                                  helperText={fieldErrors.customerSpecialRequirement}
                                   multiline
                                   rows={4} // Adjust the number of rows as needed
                                 />
@@ -1430,83 +1369,6 @@ function WorkOrder() {
           PaperComponent={PaperComponent}
           aria-labelledby="draggable-dialog-title"
         >
-          <DialogTitle textAlign="center" style={{ cursor: 'move' }} id="draggable-dialog-title">
-            <h6>Grid Details</h6>
-          </DialogTitle>
-          <DialogContent className="pb-0">
-            <div className="row">
-              <div className="col-lg-12">
-                <div className="table-responsive">
-                  <table className="table table-bordered">
-                    <thead>
-                      <tr style={{ backgroundColor: '#673AB7' }}>
-                        <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
-                          <Checkbox checked={selectAll} onChange={handleSelectAll} sx={{
-                            color: 'white', // Unchecked color
-                            '&.Mui-checked': {
-                              color: 'white' // Checked color
-                            }
-                          }} />
-                        </th>
-                        <th className="px-2 py-2 text-white text-center" style={{ width: '50px' }}>
-                          S.No
-                        </th>
-                        <th className="px-2 py-2 text-white text-center">Part No *</th>
-                        <th className="px-2 py-2 text-white text-center">Part Desc</th>
-                        <th className="px-2 py-2 text-white text-center">SKU</th>
-                        <th className="px-2 py-2 text-white text-center">Batch No</th>
-                        {/* <th className="px-2 py-2 text-white text-center">Qty *</th> */}
-                        <th className="px-2 py-2 text-white text-center">Avl. Qty</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {quotationDetails.map((row, index) => (
-                        <tr key={index}>
-                          <td className="border p-0 text-center">
-                            <Checkbox
-                              checked={selectedRows.includes(index)}
-                              onChange={(e) => {
-                                const isChecked = e.target.checked;
-                                setSelectedRows((prev) => (isChecked ? [...prev, index] : prev.filter((i) => i !== index)));
-
-                              }}
-                            />
-                          </td>
-                          <td className="text-center p-0">
-                            <div style={{ paddingTop: 12 }}>{index + 1}</div>
-                          </td>
-                          <td className="border text-center pb-0 ps-0 pe-0" style={{ paddingTop: 12 }}>
-                            {row.partNo}
-                          </td>
-                          <td className="border text-center pb-0 ps-0 pe-0" style={{ paddingTop: 12 }}>
-                            {row.partDesc}
-                          </td>
-                          <td className="border text-center pb-0 ps-0 pe-0" style={{ paddingTop: 12 }}>
-                            {row.sku}
-                          </td>
-                          <td className="border text-center pb-0 ps-0 pe-0" style={{ paddingTop: 12 }}>
-                            {row.batchNo}
-                          </td>
-                          {/* <td className="border text-center pb-0 ps-0 pe-0" style={{ paddingTop: 12 }}>
-                                  {row.qty}
-                                </td> */}
-                          <td className="border text-center pb-0 ps-0 pe-0" style={{ paddingTop: 12 }}>
-                            {row.availQty}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </DialogContent>
-          <DialogActions sx={{ p: '1.25rem' }} className="pt-0">
-            <Button onClick={handleCloseModal}>Cancel</Button>
-            <Button color="secondary" onClick={handleSaveSelectedRows} variant="contained">
-              Proceed
-            </Button>
-          </DialogActions>
         </Dialog>
       </div>
     </>

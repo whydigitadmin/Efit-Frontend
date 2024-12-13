@@ -32,7 +32,14 @@ const SubContractorEnquiry = () => {
   const [value, setValue] = useState(0);
   const [editId, setEditId] = useState('');
   const [accountNames, setAccountNames] = useState([]);
-  const [partyList, setPartyList] = useState([]);
+  const [partyList, setPartyList] = useState([
+    { partyname: "Party One", id: 1 },
+    { partyname: "Party Two", id: 2 },
+    { partyname: "Party Three", id: 3 },
+    { partyname: "Party Four", id: 4 },
+    { partyname: "Party Five", id: 5 },
+    { partyname: "Party Six", id: 6 },
+  ]);
   const [currencies, setCurrencies] = useState([]);
   const [formData, setFormData] = useState({
     active: true,
@@ -42,9 +49,9 @@ const SubContractorEnquiry = () => {
     subContractorName: '',
     subContractorRefNo: '',
     routeCardNo: '',
-    contactName:'',
+    contactName: '',
     contactNo: '',
-    scIssueNo:'',
+    scIssueNo: '',
     orgId: orgId,
     enquiryDueDate: dayjs(),
 
@@ -57,9 +64,9 @@ const SubContractorEnquiry = () => {
     subContractorName: '',
     subContractorRefNo: '',
     routeCardNo: '',
-    contactName:'',
+    contactName: '',
     contactNo: '',
-    scIssueNo:'',
+    scIssueNo: '',
     orgId: orgId,
     enquiryDueDate: dayjs(),
   });
@@ -207,6 +214,30 @@ const SubContractorEnquiry = () => {
 
 
 
+  // const handleInputChange = (e) => {
+  //   const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
+
+  //   let errorMessage = '';
+
+  //   if (errorMessage) {
+  //     setFieldErrors({ ...fieldErrors, [name]: errorMessage });
+  //   } else {
+  //     setFormData({ ...formData, [name]: value.toUpperCase() });
+
+  //     setFieldErrors({ ...fieldErrors, [name]: '' });
+
+  //     // Preserve the cursor position for text-based inputs
+  //     if (type === 'text' || type === 'textarea') {
+  //       setTimeout(() => {
+  //         const inputElement = document.getElementsByName(name)[0];
+  //         if (inputElement && inputElement.setSelectionRange) {
+  //           inputElement.setSelectionRange(selectionStart, selectionEnd);
+  //         }
+  //       }, 0);
+  //     }
+  //   }
+  // };
+
   const handleInputChange = (e) => {
     const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
 
@@ -248,7 +279,7 @@ const SubContractorEnquiry = () => {
       routeCardNo: '',
       contactName: '',
       contactNo: '',
-      scIssueNo:'',
+      scIssueNo: '',
       orgId: orgId,
       enquiryDueDate: null,
     });
@@ -261,9 +292,9 @@ const SubContractorEnquiry = () => {
       subContractorName: '',
       subContractorRefNo: '',
       routeCardNo: '',
-      contactName:'',
+      contactName: '',
       contactNo: '',
-      scIssueNo:'',
+      scIssueNo: '',
       orgId: orgId,
       enquiryDueDate: '',
       refNo: '',
@@ -510,38 +541,30 @@ const SubContractorEnquiry = () => {
 
                 {/* Enquiry Type */}
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.enquiryType}>
-                    <InputLabel id="demo-simple-select-label">
-                      {
-                        <span>
-                          Enquiry Type <span className="asterisk">*</span>
-                        </span>
-                      }
-                    </InputLabel>
+                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.supplierName}>
+                    <InputLabel id="supplierName">Supplier Name</InputLabel>
                     <Select
-                      labelId="demo-simple-select-label"
-                      id="demo-simple-select"
-                      label="Enquiry Type"
+                      labelId="supplierName"
+                      id="supplierName"
+                      label="Supplier Name"
                       onChange={handleInputChange}
-                      name="enquiryType"
-                      value={formData.enquiryType}
+                      name="supplierName"
+                      value={formData.supplierName}
                     >
-                      {currencies.map((item) => (
-                        <MenuItem key={item.id} value={item.enquiryType}>
-                          {item.enquiryType}
-                        </MenuItem>
-                      ))}
+                      <MenuItem value="Head Office">Head Office</MenuItem>
+                      <MenuItem value="Branch">Branch</MenuItem>
                     </Select>
-                    {fieldErrors.enquiryType && <FormHelperText style={{ color: 'red' }}>Enquiry Type is required</FormHelperText>}
+                    {fieldErrors.supplierName && <FormHelperText>{fieldErrors.supplierName}</FormHelperText>}
                   </FormControl>
                 </div>
+
 
                 {/* Sub Contractor Name */}
                 <div className="col-md-3 mb-3">
                   <Autocomplete
                     disablePortal
                     options={partyList.map((option, index) => ({ ...option, key: index }))}
-                    getOptionLabel={(option) => option.partyname || ''}
+                    getOptionLabel={(option) => option.partyname}
                     sx={{ width: '100%' }}
                     size="small"
                     value={formData.subContractorName ? partyList.find((c) => c.partyname === formData.subContractorName) : null}
@@ -558,8 +581,8 @@ const SubContractorEnquiry = () => {
                         {...params}
                         label="Sub Contractor Name"
                         name="subContractorName"
-                        error={!!fieldErrors.subContractorName}  // Shows error if supplierName has a value in fieldErrors
-                        helperText={fieldErrors.subContractorName} // Displays the error message
+                        error={!!fieldErrors.subContractorName}
+                        helperText={fieldErrors.subContractorName}
                         InputProps={{
                           ...params.InputProps,
                           style: { height: 40 },
@@ -613,7 +636,7 @@ const SubContractorEnquiry = () => {
                         label="Enquiry Due Date"
                         value={formData.enquiryDueDate}
                         onChange={(date) => handleDateChange('enquiryDueDate', date)}
-                        disabled
+                        // disabled
                         slotProps={{
                           textField: { size: 'small', clearable: true }
                         }}
@@ -628,7 +651,7 @@ const SubContractorEnquiry = () => {
                   <Autocomplete
                     disablePortal
                     options={partyList.map((option, index) => ({ ...option, key: index }))}
-                    getOptionLabel={(option) => option.partyname || ''}
+                    getOptionLabel={(option) => option.partyname}
                     sx={{ width: '100%' }}
                     size="small"
                     value={formData.routeCardNo ? partyList.find((c) => c.partyname === formData.routeCardNo) : null}
@@ -645,8 +668,8 @@ const SubContractorEnquiry = () => {
                         {...params}
                         label="Route Card No"
                         name="routeCardNo"
-                        error={!!fieldErrors.routeCardNo}  // Shows error if supplierName has a value in fieldErrors
-                        helperText={fieldErrors.routeCardNo} // Displays the error message
+                        error={!!fieldErrors.routeCardNo}
+                        helperText={fieldErrors.routeCardNo}
                         InputProps={{
                           ...params.InputProps,
                           style: { height: 40 },
@@ -661,7 +684,7 @@ const SubContractorEnquiry = () => {
                   <Autocomplete
                     disablePortal
                     options={partyList.map((option, index) => ({ ...option, key: index }))}
-                    getOptionLabel={(option) => option.partyname || ''}
+                    getOptionLabel={(option) => option.partyname}
                     sx={{ width: '100%' }}
                     size="small"
                     value={formData.contactName ? partyList.find((c) => c.partyname === formData.contactName) : null}
@@ -678,8 +701,8 @@ const SubContractorEnquiry = () => {
                         {...params}
                         label="Contact Name"
                         name="contactName"
-                        error={!!fieldErrors.contactName}  // Shows error if supplierName has a value in fieldErrors
-                        helperText={fieldErrors.contactName} // Displays the error message
+                        error={!!fieldErrors.contactName}
+                        helperText={fieldErrors.contactName}
                         InputProps={{
                           ...params.InputProps,
                           style: { height: 40 },
@@ -688,7 +711,7 @@ const SubContractorEnquiry = () => {
                     )}
                   />
                 </div>
-                
+
 
                 {/* Contact No */}
                 <div className="col-md-3 mb-3">
@@ -707,12 +730,12 @@ const SubContractorEnquiry = () => {
                   />
                 </div>
 
-                 {/* SC-Issue No */}
-                 <div className="col-md-3 mb-3">
+                {/* SC-Issue No */}
+                <div className="col-md-3 mb-3">
                   <Autocomplete
                     disablePortal
                     options={partyList.map((option, index) => ({ ...option, key: index }))}
-                    getOptionLabel={(option) => option.partyname || ''}
+                    getOptionLabel={(option) => option.partyname}
                     sx={{ width: '100%' }}
                     size="small"
                     value={formData.scIssueNo ? partyList.find((c) => c.partyname === formData.scIssueNo) : null}
@@ -729,8 +752,8 @@ const SubContractorEnquiry = () => {
                         {...params}
                         label="SC-Issue No"
                         name="scIssueNo"
-                        error={!!fieldErrors.scIssueNo}  // Shows error if supplierName has a value in fieldErrors
-                        helperText={fieldErrors.scIssueNo} // Displays the error message
+                        error={!!fieldErrors.scIssueNo}
+                        helperText={fieldErrors.scIssueNo}
                         InputProps={{
                           ...params.InputProps,
                           style: { height: 40 },

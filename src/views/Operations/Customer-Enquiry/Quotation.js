@@ -21,7 +21,9 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import apiCalls from 'apicall';
 import { getAllActiveCurrency } from 'utils/CommonFunctions';
+import numberToWords from "number-to-words";
 
+import axios from 'axios';
 const Quotation = () => {
   const [showForm, setShowForm] = useState(true);
   const [data, setData] = useState(true);
@@ -34,24 +36,30 @@ const Quotation = () => {
   const [editId, setEditId] = useState('');
   const [accountNames, setAccountNames] = useState([]);
   const [partyList, setPartyList] = useState([]);
+  const [enquiryList, setEnquiryList] = useState([]);
   const [currencies, setCurrencies] = useState([]);
+  const [prodManList, setProdManList] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [partNoList, setPartNoList] = useState([]);
+  const [docId, setDocId] = useState('');
+  const [listViewData, setListViewData] = useState([]);
+  const [enquiryData, setEnquiryData] = useState([]);
+  // const isFieldDisabled = formData.customerName === '';
   const [formData, setFormData] = useState({
     active: true,
-    date: dayjs(),
+    docDate: dayjs(),
     quoteNo: '',
     customerName: '',
-    customerID: '',
+    customerId: '',
     enquiryNo: '',
     enquiryDate: dayjs(),
     orgId: orgId,
-    referenceDate: null,
+    validTill: null,
     kindAttention: '',
     contactNo: '',
     taxCode: '',
     productionManager: '',
     currency: '',
-
-
     grossAmount: "",
     amountInWords: "",
     netAmount: '',
@@ -60,30 +68,28 @@ const Quotation = () => {
   const [fieldErrors, setFieldErrors] = useState({
 
     active: true,
-    date: dayjs(),
+    docDate: dayjs(),
     quoteNo: '',
     customerName: '',
-    customerID: '',
+    customerId: '',
     enquiryNo: '',
     enquiryDate: dayjs(),
     orgId: orgId,
-    referenceDate: null,
+    validTill: null,
     kindAttention: '',
     contactNo: '',
     taxCode: '',
     productionManager: '',
     currency: '',
-
-
     grossAmount: '',
     amountInWords: '',
   });
 
   const listViewColumns = [
-    { accessorKey: 'Currency', header: 'Currency', size: 140 },
-    { accessorKey: 'customerID', header: 'Ex.Rate', size: 140 },
-    { accessorKey: 'refNo', header: 'Ref No', size: 140 },
-    { accessorKey: 'quoteNo', header: 'Document Id', size: 140 }
+    { accessorKey: 'docId', header: 'Document ID', size: 140 },
+    { accessorKey: 'customerName', header: 'Customer Name', size: 140 },
+    { accessorKey: 'customerId', header: 'Customer Id', size: 140 },
+    { accessorKey: 'kindAttention', header: 'kindAttention', size: 140 }
   ];
 
   const [detailsTableData, setDetailsTableData] = useState([
@@ -120,195 +126,194 @@ const Quotation = () => {
     }
   ]);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const CurrencyData = await getAllActiveCurrency(orgId);
-        setCurrencies(CurrencyData);
-        console.log('Currency', CurrencyData);
-      } catch (error) {
-        console.error('Error fetching country data:', error);
-      }
-    };
-
-    fetchData();
-    getGeneralJournalquoteNo();
-    getAllGeneralJournalByOrgId();
-    getAccountNameFromGroup();
-  }, []);
 
   useEffect(() => {
-    const totalDebit = detailsTableData.reduce((sum, row) => sum + Number(row.revisionNo || 0), 0);
-    const totalCredit = detailsTableData.reduce((sum, row) => sum + Number(row.unit || 0), 0);
+    const totalGrossAmount = detailsTableData.reduce((sum, row) => sum + Number(row.basicPrice || 0), 0);
+    const totalNetAmount = detailsTableData.reduce((sum, row) => sum + Number(row.quoteAmount || 0), 0);
 
     setFormData((prev) => ({
       ...prev,
-      // amountInWords: totalDebit,
-      // grossAmount: totalCredit
+      grossAmount: totalGrossAmount,
+      netAmount: totalNetAmount,
+      amountInWords: numberToWords.toWords(Number(totalNetAmount)).toUpperCase()
     }));
+
   }, [detailsTableData]);
 
-  const getGeneralJournalquoteNo = async () => {
+  const getAvailablePartNos = (currentRowId) => {
+
+    const selectedPartNos = detailsTableData
+      .filter((row) => row.id !== currentRowId)
+      .map((row) => row.partNo);
+
+    return partNoList.filter((part) => !selectedPartNos.includes(part.partNo));
+  };
+
+  const getQuotationById = async (row) => {
+    console.log('Row selected:', row);
+    setShowForm(true);
     try {
-      const response = await apiCalls(
+      const result = await apiCalls(
         'get',
-        `/transaction/getGeneralJournalquoteNo?branchCode=${branchCode}&branch=${branch}&finYear=${finYear}&orgId=${orgId}`
+        `/customerenquiry/getQuotationById?id=${row.original.id}`
       );
-      setFormData((prevData) => ({
-        ...prevData,
-        quoteNo: response.paramObjectsMap.generalJournalquoteNo,
-        date: dayjs()
-      }));
-    } catch (error) {
-      console.error('Error fetching gate passes:', error);
+
+      if (result && result.status && result.paramObjectsMap?.quotationVO?.length) {
+        const Quot = result.paramObjectsMap.quotationVO[0];
+
+        console.log('DataToEdit', Quot);
+
+        setEditId(Quot.id);
+        setDocId(Quot.docId);
+        getCustomerNameAndCode(Quot.customer);
+        getEnquiryNoAndDate(Quot.customerId);
+        getProductionManager(Quot.productionManager);
+        getPartNoAndPartDesBasedOnEnquiryNo(Quot.customerId, Quot.enquiryNo);
+        setFormData({
+          active: Quot.active === "Active",
+          taxCode: Quot.taxCode,
+          customerName: Quot.customerName,
+          customerId: Quot.customerId,
+          enquiryNo: Quot.enquiryNo,
+          enquiryDate: Quot.enquiryDate,
+          kindAttention: Quot.kindAttention,
+          contactNo: Quot.contactNo,
+          currency: Quot.currency,
+          productionManager: Quot.productionManager,
+          validTill: Quot.vaidTill ? dayjs(Quot.vaidTill, 'YYYY-MM-DD') : dayjs(),
+          docDate: Quot.docDate ? dayjs(Quot.docDate, 'YYYY-MM-DD') : dayjs(),
+          grossAmount: Quot.grossAmount,
+          netAmount: Quot.netAmount,
+          amountInWords: Quot.amountInWords,
+          orgId: Quot.orgId,
+          createdBy: Quot.createdBy,
+          updatedBy: Quot.updatedBy,
+        });
+
+
+        setDetailsTableData(
+          Quot.quotationDetailsVO?.map((row) => ({
+            id: row.id,
+            partNo: row.partCode,
+            partDescription: row.partDescription,
+            drawingNo: parseInt(row.drawingNo, 10) || 0,
+            revisionNo: row.revisionNo,
+            unit: row.unit,
+            unitPrice: row.unitPrice,
+            qtyOffered: row.qtyOffered,
+            basicPrice: row.basicPrice,
+            discount: row.discount,
+            discountAmount: row.discountAmount,
+            quoteAmount: row.quoteAmount,
+            deliveryDate: row.deliveryDate,
+          })) || []
+        );
+      } else {
+        console.error('No data found for the selected ID');
+        showToast('error', 'No data found for the selected ID');
+      }
+    }
+    catch (error) {
+      console.error('Error fetching data:', error);
     }
   };
 
-  const getAllGeneralJournalByOrgId = async () => {
+  useEffect(() => {
+    getCustomerNameAndCode();
+    getEnquiryNoAndDate();
+    getProductionManager();
+  }, []);
+
+
+  const getCustomerNameAndCode = async () => {
     try {
-      const result = await apiCalls('get', `/transaction/getAllGeneralJournalByOrgId?orgId=${orgId}`);
-      setData(result.paramObjectsMap.generalJournalVO || []);
+      const result = await apiCalls('get', `/customerenquiry/getCustomerNameAndCode?orgId=${orgId}`);
+      setPartyList(result.paramObjectsMap.partymasterVO || []);
+    } catch (err) {
+      console.log('error', err);
+    }
+  };
+  const getEnquiryNoAndDate = async (customer) => {
+    try {
+      const result = await apiCalls('get', `/customerenquiry/getEnquiryNoAndDate?customerCode=${customer}&orgId=${orgId}`);
+      setEnquiryList(result.paramObjectsMap.enquiryVO || []);
+    } catch (err) {
+      console.log('error', err);
+    }
+  };
+  
+  const getPartNoAndPartDesBasedOnEnquiryNo = async (customerId, enquiryNo) => {
+    try {
+      const result = await apiCalls('get', `/customerenquiry/getPartNoAndPartDesBasedOnEnquiryNo?customerCode=${customerId}&docId=${enquiryNo}&orgId=${orgId}`);
+      setPartNoList(result.paramObjectsMap.enquiryVO || []);
+    } catch (err) {
+      console.log('error', err);
+    }
+  };
+  const getProductionManager = async (customer) => {
+    try {
+      const result = await apiCalls('get', `/customerenquiry/getProductionManager?orgId=${orgId}`);
+      setProdManList(result.paramObjectsMap.employeeVO || []);
     } catch (err) {
       console.log('error', err);
     }
   };
 
-  const getGeneralJournalById = async (row) => {
-    setShowForm(true);
+  useEffect(() => {
+    getDepartmentDocId();
+  }, [])
+
+  const getDepartmentDocId = async () => {
     try {
-      const result = await apiCalls('get', `/transaction/getGeneralJournalById?id=${row.original.id}`);
-
-      if (result) {
-        const glVO = result.paramObjectsMap.generalJournalVO[0];
-        setEditId(row.original.id);
-
-        setFormData({
-          id: glVO.id || '',
-          date: glVO.date ? dayjs(glVO.date, 'YYYY-MM-DD') : dayjs(),
-          quoteNo: glVO.quoteNo || '',
-          currency: glVO.currency || '',
-          customerID: glVO.customerID || '',
-          refNo: glVO.refNo || '',
-          referenceDate: glVO.referenceDate ? dayjs(glVO.referenceDate, 'YYYY-MM-DD') : dayjs(),
-          taxCode: glVO.taxCode || '',
-          orgId: glVO.orgId || '',
-          amountInWords: glVO.amountInWords || '',
-          grossAmount: glVO.grossAmount || ''
-          // active: glVO.active || false,
-        });
-        setDetailsTableData(
-          glVO.particularsJournalVO.map((row) => ({
-            id: row.id,
-            partNo: row.partNo,
-            unit: row.unit,
-            revisionNo: row.revisionNo,
-            unitPrice: row.unitPrice,
-            drawingNo: row.drawingNo,
-            partDescription: row.partDescription
-          }))
-        );
-
-        console.log('DataToEdit', glVO);
-      } else {
-        // Handle erro
-      }
+      const response = await apiCalls('get', `/customerenquiry/getQuotationDocId?orgId=${orgId}`);
+      setDocId(response.paramObjectsMap.quotationDocId)
     } catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  };
-
-  const getAccountNameFromGroup = async () => {
-    try {
-      const response = await apiCalls('get', `/transaction/getAccountNameFromGroup?orgId=${orgId}`);
-      setAccountNames(response.paramObjectsMap.generalJournalVO);
-      console.log('generalJournalVO', response.paramObjectsMap.generalJournalVO);
-    } catch (error) {
-      console.error('Error fetching gate passes:', error);
-    }
-  };
-
-  const handleDebitChange = (e, row, index) => {
-    const value = e.target.value;
-
-    if (/^\d{0,20}$/.test(value)) {
-      setDetailsTableData((prev) => prev.map((r) => (r.id === row.id ? { ...r, revisionNo: value, unit: value ? '0' : '' } : r)));
-
-      setDetailsTableErrors((prev) => {
-        const newErrors = [...prev];
-        newErrors[index] = {
-          ...newErrors[index],
-          revisionNo: !value ? 'Debit Amount is Required' : ''
-        };
-        return newErrors;
-      });
-    }
-  };
-
-  const handleCreditChange = (e, row, index) => {
-    const value = e.target.value;
-
-    if (/^\d{0,20}$/.test(value)) {
-      setDetailsTableData((prev) => prev.map((r) => (r.id === row.id ? { ...r, unit: value, revisionNo: value ? '0' : '' } : r)));
-
-      setDetailsTableErrors((prev) => {
-        const newErrors = [...prev];
-        newErrors[index] = {
-          ...newErrors[index],
-          unit: !value ? 'Credit Amount is Required' : ''
-        };
-        return newErrors;
-      });
+      console.error('Error fetching departmentDocId:', error);
     }
   };
 
   const handleInputChange = (e) => {
-    const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
+    const { name, value } = e.target;
 
     let errorMessage = '';
 
     if (errorMessage) {
       setFieldErrors({ ...fieldErrors, [name]: errorMessage });
     } else {
-      setFormData({ ...formData, [name]: value.toUpperCase() });
-
+      setFormData({ ...formData, [name]: value });
       setFieldErrors({ ...fieldErrors, [name]: '' });
-
-      // Preserve the cursor position for text-based inputs
-      if (type === 'text' || type === 'textarea') {
-        setTimeout(() => {
-          const inputElement = document.getElementsByName(name)[0];
-          if (inputElement && inputElement.setSelectionRange) {
-            inputElement.setSelectionRange(selectionStart, selectionEnd);
-          }
-        }, 0);
-      }
     }
   };
+
 
   const handleDateChange = (field, date) => {
     const formattedDate = dayjs(date);
     console.log('formattedDate', formattedDate);
-    // const formattedDate = dayjs(date).format('YYYY-MM-DD');
     setFormData((prevData) => ({ ...prevData, [field]: formattedDate }));
   };
 
   const handleClear = () => {
     setFormData({
-      date: dayjs(),
-      customerID: '',
+      customerId: '',
       orgId: orgId,
-      referenceDate: null,
+      validTill: null,
+      docDate: dayjs(),
+      validTill: null,
       netAmount: '',
       taxCode: '',
+      kindAttention: '',
+      currency: '',
+      contactNo: '',
       grossAmount: '',
       amountInWords: '',
     });
+    getDepartmentDocId();
     getAllActiveCurrency(orgId);
     setFieldErrors({
       date: dayjs(),
-      customerID: '',
+      customerId: '',
       orgId: orgId,
-      referenceDate: null,
+      validTill: null,
       netAmount: '',
       taxCode: '',
       grossAmount: '',
@@ -319,7 +324,6 @@ const Quotation = () => {
     ]);
     setDetailsTableErrors('');
     setEditId('');
-    getGeneralJournalquoteNo();
   };
 
 
@@ -350,7 +354,7 @@ const Quotation = () => {
         !lastRow.partNo ||
         !lastRow.unit ||
         !lastRow.unitPrice ||
-        // !lastRow.drawingNo ||
+        !lastRow.drawingNo ||
         !lastRow.partDescription ||
         !lastRow.revisionNo ||
         !lastRow.qtyOffered ||
@@ -370,15 +374,11 @@ const Quotation = () => {
         const newErrors = [...prevErrors];
         const lastRow = table[table.length - 1];
 
-        // Add error messages for Required fields
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
           partNo: !lastRow.partNo ? 'Part Number is Required' : '',
           unit: !lastRow.unit ? 'Unit is Required' : '',
           unitPrice: !lastRow.unitPrice ? 'Unit Price is Required' : '',
-          drawingNo: !lastRow.drawingNo ? 'Drawing Number is Required' : '',
-          // partDescription: !lastRow.partDescription ? 'Part Description is Required' : '',
-          // revisionNo: !lastRow.revisionNo ? 'Revision Number is Required' : '',
           qtyOffered: !lastRow.qtyOffered ? 'Quantity Offered is Required' : '',
           basicPrice: !lastRow.basicPrice ? 'Basic Price is Required' : '',
           discount: !lastRow.discount ? 'Discount is Required' : '',
@@ -399,7 +399,6 @@ const Quotation = () => {
       const updatedData = table.filter((row) => row.id !== id);
       const updatedErrors = errorTable.filter((_, index) => index !== rowIndex);
 
-      // Update both table data and error state
       setTable(updatedData);
       setErrorTable(updatedErrors);
     }
@@ -413,17 +412,33 @@ const Quotation = () => {
     setValue(newValue);
   };
 
+
+
+  useEffect(() => {
+    getAllQuotationByOrgId();
+  }, []);
+  const getAllQuotationByOrgId = async () => {
+    try {
+      const response = await apiCalls('get', `/customerenquiry/getAllQuotationByOrgId?orgId=${orgId}`);
+      console.log('API Response:', response);
+
+      if (response.status === true) {
+        setListViewData(response.paramObjectsMap.quotationVO);
+      } else {
+        console.error('API Error:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
   const handleSave = async () => {
     const errors = {};
     let isValid = true;
-    // if (!formData.quoteNo) errors.quoteNo = 'Quote Number is Required';
     if (!formData.customerName) errors.customerName = 'Customer Name is Required';
-    // if (!formData.customerID) errors.customerID = 'Customer ID is Required';
     if (!formData.enquiryNo) errors.enquiryNo = 'Enquiry Number is Required';
-    if (!formData.referenceDate) errors.referenceDate = 'Reference Date is Required';
+    if (!formData.validTill) errors.validTill = 'Reference Date is Required';
     if (!formData.kindAttention) errors.kindAttention = 'Kind Attention is Required';
-    // if (!formData.contactNo) errors.contactNo = 'Contact Number is Required';
-    // if (!formData.taxCode) errors.taxCode =   'Tax Code is Required';
     if (!formData.productionManager) errors.productionManager = 'Production Manager is Required';
     if (!formData.currency) errors.currency = 'Currency is Required';
     if (!formData.grossAmount) errors.grossAmount = 'Gross Amount is Required';
@@ -437,18 +452,6 @@ const Quotation = () => {
         rowErrors.partNo = 'Part No is Required';
         detailTableDataValid = false;
       }
-      // if (!row.partDescription) {
-      //   rowErrors.partDescription = 'Part Description is Required';
-      //   detailTableDataValid = false;
-      // }
-      if (!formData.drawingNo) {
-        errors.drawingNo = 'Drawing No is Required'; // Custom error message
-        isValid = false;
-      }
-      // if (!row.revisionNo) {
-      //   rowErrors.revisionNo = 'Revision No  is Required';
-      //   detailTableDataValid = false;
-      // }
       if (!row.unit) {
         rowErrors.unit = ' Unit is Required';
         detailTableDataValid = false;
@@ -490,48 +493,67 @@ const Quotation = () => {
     setDetailsTableErrors(newTableErrors);
 
     if (Object.keys(errors).length === 0 && detailTableDataValid) {
-      const GeneralJournalVO = detailsTableData.map((row) => ({
-        ...(editId && { id: row.id }),
-        partNo: row.partNo,
-        unit: row.unit,
-        revisionNo: row.revisionNo,
-        unitPrice: row.unitPrice,
+      setIsLoading(true);
+
+      const quotedetailsVo = detailsTableData.map((row) => ({
+        ...(editId && { id: parseInt(row.id, 10) || undefined }),
+        itemSubGroup: row.itemSubGroup,
+        deliveryDate: row.deliveryDate,
+        discount: parseInt(row.discount, 10),
+        partCode: row.partNo,
+        partDescription: row.partDescription,
         drawingNo: row.drawingNo,
-        partDescription: row.partDescription
+        qtyOffered: parseInt(row.qtyOffered, 10),
+        revisionNo: parseInt(row.revisionNo, 10),
+        unit: row.unit,
+        unitPrice: parseFloat(row.unitPrice),
       }));
+
       const saveFormData = {
-        ...(editId && { id: editId }),
-        active: formData.active,
-        branch: branch,
-        branchCode: branchCode,
+        ...(editId && { id: parseInt(editId, 10) || undefined }),
+        active: true,
+        contactNo: parseInt(formData.contactNo, 10) || 0,
         createdBy: loginUserName,
         currency: formData.currency,
-        customerID: formData.customerID,
-        finYear: finYear,
-        orgId: orgId,
-        particularsJournalDTO: GeneralJournalVO,
-        referenceDate: dayjs(formData.referenceDate).format('YYYY-MM-DD'),
-        refNo: formData.refNo,
+        customerId: formData.customerId,
+        customerName: formData.customerName,
+        enquiryDate: formData.enquiryDate,
+        enquiryNo: formData.enquiryNo,
+        drawingNo: formData.drawingNo,
+        kindAttention: formData.kindAttention,
+        orgId: parseInt(orgId, 10),
+        productionManager: formData.productionManager,
+        quotationDetailsDTO: quotedetailsVo,
         taxCode: formData.taxCode,
-        grossAmount: formData.grossAmount,
-        amountInWords: formData.amountInWords,
+        vaidTill: dayjs(formData.validTill).format('YYYY-MM-DD'),
       };
-      console.log('DATA TO SAVE IS:', saveFormData);
+
+      console.log("DATA TO SAVE IS:", saveFormData);
+
       try {
-        const response = await apiCalls('put', `/transaction/updateCreateGeneralJournal`, saveFormData);
+        const response = await apiCalls("put", "/customerenquiry/createUpdateQuotation", saveFormData);
         if (response.status === true) {
-          console.log('Response:', response);
-          showToast('success', editId ? 'General Journal Updated Successfully' : 'General Journal Created successfully');
-          getAllGeneralJournalByOrgId();
+          console.log("Response:", response);
+          showToast(
+            "success",
+            editId
+              ? "Quotation updated successfully"
+              : "Quotation values created successfully"
+          );
+          getAllQuotationByOrgId();
           handleClear();
+          setIsLoading(false);
         } else {
-          showToast('error', response.paramObjectsMap.errorMessage || 'General Journal creation failed');
+          showToast("error", response.paramObjectsMap.errorMessage || "Quotation value creation failed");
+          setIsLoading(false);
         }
       } catch (error) {
-        console.error('Error:', error);
-        showToast('error', 'General Journal creation failed');
+        console.error("Error:", error);
+        showToast("error", "Quotation value creation failed");
+        setIsLoading(false);
       }
-    } else {
+    }
+    else {
       setFieldErrors(errors);
     }
   };
@@ -555,25 +577,23 @@ const Quotation = () => {
               <div className="row d-flex ml">
                 <div className="col-md-3 mb-3">
                   <TextField
-                    id="outlined-textarea-zip"
+                    id="quoteNo"
                     label="Quote No"
                     variant="outlined"
                     size="small"
                     fullWidth
                     name="quoteNo"
-                    value={formData.quoteNo}
-                    onChange={handleInputChange}
+                    value={docId}
                     disabled
-                    inputProps={{ maxLength: 10 }}
                   />
                 </div>
                 <div className="col-md-3 mb-3">
                   <FormControl fullWidth variant="filled" size="small">
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <DatePicker
-                        label="Date"
-                        value={formData.date}
-                        onChange={(date) => handleDateChange('date', date)}
+                        label="Document Date"
+                        value={formData.docDate}
+                        onChange={(date) => handleDateChange('docDate', date)}
                         disabled
                         slotProps={{
                           textField: { size: 'small', clearable: true }
@@ -586,30 +606,43 @@ const Quotation = () => {
                 <div className="col-md-3 mb-3">
                   <Autocomplete
                     disablePortal
-                    options={partyList.map((option, index) => ({ ...option, key: index }))}
-                    getOptionLabel={(option) => option.partyname || ''}
+                    options={partyList}
+                    getOptionLabel={(option) => option.customer || ''}
                     sx={{ width: '100%' }}
                     size="small"
-                    value={formData.customerName ? partyList.find((c) => c.partyname === formData.customerName) : null}
+                    value={partyList.find((c) => c.customer === formData.customerName) || null}
                     onChange={(event, newValue) => {
-                      handleInputChange({
-                        target: {
-                          name: 'customerName',
-                          value: newValue ? newValue.partyname : '', // Adjusted to 'partyname'
-                        },
-                      });
+                      if (newValue) {
+                        setFormData({
+                          ...formData,
+                          customerName: newValue.customer,
+                          customerId: newValue.customerCode,
+                          taxCode: newValue.taxCode,
+                          currency: newValue.currency,
+                        });
+                        getEnquiryNoAndDate(newValue.customerCode)
+                      } else {
+                        setFormData({
+                          ...formData,
+                          customerName: '',
+                          customerId: '',
+                          taxCode: '',
+                          currency: '',
+                        });
+                      }
                     }}
                     renderInput={(params) => (
                       <TextField
                         {...params}
                         label="Customer Name"
                         name="customerName"
-                        error={!!fieldErrors.customerName}  // Shows error if customerName has a value in fieldErrors
-                        helperText={fieldErrors.customerName} // Displays the error message
+                        error={!!fieldErrors.customerName}
+                        helperText={fieldErrors.customerName}
                         InputProps={{
                           ...params.InputProps,
                           style: { height: 40 },
                         }}
+                        // disabled={isFieldDisabled}
                       />
                     )}
                   />
@@ -621,8 +654,8 @@ const Quotation = () => {
                     variant="outlined"
                     size="small"
                     fullWidth
-                    name="customerID"
-                    value={formData.customerID}
+                    name="customerId"
+                    value={formData.customerId}
                     onChange={handleInputChange}
                     disabled
                     inputProps={{ maxLength: 10 }}
@@ -631,18 +664,30 @@ const Quotation = () => {
                 <div className="col-md-3 mb-3">
                   <Autocomplete
                     disablePortal
-                    options={partyList.map((option, index) => ({ ...option, key: index }))}
-                    getOptionLabel={(option) => option.partyname || ''}
+                    options={enquiryList.map((option, index) => ({ ...option, key: index }))}
+                    getOptionLabel={(option) => option.enquiryDocNo || ''}
                     sx={{ width: '100%' }}
                     size="small"
-                    value={formData.enquiryNo ? partyList.find((c) => c.partyname === formData.enquiryNo) : null}
+                    value={enquiryList.find((eNo) => eNo.enquiryDocNo === formData.enquiryNo) || null}
                     onChange={(event, newValue) => {
-                      handleInputChange({
-                        target: {
-                          name: 'enquiryNo',
-                          value: newValue ? newValue.partyname : '', // Adjusted to 'partyname'
-                        },
-                      });
+                      if (newValue) {
+                        setFormData({
+                          ...formData,
+                          enquiryNo: newValue.enquiryDocNo,
+                          kindAttention: newValue.kindAttention,
+                          enquiryDate: newValue.enquiryDocDate,
+                          contactNo: newValue.contactNo,
+                        });
+                        getPartNoAndPartDesBasedOnEnquiryNo(formData.customerId, newValue.enquiryDocNo)
+                      } else {
+                        setFormData({
+                          ...formData,
+                          enquiryNo: '',
+                          kindAttention: '',
+                          enquiryDate: '',
+                          contactNo: '',
+                        });
+                      }
                     }}
                     renderInput={(params) => (
                       <TextField
@@ -680,17 +725,17 @@ const Quotation = () => {
                   <FormControl fullWidth variant="filled" size="small">
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <DatePicker
-                        label="Reference Date"
-                        value={formData.referenceDate}
-                        onChange={(date) => handleDateChange('referenceDate', date)}
+                        label="Valid Till"
+                        value={formData.validTill}
+                        onChange={(date) => handleDateChange('validTill', date)}
                         slotProps={{
                           textField: { size: 'small', clearable: true }
                         }}
                         format="DD-MM-YYYY"
                       />
                     </LocalizationProvider>
-                    {/* {fieldErrors.referenceDate && <p className="dateErrMsg">Ref Date is Required</p>} */}
-                    {fieldErrors.referenceDate && (
+                    {/* {fieldErrors.validTill && <p className="dateErrMsg">Ref Date is Required</p>} */}
+                    {fieldErrors.validTill && (
                       <p className="dateErrMsg">Ref Date is Required</p>
                     )}
                   </FormControl>
@@ -700,11 +745,6 @@ const Quotation = () => {
                     <TextField
                       id="kindAttention"
                       label="Kind Attention"
-                      // label={
-                      //   <span>
-                      //     Drawing Id <span className="asterisk">*</span>
-                      //   </span>
-                      // }
                       name="kindAttention"
                       size="small"
                       value={formData.kindAttention}
@@ -746,16 +786,16 @@ const Quotation = () => {
                 <div className="col-md-3 mb-3">
                   <Autocomplete
                     disablePortal
-                    options={partyList.map((option, index) => ({ ...option, key: index }))}
-                    getOptionLabel={(option) => option.partyname || ''}
+                    options={prodManList}
+                    getOptionLabel={(option) => option.productionManager}
                     sx={{ width: '100%' }}
                     size="small"
-                    value={formData.productionManager ? partyList.find((c) => c.partyname === formData.productionManager) : null}
+                    value={formData.productionManager ? prodManList.find((c) => c.productionManager === formData.productionManager) : null}
                     onChange={(event, newValue) => {
                       handleInputChange({
                         target: {
                           name: 'productionManager',
-                          value: newValue ? newValue.partyname : '', // Adjusted to 'partyname'
+                          value: newValue ? newValue.productionManager : '',
                         },
                       });
                     }}
@@ -779,11 +819,6 @@ const Quotation = () => {
                     <TextField
                       id="currency"
                       label="Currency"
-                      // label={
-                      //   <span>
-                      //     Drawing Id <span className="asterisk">*</span>
-                      //   </span>
-                      // }
                       name="currency"
                       size="small"
                       value={formData.currency}
@@ -791,6 +826,7 @@ const Quotation = () => {
                       inputProps={{ maxLength: 30 }}
                       error={!!fieldErrors.currency}
                       helperText={fieldErrors.currency}
+                      disabled
                     />
                   </FormControl>
                 </div>
@@ -860,120 +896,97 @@ const Quotation = () => {
                                       </td>
                                       <td className="border px-2 py-2">
                                         <select
-                                          value={row.partNo}
-                                          style={{ width: '200px' }}
-                                          className={detailsTableErrors[index]?.partNo ? 'error form-control' : 'form-control'}
-                                          onChange={(e) =>
-                                            setDetailsTableData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, partNo: e.target.value } : r))
-                                            )
+                                          value={row.partNo || ""}
+                                          style={{ width: "150px" }}
+                                          className={
+                                            detailsTableErrors[index]?.partNo ? "error form-control" : "form-control"
                                           }
-                                        >
-                                          <option value="">-- Select --</option>
-                                          {accountNames.map((item) => (
-                                            <option key={item.id} value={item.accountName}>
-                                              {item.accountName}
-                                            </option>
-                                          ))}
-                                        </select>
-                                        {detailsTableErrors[index]?.partNo && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors[index].partNo}
-                                          </div>
-                                        )}
-                                      </td>
-                                      <td className="border px-2 py-2">
-                                        <input
-                                          type="text"
-                                          value={row.partDescription}
                                           onChange={(e) => {
-                                            const value = e.target.value;
-                                            setDetailsTableData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, partDescription: value } : r))
+                                            const selectedPartNo = e.target.value;
+
+                                            // Find details for the selected part
+                                            const selectedPartDetails = partNoList.find(
+                                              (item) => item.partNo === selectedPartNo
                                             );
+
+                                            // Update partNo and related fields
+                                            setDetailsTableData((prev) =>
+                                              prev.map((r, i) =>
+                                                i === index
+                                                  ? {
+                                                    ...r,
+                                                    partNo: selectedPartDetails?.partNo || "",
+                                                    partDescription: selectedPartDetails?.partDescription || "",
+                                                    unit: selectedPartDetails?.unit || "",
+                                                    revisionNo: selectedPartDetails?.revisionNo || "",
+                                                    drawingNo: selectedPartDetails?.drawingNo || "",
+                                                  }
+                                                  : r
+                                              )
+                                            );
+
+                                            // Update validation errors
                                             setDetailsTableErrors((prev) => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                partDescription: !value ? 'Sub Ledger Name is Required' : ''
+                                                partNo: !selectedPartNo ? "Part No is required" : "",
                                               };
                                               return newErrors;
                                             });
                                           }}
-                                          className={detailsTableErrors[index]?.partDescription ? 'error form-control' : 'form-control'}
-                                          style={{ width: '150px' }}
-                                          disabled
-                                        />
-                                        {detailsTableErrors[index]?.partDescription && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors[index].partDescription}
+                                        >
+                                          <option value="">-- Select --</option>
+                                          {getAvailablePartNos(row.id).map((item) => (
+                                            <option key={item.id} value={item.partNo}>
+                                              {item.partNo}
+                                            </option>
+                                          ))}
+                                        </select>
+                                        {detailsTableErrors[index]?.partNo && (
+                                          <div className="mt-2" style={{ color: "red", fontSize: "12px" }}>
+                                            {detailsTableErrors[index].partNo}
                                           </div>
                                         )}
                                       </td>
-                                      <td>
-                                        <Autocomplete
-                                          disablePortal
-                                          options={partyList.map((option, index) => ({ ...option, key: index }))}
-                                          getOptionLabel={(option) => option.partyname || ''}
-                                          sx={{ width: '100%' }}
-                                          size="small"
-                                          value={formData.drawingNo ? partyList.find((c) => c.partyname === formData.drawingNo) : null}
-                                          onChange={(event, newValue) => {
-                                            handleInputChange({
-                                              target: {
-                                                name: 'drawingNo',
-                                                value: newValue ? newValue.partyname : '', // Adjusted to 'partyname'
-                                              },
-                                            });
-                                          }}
-                                          renderInput={(params) => (
-                                            <TextField
-                                              {...params}
-                                              label="Drawing No"
-                                              name="drawingNo"
-                                              error={!!fieldErrors.drawingNo}  // Shows red border if there's an error
-                                              helperText={fieldErrors.drawingNo}  // Shows the error message
-                                              InputProps={{
-                                                ...params.InputProps,
-                                                style: { height: 40, width: 200 },
-                                              }}
-                                            />
-                                          )}
+
+                                      
+                                      <td className="border px-2 py-2">
+                                        <input
+                                          type="text"
+                                          value={row.partDescription}
+                                          className="form-control"
+                                          style={{ width: "150px" }}
+                                          disabled
                                         />
                                       </td>
-
+                                      <td className="border px-2 py-2">
+                                        <input
+                                          type="text"
+                                          value={row.drawingNo}
+                                          className="form-control"
+                                          style={{ width: "150px" }}
+                                          disabled
+                                        />
+                                      </td>
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
                                           value={row.revisionNo}
-                                          onChange={(e) => handleDebitChange(e, row, index)}
-                                          maxLength="20"
-                                          className={detailsTableErrors[index]?.revisionNo ? 'error form-control' : 'form-control'}
-                                          style={{ width: '150px' }}
+                                          className="form-control"
+                                          style={{ width: "150px" }}
                                           disabled
                                         />
-                                        {detailsTableErrors[index]?.revisionNo && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors[index].revisionNo}
-                                          </div>
-                                        )}
                                       </td>
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
                                           value={row.unit}
-                                          onChange={(e) => handleCreditChange(e, row, index)}
-                                          maxLength="20"
-                                          className={detailsTableErrors[index]?.unit ? 'error form-control' : 'form-control'}
-                                          style={{ width: '150px' }}
+                                          className="form-control"
+                                          style={{ width: "150px" }}
+                                          disabled
                                         />
-                                        {detailsTableErrors[index]?.unit && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors[index].unit}
-                                          </div>
-                                        )}
                                       </td>
-
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
@@ -981,13 +994,17 @@ const Quotation = () => {
                                           onChange={(e) => {
                                             const value = e.target.value;
                                             setDetailsTableData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, unitPrice: value } : r))
+                                              prev.map((r) =>
+                                                r.id === row.id
+                                                  ? { ...r, unitPrice: value, basicPrice: value * (r.qtyOffered || 0) }
+                                                  : r
+                                              )
                                             );
                                             setDetailsTableErrors((prev) => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                unitPrice: !value ? 'unitPrice is Required' : ''
+                                                unitPrice: !value ? 'unitPrice is Required' : '',
                                               };
                                               return newErrors;
                                             });
@@ -1011,13 +1028,17 @@ const Quotation = () => {
                                           onChange={(e) => {
                                             const value = e.target.value;
                                             setDetailsTableData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, qtyOffered: value } : r))
+                                              prev.map((r) =>
+                                                r.id === row.id
+                                                  ? { ...r, qtyOffered: value, basicPrice: (r.unitPrice || 0) * value }
+                                                  : r
+                                              )
                                             );
                                             setDetailsTableErrors((prev) => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                qtyOffered: !value ? 'qtyOffered is Required' : ''
+                                                qtyOffered: !value ? 'qtyOffered is Required' : '',
                                               };
                                               return newErrors;
                                             });
@@ -1035,43 +1056,34 @@ const Quotation = () => {
                                         <input
                                           type="text"
                                           value={row.basicPrice}
-                                          onChange={(e) => {
-                                            const value = e.target.value;
-                                            setDetailsTableData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, basicPrice: value } : r))
-                                            );
-                                            setDetailsTableErrors((prev) => {
-                                              const newErrors = [...prev];
-                                              newErrors[index] = {
-                                                ...newErrors[index],
-                                                basicPrice: !value ? 'basicPrice is Required' : ''
-                                              };
-                                              return newErrors;
-                                            });
-                                          }}
-                                          className={detailsTableErrors[index]?.basicPrice ? 'error form-control' : 'form-control'}
+                                          readOnly
+                                          className="form-control"
                                           style={{ width: '150px' }}
                                         />
-                                        {detailsTableErrors[index]?.basicPrice && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors[index].basicPrice}
-                                          </div>
-                                        )}
                                       </td>
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
                                           value={row.discount}
                                           onChange={(e) => {
-                                            const value = e.target.value;
+                                            const value = parseFloat(e.target.value) || 0;
                                             setDetailsTableData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, discount: value } : r))
+                                              prev.map((r) =>
+                                                r.id === row.id
+                                                  ? {
+                                                    ...r,
+                                                    discount: value,
+                                                    discountAmount: (r.basicPrice || 0) * (value / 100),
+                                                    quoteAmount: (r.basicPrice || 0) - (r.basicPrice || 0) * (value / 100),
+                                                  }
+                                                  : r
+                                              )
                                             );
                                             setDetailsTableErrors((prev) => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                discount: !value ? 'discount is Required' : ''
+                                                discount: value <= 0 ? 'Discount is Required' : '',
                                               };
                                               return newErrors;
                                             });
@@ -1116,28 +1128,10 @@ const Quotation = () => {
                                         <input
                                           type="text"
                                           value={row.quoteAmount}
-                                          onChange={(e) => {
-                                            const value = e.target.value;
-                                            setDetailsTableData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, quoteAmount: value } : r))
-                                            );
-                                            setDetailsTableErrors((prev) => {
-                                              const newErrors = [...prev];
-                                              newErrors[index] = {
-                                                ...newErrors[index],
-                                                quoteAmount: !value ? 'quoteAmount is Required' : ''
-                                              };
-                                              return newErrors;
-                                            });
-                                          }}
-                                          className={detailsTableErrors[index]?.quoteAmount ? 'error form-control' : 'form-control'}
+                                          readOnly
+                                          className="form-control"
                                           style={{ width: '150px' }}
                                         />
-                                        {detailsTableErrors[index]?.quoteAmount && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors[index].quoteAmount}
-                                          </div>
-                                        )}
                                       </td>
                                       <td className="border px-2 py-2">
                                         <input
@@ -1198,6 +1192,7 @@ const Quotation = () => {
                               <span style={{ color: 'red' }}>{fieldErrors.grossAmount ? 'Total Credit Amount is Required' : ''}</span>
                             }
                             inputProps={{ maxLength: 40 }}
+                            disabled
                           />
                         </div>
                         <div className="col-md-3">
@@ -1214,10 +1209,11 @@ const Quotation = () => {
                               onChange={handleInputChange}
                               error={!!fieldErrors.netAmount}
                               helperText={fieldErrors.netAmount}
+                              disabled
                             />
                           </FormControl>
                         </div>
-                        <div className="col-md-3">
+                        <div className="col-md-6">
                           <FormControl fullWidth variant="filled">
                             <TextField
                               id="Amount In Words"
@@ -1231,6 +1227,7 @@ const Quotation = () => {
                               onChange={handleInputChange}
                               error={!!fieldErrors.amountInWords}
                               helperText={fieldErrors.amountInWords}
+                              disabled
                             />
                           </FormControl>
                         </div>
@@ -1241,7 +1238,7 @@ const Quotation = () => {
               </div>
             </>
           ) : (
-            <CommonTable data={data} columns={listViewColumns} blockEdit={true} toEdit={getGeneralJournalById} />
+            <CommonTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getQuotationById} />
           )}
         </div>
       </div>

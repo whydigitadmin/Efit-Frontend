@@ -33,15 +33,19 @@ const IssueToSubContractor = () => {
   const [value, setValue] = useState(0);
   const [editId, setEditId] = useState('');
   const [accountNames, setAccountNames] = useState([]);
-  const [partyList, setPartyList] = useState([]);
+  const [departmentList, setDepartmentList] = useState([]);
+
+  const [partyList, setPartyList] = useState([
+    {    partyname:"one2121"  }
+  ]);
   const [currencies, setCurrencies] = useState([]);
   const [formData, setFormData] = useState({
     active: true,
-    scIssueDate: dayjs(),
-    scIssueNo: '',
-    routeCardNo: '',
-    customerName: '',
-    department: '',
+    docDate: dayjs(),
+    docId: '',
+    routeCardNo: 'Route Card No',
+    customerName: 'Customer Name',
+    department: 'Department',
     status: '',
     orgId: orgId,
     narration: "",
@@ -49,8 +53,8 @@ const IssueToSubContractor = () => {
 
   const [fieldErrors, setFieldErrors] = useState({
     active: true,
-    scIssueDate: dayjs(),
-    scIssueNo: '',
+    docDate: new Date(),
+    docId: '',
     routeCardNo: '',
     customerName: '',
     department: '',
@@ -58,20 +62,22 @@ const IssueToSubContractor = () => {
     orgId: orgId,
     narration: "",
   });
-
+  const [listViewData, setListViewData] = useState([]);
   const listViewColumns = [
-    { accessorKey: 'Currency', header: 'Currency', size: 140 },
-    { accessorKey: 'customerName', header: 'Ex.Rate', size: 140 },
-    { accessorKey: 'refNo', header: 'Ref No', size: 140 },
-    { accessorKey: 'scIssueNo', header: 'Document Id', size: 140 }
+    { accessorKey: 'docId', header: 'SC Issue No', size: 140 },
+    { accessorKey: 'docDate', header: 'Doc Date', size: 140 },
+    { accessorKey: 'routeCardNo', header: 'Route Card No', size: 140 },
+    { accessorKey: 'customerName', header: 'Customer Name', size: 140 },
+    { accessorKey: 'department', header: 'Department', size: 140 },
+    { accessorKey: 'status', header: 'Status', size: 140 },
   ];
 
   const [detailsTableData, setDetailsTableData] = useState([
     {
       id: 1,
-      partNo: '',
-      partDescription: '',
-      process: '',
+      item: '	Item',
+      itemDescription: 'itemDescription',
+      process: 'Process',
       quantity: '',
       remarks: '',
     }
@@ -79,8 +85,8 @@ const IssueToSubContractor = () => {
   const [detailsTableErrors, setDetailsTableErrors] = useState([
     {
       id: 1,
-      partNo: '',
-      partDescription: '',
+      item: '',
+      itemDescription: '',
       process: '',
       quantity: '',
       remarks: '',
@@ -99,9 +105,6 @@ const IssueToSubContractor = () => {
     };
 
     fetchData();
-    getGeneralJournalscIssueNo();
-    getAllGeneralJournalByOrgId();
-    getAccountNameFromGroup();
   }, []);
 
   useEffect(() => {
@@ -114,84 +117,72 @@ const IssueToSubContractor = () => {
     }));
   }, [detailsTableData]);
 
-  const getGeneralJournalscIssueNo = async () => {
+  // Department
+  useEffect(() => {
+    getDepartmentNames();
+  }, []);
+  const getDepartmentNames = async () => {
     try {
-      const response = await apiCalls(
-        'get',
-        `/transaction/getGeneralJournalscIssueNo?branchCode=${branchCode}&branch=${branch}&finYear=${finYear}&orgId=${orgId}`
-      );
-      setFormData((prevData) => ({
-        ...prevData,
-        scIssueNo: response.paramObjectsMap.generalJournalscIssueNo,
-        date: dayjs()
-      }));
+      const response = await apiCalls('get', `/issuetosubcontractor/getDepartmentName?orgId=${orgId}`);
+      if (response.status === true && response.paramObjectsMap.routeCardVO) {
+        const departmentData = response.paramObjectsMap.routeCardVO.map(({ departmentName }) => ({
+          departmentName,
+        }));
+        setDepartmentList(departmentData);
+        return departmentData;
+      } else {
+        console.error('API Error:', response);
+        return [];
+      }
     } catch (error) {
-      console.error('Error fetching gate passes:', error);
+      console.error('Error fetching department names:', error);
+      return [];
     }
   };
 
-  const getAllGeneralJournalByOrgId = async () => {
-    try {
-      const result = await apiCalls('get', `/transaction/getAllGeneralJournalByOrgId?orgId=${orgId}`);
-      setData(result.paramObjectsMap.generalJournalVO || []);
-    } catch (err) {
-      console.log('error', err);
-    }
-  };
-
-  const getGeneralJournalById = async (row) => {
+  const getIssueToSubContractorById = async (row) => {
     setShowForm(true);
     try {
-      const result = await apiCalls('get', `/transaction/getGeneralJournalById?id=${row.original.id}`);
-
+      const result = await apiCalls('get', `/issuetosubcontractor/getIssueToSubContractorById?id=${row.original.id}`);
+  
       if (result) {
-        const glVO = result.paramObjectsMap.generalJournalVO[0];
+        const IssToSubContra = result.paramObjectsMap.issueToSubContractorVO[0];
         setEditId(row.original.id);
-
+  
         setFormData({
-          id: glVO.id || '',
-          // scIssueDate: glVO.date ? scIssueDate(glVO.scIssueDate, 'YYYY-MM-DD') : dayjs(),
-          scIssueNo: glVO.scIssueNo || '',
-          currency: glVO.currency || '',
-          customerName: glVO.customerName || '',
-          refNo: glVO.refNo || '',
-          referenceDate: glVO.referenceDate ? dayjs(glVO.referenceDate, 'YYYY-MM-DD') : dayjs(),
-          taxCode: glVO.taxCode || '',
-          orgId: glVO.orgId || '',
-          amountInWords: glVO.amountInWords || '',
-          narration: glVO.narration || ''
-          // active: glVO.active || false,  
+          id: IssToSubContra.id,
+          docId: IssToSubContra.docId,  
+          docDate: IssToSubContra.docDate ? dayjs(IssToSubContra.docDate, 'YYYY-MM-DD') : dayjs(),
+          routeCardNo: IssToSubContra.routeCardNo,
+          customerName: IssToSubContra.customerName,
+          department: IssToSubContra.department,
+          status: IssToSubContra.status,
+          narration: IssToSubContra.narration,
+          orgId: orgId,
+          createdBy: loginUserName,
         });
+  
+        // Update details table data
         setDetailsTableData(
-          glVO.particularsJournalVO.map((row) => ({
+          IssToSubContra.issueItemDetailsVO.map((row) => ({
             id: row.id,
-            partNo: row.partNo,
-            unit: row.unit,
+            item: row.item,
+            itemDescription: row.itemDescription,
+            process: row.process,
             quantity: row.quantity,
             remarks: row.remarks,
-            process: row.process,
-            partDescription: row.partDescription
           }))
         );
-
-        console.log('DataToEdit', glVO);
-      } else {
-        // Handle erro
+  
+        console.log('DataToEdit', IssToSubContra);
+      } else { 
+        console.error('No data received for the given ID');
       }
     } catch (error) {
       console.error('Error fetching data:', error);
     }
   };
 
-  const getAccountNameFromGroup = async () => {
-    try {
-      const response = await apiCalls('get', `/transaction/getAccountNameFromGroup?orgId=${orgId}`);
-      setAccountNames(response.paramObjectsMap.generalJournalVO);
-      console.log('generalJournalVO', response.paramObjectsMap.generalJournalVO);
-    } catch (error) {
-      console.error('Error fetching gate passes:', error);
-    }
-  };
 
   const handleDebitChange = (e, row, index) => {
     const value = e.target.value;
@@ -260,8 +251,8 @@ const IssueToSubContractor = () => {
 
   const handleClear = () => {
     setFormData({
-      scIssueDate: dayjs(),
-      scIssueNo: '',
+      docDate: dayjs(),
+      docId: '',
       routeCardNo: '',
       customerName: '',
       department: '',
@@ -269,10 +260,11 @@ const IssueToSubContractor = () => {
       orgId: orgId,
       narration: "",
     });
+    getIssueToSubContractorDocId()
     getAllActiveCurrency(orgId);
     setFieldErrors({
-      scIssueDate: dayjs(),
-      scIssueNo: '',
+      docDate: dayjs(),
+      docId: '',
       routeCardNo: '',
       customerName: '',
       department: '',
@@ -281,11 +273,10 @@ const IssueToSubContractor = () => {
       narration: "",
     });
     setDetailsTableData([
-      { id: 1, partNo: '', unit: '', process: '', partDescription: '', quantity: '', remarks: '', }
+      { id: 1, item: '', unit: '', process: '', itemDescription: '', quantity: '', remarks: '', }
     ]);
     setDetailsTableErrors('');
     setEditId('');
-    getGeneralJournalscIssueNo();
   };
 
 
@@ -296,15 +287,15 @@ const IssueToSubContractor = () => {
     }
     const newRow = {
       id: Date.now(),
-      partNo: '',
+      item: '',
       unit: '',
       process: '',
-      partDescription: '',
+      itemDescription: '',
       quantity: '',
       remarks: '',
     };
     setDetailsTableData([...detailsTableData, newRow]);
-    setDetailsTableErrors([...detailsTableErrors, { partNo: '', unit: '', quantity: '', remarks: '', }]);
+    setDetailsTableErrors([...detailsTableErrors, { item: '', unit: '', quantity: '', remarks: '', }]);
   };
 
   const isLastRowEmpty = (table) => {
@@ -313,11 +304,11 @@ const IssueToSubContractor = () => {
     if (!lastRow) return false;
     if (table === detailsTableData) {
       return (
-        !lastRow.partNo ||
+        !lastRow.item ||
         !lastRow.unit ||
         !lastRow.remarks ||
         // !lastRow.process ||
-        !lastRow.partDescription ||
+        !lastRow.itemDescription ||
         !lastRow.quantity ||
         !lastRow.qtyOffered ||
         !lastRow.basicPrice ||
@@ -339,11 +330,11 @@ const IssueToSubContractor = () => {
         // Add error messages for Required fields
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
-          partNo: !lastRow.partNo ? 'Part Number is Required' : '',
+          item: !lastRow.item ? 'Part Number is Required' : '',
           unit: !lastRow.unit ? 'Unit is Required' : '',
           remarks: !lastRow.remarks ? 'Unit Price is Required' : '',
           process: !lastRow.process ? 'process  is Required' : '',
-          // partDescription: !lastRow.partDescription ? 'Part Description is Required' : '',
+          // itemDescription: !lastRow.itemDescription ? 'Part Description is Required' : '',
           // quantity: !lastRow.quantity ? 'Revision Number is Required' : '',
           qtyOffered: !lastRow.qtyOffered ? 'Quantity Offered is Required' : '',
           basicPrice: !lastRow.basicPrice ? 'Basic Price is Required' : '',
@@ -378,7 +369,39 @@ const IssueToSubContractor = () => {
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
+  useEffect(() => {
+    getIssueToSubContractorDocId();
+  }, []);
 
+  useEffect(() => {
+    getAllIssueToSubContractorByOrgId();
+  }, []);
+  const getAllIssueToSubContractorByOrgId = async () => {
+    try {
+      const response = await apiCalls('get', `/issuetosubcontractor/getAllIssueToSubContractorByOrgId?orgId=${orgId}`);
+      console.log('API Response:', response);
+
+      if (response.status === true) {
+        setListViewData(response.paramObjectsMap.issueToSubContractorVO);
+      } else {
+        console.error('API Error:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const getIssueToSubContractorDocId = async () => {
+    try {
+      const response = await apiCalls('get', `/issuetosubcontractor/getIssueToSubContractorDocId?orgId=${orgId}`);
+      setFormData((prevData) => ({
+        ...prevData,
+        docId: response.paramObjectsMap.issueToSubContractorDocId,
+      }));
+    } catch (error) {
+      console.error('Error fetching departmentDocId:', error);
+    }
+  };
   const handleSave = async () => {
     const errors = {};
     let isValid = true;
@@ -388,10 +411,6 @@ const IssueToSubContractor = () => {
     if (!formData.narration) errors.narration = 'Narration is Required';
 
 
-    if (!formData.productionManager) errors.productionManager = 'Production Manager is Required';
-    if (!formData.currency) errors.currency = 'Currency is Required';
-    if (!formData.amountInWords) errors.amountInWords = 'Amount in Words is Required';
-    if (!formData.netAmount) errors.netAmount = 'Net Amount is Required';
 
     let detailTableDataValid = true;
     const newTableErrors = detailsTableData.map((row) => {
@@ -418,46 +437,40 @@ const IssueToSubContractor = () => {
     setDetailsTableErrors(newTableErrors);
 
     if (Object.keys(errors).length === 0 && detailTableDataValid) {
-      const GeneralJournalVO = detailsTableData.map((row) => ({
+      const IssueSubContractVO = detailsTableData.map((row) => ({
         ...(editId && { id: row.id }),
-        partNo: row.partNo,
-        unit: row.unit,
+        item: row.item,
+        itemDescription: row.itemDescription,
+        process: row.process,
         quantity: row.quantity,
         remarks: row.remarks,
-        process: row.process,
-        partDescription: row.partDescription
       }));
       const saveFormData = {
         ...(editId && { id: editId }),
         active: formData.active,
-        branch: branch,
-        branchCode: branchCode,
-        createdBy: loginUserName,
-        currency: formData.currency,
-        customerName: formData.customerName,
-        finYear: finYear,
         orgId: orgId,
-        particularsJournalDTO: GeneralJournalVO,
-        referenceDate: dayjs(formData.referenceDate).format('YYYY-MM-DD'),
-        refNo: formData.refNo,
-        taxCode: formData.taxCode,
+        createdBy: loginUserName,
+        issueItemDetailsDTO: IssueSubContractVO,
+        routeCardNo: formData.routeCardNo,
+        customerName: formData.customerName,
+        department: formData.department,
+        status: formData.status,
         narration: formData.narration,
-        amountInWords: formData.amountInWords,
       };
       console.log('DATA TO SAVE IS:', saveFormData);
       try {
-        const response = await apiCalls('put', `/transaction/updateCreateGeneralJournal`, saveFormData);
+        const response = await apiCalls('put', `/issuetosubcontractor/createUpdateIssueToSubContractor`, saveFormData);
         if (response.status === true) {
           console.log('Response:', response);
-          showToast('success', editId ? 'General Journal Updated Successfully' : 'General Journal Created successfully');
-          getAllGeneralJournalByOrgId();
+          showToast('success', editId ? 'Issue To Sub Contractor Updated Successfully' : 'Issue To Sub Contractor Created successfully');
+
           handleClear();
         } else {
-          showToast('error', response.paramObjectsMap.errorMessage || 'General Journal creation failed');
+          showToast('error', response.paramObjectsMap.errorMessage || 'Issue To Sub Contractor creation failed');
         }
       } catch (error) {
         console.error('Error:', error);
-        showToast('error', 'General Journal creation failed');
+        showToast('error', 'Issue To Sub Contractor creation failed');
       }
     } else {
       setFieldErrors(errors);
@@ -488,8 +501,8 @@ const IssueToSubContractor = () => {
                     variant="outlined"
                     size="small"
                     fullWidth
-                    name="scIssueNo"
-                    value={formData.scIssueNo}
+                    name="docId"
+                    value={formData.docId}
                     onChange={handleInputChange}
                     disabled
                     inputProps={{ maxLength: 10 }}
@@ -500,8 +513,8 @@ const IssueToSubContractor = () => {
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <DatePicker
                         label="SC Issue Date"
-                        value={formData.scIssueDate}
-                        onChange={(date) => handleDateChange('scIssueDate', date)}
+                        value={formData.docDate}
+                        onChange={(date) => handleDateChange('docDate', date)}
                         disabled
                         slotProps={{
                           textField: { size: 'small', clearable: true }
@@ -515,7 +528,7 @@ const IssueToSubContractor = () => {
                   <Autocomplete
                     disablePortal
                     options={partyList.map((option, index) => ({ ...option, key: index }))}
-                    getOptionLabel={(option) => option.partyname || ''}
+                    getOptionLabel={(option) => option.partyname}
                     sx={{ width: '100%' }}
                     size="small"
                     value={formData.routeCardNo ? partyList.find((c) => c.partyname === formData.routeCardNo) : null}
@@ -559,16 +572,20 @@ const IssueToSubContractor = () => {
                 <div className="col-md-3 mb-3">
                   <Autocomplete
                     disablePortal
-                    options={partyList.map((option, index) => ({ ...option, key: index }))}
-                    getOptionLabel={(option) => option.partyname || ''}
+                    options={departmentList}
+                    getOptionLabel={(option) => option.departmentName}
                     sx={{ width: '100%' }}
                     size="small"
-                    value={formData.department ? partyList.find((c) => c.partyname === formData.department) : null}
+                    value={
+                      formData.department
+                        ? departmentList.find((c) => c.departmentName === formData.department)
+                        : null
+                    }
                     onChange={(event, newValue) => {
                       handleInputChange({
                         target: {
                           name: 'department',
-                          value: newValue ? newValue.partyname : '', // Adjusted to 'partyname'
+                          value: newValue ? newValue.departmentName : '',
                         },
                       });
                     }}
@@ -587,6 +604,7 @@ const IssueToSubContractor = () => {
                     )}
                   />
                 </div>
+
                 <div className="col-md-3 mb-3">
                   <TextField
                     id="outlined-textarea-zip"
@@ -678,7 +696,7 @@ const IssueToSubContractor = () => {
                                       </td>
                                       <td>
                                         <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.item}>
-                                          <InputLabel id="item">Item Type</InputLabel>
+                                          <InputLabel id="item">Item</InputLabel>
                                           <Select
                                             labelId="item"
                                             id="item"
@@ -687,7 +705,7 @@ const IssueToSubContractor = () => {
                                             name="item"
                                             value={formData.item}
                                             style={{ width: '200px' }}
-                                            disabled
+                                          // disabled
                                           >
                                             <MenuItem value="FG">FG</MenuItem>
                                             <MenuItem value="SFG">SFG</MenuItem>
@@ -699,28 +717,28 @@ const IssueToSubContractor = () => {
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
-                                          value={row.partDescription}
+                                          value={row.itemDescription}
                                           onChange={(e) => {
                                             const value = e.target.value;
                                             setDetailsTableData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, partDescription: value } : r))
+                                              prev.map((r) => (r.id === row.id ? { ...r, itemDescription: value } : r))
                                             );
                                             setDetailsTableErrors((prev) => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                partDescription: !value ? 'Sub Ledger Name is Required' : ''
+                                                itemDescription: !value ? 'Sub Ledger Name is Required' : ''
                                               };
                                               return newErrors;
                                             });
                                           }}
-                                          className={detailsTableErrors[index]?.partDescription ? 'error form-control' : 'form-control'}
+                                          className={detailsTableErrors[index]?.itemDescription ? 'error form-control' : 'form-control'}
                                           style={{ width: '150px' }}
                                           disabled
                                         />
-                                        {detailsTableErrors[index]?.partDescription && (
+                                        {detailsTableErrors[index]?.itemDescription && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors[index].partDescription}
+                                            {detailsTableErrors[index].itemDescription}
                                           </div>
                                         )}
                                       </td>
@@ -728,7 +746,7 @@ const IssueToSubContractor = () => {
                                         <Autocomplete
                                           disablePortal
                                           options={partyList.map((option, index) => ({ ...option, key: index }))}
-                                          getOptionLabel={(option) => option.partyname || ''}
+                                          getOptionLabel={(option) => option.partyname}
                                           sx={{ width: '100%' }}
                                           size="small"
                                           value={formData.process ? partyList.find((c) => c.partyname === formData.process) : null}
@@ -835,7 +853,7 @@ const IssueToSubContractor = () => {
               </div>
             </>
           ) : (
-            <CommonTable data={data} columns={listViewColumns} blockEdit={true} toEdit={getGeneralJournalById} />
+            <CommonTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getIssueToSubContractorById} />
           )}
         </div>
       </div>
