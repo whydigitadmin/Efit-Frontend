@@ -2,7 +2,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import { Checkbox, FormControl, FormControlLabel, FormGroup, TextField } from '@mui/material';
+import { Autocomplete, Checkbox, FormControl, FormControlLabel, FormGroup, TextField } from '@mui/material';
 import apiCalls from 'apicall';
 import { useEffect, useRef, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
@@ -27,48 +27,32 @@ import dayjs from 'dayjs';
 const Enquiry = () => {
   const [showForm, setShowForm] = useState(true);
   const [data, setData] = useState([]);
-  const [orgId, setOrgId] = useState(parseInt(localStorage.getItem('orgId'), 10));
+  const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [value, setValue] = useState(0);
-  const [editId, setEditId] = useState();
+  const [editId, setEditId] = useState('');
+  const [companyList, setCustomerList] = useState([]);
+  const [contactNameList, setContactNameList] = useState([]);
+  const [partCodeList, setPartCodeList] = useState([]);
 
   const [formData, setFormData] = useState({
+    active: true,
     customerEnquiryNo: '',
-    enquiryDate: null,
+    enquiryDate: dayjs(),
     enquiryType: '',
     customer: '',
     customerCode: '',
     enquiryDueDate: null,
     contactName: '',
-    contactNo: '',
-    anyAdditionalInv: '',
-    additionalManPower: '',
-    timeFrame: '',
-    expectTimeForDelSample: '',
-    regularProduction: '',
-    initialReviewComments: '',
-    detailReview: '',
-    conclusion: '',
-    enquiryRemarks: ''
+    contactNo: ''
   });
   const [fieldErrors, setFieldErrors] = useState({
-    customerEnquiryNo: '',
-    enquiryDate: null,
     enquiryType: '',
     customer: '',
     customerCode: '',
     enquiryDueDate: null,
     contactName: '',
-    contactNo: '',
-    anyAdditionalInv: '',
-    additionalManPower: '',
-    timeFrame: '',
-    expectTimeForDelSample: '',
-    regularProduction: '',
-    initialReviewComments: '',
-    detailReview: '',
-    conclusion: '',
-    enquiryRemarks: ''
+    contactNo: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [enquiryDetailsData, setEnquiryDetailsData] = useState([
@@ -77,6 +61,7 @@ const Enquiry = () => {
       partCode: '',
       partDescription: '',
       drawingNo: '',
+      drawingNoList: [],
       revisionNo: '',
       unit: '',
       requireQty: '',
@@ -89,6 +74,7 @@ const Enquiry = () => {
       partCode: '',
       partDescription: '',
       drawingNo: '',
+      drawingNoList: [],
       revisionNo: '',
       unit: '',
       requireQty: '',
@@ -97,26 +83,260 @@ const Enquiry = () => {
     }
   ]);
 
+  const [enquirySummaryDTO, setEnquirySummaryDTO] = useState([
+    {
+      additionalManPower: '',
+      anyAdditionalInverstment: '',
+      conclusion: '',
+      detailreview: '',
+      expectedTimeForDeliverySample: null,
+      initialReviewComments: '',
+      regularProduction: '',
+      remarks: '',
+      timeFrame: ''
+    }
+  ]);
+
+  const [enquirySummaryErrors, setEnquirySummaryErrors] = useState([
+    {
+      additionalManPower: '',
+      anyAdditionalInverstment: '',
+      conclusion: '',
+      detailreview: '',
+      expectedTimeForDeliverySample: null,
+      initialReviewComments: '',
+      regularProduction: '',
+      remarks: '',
+      timeFrame: ''
+    }
+  ]);
+
   const columns = [
-    { accessorKey: 'listCode', header: 'List Code', size: 140 },
-    { accessorKey: 'listDescription', header: 'Description', size: 140 },
-    { accessorKey: 'active', header: 'Active', size: 140 }
+    { accessorKey: 'enquiryType', header: 'Enquiry Type', size: 140 },
+    { accessorKey: 'customer', header: 'Customer', size: 140 },
+    { accessorKey: 'customerCode', header: 'Customer Code', size: 140 },
+    { accessorKey: 'contactName', header: 'Contact Name', size: 140 }
   ];
 
-  // useEffect(() => {
-  //   getAllListOfValuesByOrgId();
-  // }, []);
+  useEffect(() => {
+    getCustomerNameAndCode();
+    getPartNoAndDescription();
+    getEnquiryDocId();
+    getAllEnquiryByOrgId();
+  }, []);
 
-  const handleInputChange = (e) => {
+  const getEnquiryDocId = async () => {
+    try {
+      const response = await apiCalls('get', `/customerenquiry/getEnquiryDocId?orgId=${orgId}`);
+      setFormData((prevData) => ({
+        ...prevData,
+        customerEnquiryNo: response.paramObjectsMap.enquiryDocId,
+        enquiryDate: dayjs()
+      }));
+    } catch (error) {
+      console.error('Error fetching gate passes:', error);
+    }
+  };
+
+  const getCustomerNameAndCode = async () => {
+    try {
+      const response = await apiCalls('get', `/customerenquiry/getCustomerNameAndCode?orgId=${orgId}`);
+
+      if (response.status === true) {
+        setCustomerList(response.paramObjectsMap.partymasterVO);
+      } else {
+        console.error('API Error:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const getPartNoAndDescription = async () => {
+    try {
+      const response = await apiCalls('get', `/customerenquiry/getPartNoAndDescription?orgId=${orgId}`);
+
+      if (response.status === true) {
+        setPartCodeList(response.paramObjectsMap.itemVO);
+      } else {
+        console.error('API Error:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const getDrawingNoAndRevisionNo = async (partNo, rowId) => {
+    try {
+      const response = await apiCalls('get', `/customerenquiry/getDrawingNoAndRevisionNo?orgId=${orgId}&partNo=${partNo}`);
+
+      if (response.status === true) {
+        setEnquiryDetailsData((prevData) =>
+          prevData.map((row) =>
+            row.id === rowId
+              ? {
+                  ...row,
+                  drawingNoList: response.paramObjectsMap.drawingMasterVO
+                }
+              : row
+          )
+        );
+      } else {
+        console.error('API Error:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const getAllEnquiryByOrgId = async () => {
+    try {
+      const result = await apiCalls('get', `/customerenquiry/getAllEnquiryByOrgId?orgId=${orgId}`);
+      setData(result.paramObjectsMap.enquiryVO || []);
+      showForm(true);
+    } catch (err) {
+      console.log('error', err);
+    }
+  };
+
+  const getEnquiryById = async (row) => {
+    setShowForm(true);
+    setFieldErrors({});
+    setEnquiryDetailsErrors('');
+    try {
+      const result = await apiCalls('get', `/customerenquiry/getEnquiryById?id=${row.original.id}`);
+
+      if (result) {
+        const listValueVO = result.paramObjectsMap.enquiryVO[0];
+        setEditId(row.original.id);
+        setFormData({
+          customerEnquiryNo: listValueVO.docId || '',
+          enquiryDate: listValueVO.docDate ? dayjs(listValueVO.docDate, 'YYYY-MM-DD') : dayjs() || '',
+          enquiryType: listValueVO.enquiryType || '',
+          customer: listValueVO.customer || '',
+          customerCode: listValueVO.customerCode || '',
+          enquiryDueDate: listValueVO.enquiryDueDate ? dayjs(listValueVO.enquiryDueDate, 'YYYY-MM-DD') : dayjs() || '',
+          contactName: listValueVO.contactName || '',
+          contactNo: listValueVO.contactNo || '',
+          active: listValueVO.active === 'Active' ? true : false,
+          id: listValueVO.id || ''
+        });
+        setEnquiryDetailsData(
+          listValueVO.enquiryDetailsVO.map((cl) => ({
+            id: cl.id,
+            partCode: cl.partCode,
+            partDescription: cl.partDescription,
+            drawingNo: cl.drawingNo,
+            revisionNo: cl.revisionNo,
+            unit: cl.unit,
+            requireQty: cl.requireQty,
+            deliveryDate: cl.deliveryDate,
+            remarks: cl.remarks,
+            active: cl.active
+          }))
+        );
+        setEnquirySummaryDTO(
+          listValueVO.enquirySummaryVO.map((cl) => ({
+            id: cl.id,
+            additionalManPower: cl.additionalManPower,
+            anyAdditionalInverstment: cl.anyAdditionalInverstment,
+            conclusion: cl.conclusion,
+            detailreview: cl.detailreview,
+            expectedTimeForDeliverySample: cl.expectedTimeForDeliverySample,
+            initialReviewComments: cl.initialReviewComments,
+            regularProduction: cl.regularProduction,
+            remarks: cl.remarks,
+            timeFrame: cl.timeFrame
+          }))
+        );
+        getContactNameAndNo(listValueVO.customerCode);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const handleInputChange = (e, fieldType, index) => {
     const { name, value, type, checked } = e.target;
     const inputValue = type === 'checkbox' ? checked : value;
     setFormData({ ...formData, [name]: inputValue });
     setFieldErrors({ ...fieldErrors, [name]: false });
+    let errorMessage = '';
+    const alphaNumericRegex = /^[A-Za-z0-9]*$/;
+
+    if (errorMessage) {
+      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
+    } else {
+      if (name === 'customer') {
+        const selectedCustomer = companyList.find((scr) => scr.customer === value);
+
+        if (selectedCustomer) {
+          setFormData((prevData) => ({
+            ...prevData,
+            customerCode: selectedCustomer.customerCode,
+            customer: selectedCustomer.customer,
+            contactName: '',
+            contactNo: ''
+          }));
+          getContactNameAndNo(selectedCustomer.customerCode);
+        }
+      }
+      if (name === 'contactName') {
+        const selectedContact = contactNameList.find((scr) => scr.contactName === value);
+
+        if (selectedContact) {
+          setFormData((prevData) => ({
+            ...prevData,
+            contactName: selectedContact.contactName,
+            contactNo: selectedContact.contactNo
+          }));
+        }
+      } else if (fieldType === 'enquirySummaryDTO') {
+        setEnquirySummaryDTO((prevData) => prevData.map((item, i) => (i === index ? { ...item, [name]: value } : item)));
+      }
+      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: '' }));
+    }
   };
 
-  const handleDateChange = (name, date) => {
-    setFormData({ ...formData, [name]: date });
-    setFieldErrors({ ...fieldErrors, [name]: false });
+  const getContactNameAndNo = async (row) => {
+    try {
+      const result = await apiCalls('get', `/customerenquiry/getContactNameAndNo?orgId=${orgId}&partyCode=${row}`);
+
+      if (result) {
+        setContactNameList(result.paramObjectsMap.partymasterVO);
+      } else {
+        // Handle erro
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  // const handleDateChange = (name, date) => {
+  //   setFormData({ ...formData, [name]: date });
+  //   setFieldErrors({ ...fieldErrors, [name]: false });
+  // };
+  const handleDateChange = (name, date, index) => {
+    setFormData({
+      ...formData,
+      [name]: date
+    });
+
+    setEnquirySummaryDTO((prev) =>
+      prev.map((row, idx) =>
+        idx === index
+          ? {
+              ...row,
+              [name]: date ? date.format('YYYY-MM-DD') : null
+            }
+          : row
+      )
+    );
+
+    setFieldErrors((prevErrors) => ({
+      ...prevErrors,
+      [name]: false
+    }));
   };
 
   const handleKeyDown = (e, row, table) => {
@@ -149,7 +369,7 @@ const Enquiry = () => {
     setEnquiryDetailsData([...enquiryDetailsData, newRow]);
     setEnquiryDetailsErrors([
       ...enquiryDetailsErrors,
-      { partCode: '', partDescription: '', drawingNo: '', revisionNo: '', unit: '', requireQty: '', deliveryDate: null, remarks: '' }
+      { partCode: '', partDescription: '', drawingNo: '', requireQty: '', deliveryDate: null }
     ]);
   };
   const isLastRowEmpty = (table) => {
@@ -160,12 +380,9 @@ const Enquiry = () => {
       return (
         !lastRow.partCode ||
         !lastRow.partDescription ||
-        !lastRow.drawingNo ||
-        !lastRow.revisionNo ||
-        !lastRow.unit ||
+        // !lastRow.drawingNo ||
         !lastRow.requireQty ||
-        !lastRow.deliveryDate ||
-        !lastRow.remarks
+        !lastRow.deliveryDate
       );
     }
     return false;
@@ -179,12 +396,9 @@ const Enquiry = () => {
           ...newErrors[table.length - 1],
           partCode: !table[table.length - 1].partCode ? 'Part Code is required' : '',
           partDescription: !table[table.length - 1].partDescription ? 'Part Description is required' : '',
-          drawingNo: !table[table.length - 1].drawingNo ? 'Drawing No is required' : '',
-          revisionNo: !table[table.length - 1].revisionNo ? 'Revision No is required' : '',
-          unit: !table[table.length - 1].unit ? 'Unit is required' : '',
+          // drawingNo: !table[table.length - 1].drawingNo ? 'Drawing No is required' : '',
           requireQty: !table[table.length - 1].requireQty ? 'Require Qty is required' : '',
-          deliveryDate: !table[table.length - 1].deliveryDate ? 'Delivery Date is required' : '',
-          remarks: !table[table.length - 1].remarks ? 'Remarks is required' : ''
+          deliveryDate: !table[table.length - 1].deliveryDate ? 'Delivery Date is required' : ''
         };
         return newErrors;
       });
@@ -202,25 +416,22 @@ const Enquiry = () => {
     }
   };
 
+  const handleList = () => {
+    setShowForm(!showForm);
+  };
+  const handleChange = (event, newValue) => {
+    setValue(newValue);
+  };
+
   const handleClear = () => {
     setFormData({
-      customerEnquiryNo: '',
-      enquiryDate: null,
+      enquiryDate: dayjs(),
       enquiryType: '',
       customer: '',
       customerCode: '',
       enquiryDueDate: null,
       contactName: '',
-      contactNo: '',
-      anyAdditionalInv: '',
-      additionalManPower: '',
-      timeFrame: '',
-      expectTimeForDelSample: '',
-      regularProduction: '',
-      initialReviewComments: '',
-      detailReview: '',
-      conclusion: '',
-      enquiryRemarks: ''
+      contactNo: ''
     });
     setFieldErrors({});
     setEnquiryDetailsData([
@@ -236,173 +447,143 @@ const Enquiry = () => {
         remarks: ''
       }
     ]);
+    setEnquirySummaryDTO([
+      {
+        id: 1,
+        additionalManPower: '',
+        anyAdditionalInverstment: '',
+        conclusion: '',
+        detailreview: '',
+        expectedTimeForDeliverySample: null,
+        initialReviewComments: '',
+        regularProduction: '',
+        remarks: '',
+        timeFrame: ''
+      }
+    ]);
     setEnquiryDetailsErrors('');
+    setEnquirySummaryErrors('');
     setEditId('');
+    getEnquiryDocId();
   };
 
   const handleSave = async () => {
     console.log('THE HANDLE SAVE IS WORKING');
 
     const errors = {};
-    if (!formData.customerEnquiryNo) errors.customerEnquiryNo = 'Customer Enquiry No is required';
-    if (!formData.enquiryDate) errors.enquiryDate = 'Enquiry Date is required';
     if (!formData.enquiryType) errors.enquiryType = 'Enquiry Type is required';
     if (!formData.customer) errors.customer = 'Customer is required';
     if (!formData.customerCode) errors.customerCode = 'Customer Code is required';
     if (!formData.enquiryDueDate) errors.enquiryDueDate = 'Enquiry Due Date is required';
     if (!formData.contactName) errors.contactName = 'Contact Name is required';
-    if (!formData.contactNo) errors.contactNo = 'Contact No is required';
-    if (!formData.anyAdditionalInv) errors.anyAdditionalInv = 'Any Additional Inv is required';
-    if (!formData.additionalManPower) errors.additionalManPower = 'Additional Man Power is required';
-    if (!formData.timeFrame) errors.timeFrame = 'Time Frame is required';
-    if (!formData.expectTimeForDelSample) errors.expectTimeForDelSample = 'Expected Time For Del Sample is required';
-    if (!formData.regularProduction) errors.regularProduction = 'Regular Production is required';
-    if (!formData.initialReviewComments) errors.initialReviewComments = 'Initial Review Comments is required';
-    if (!formData.detailReview) errors.detailReview = 'Detail Review is required';
-    if (!formData.conclusion) errors.conclusion = 'Conclusion is required';
-    if (!formData.enquiryRemarks) errors.enquiryRemarks = 'Remarks is required';
 
     let enquiryDetailsDataValid = true;
-    if (!enquiryDetailsData || !Array.isArray(enquiryDetailsData) || enquiryDetailsData.length === 0) {
-      enquiryDetailsDataValid = false;
-      setEnquiryDetailsErrors([{ general: 'Enquiry Details Data is required' }]);
-    } else {
-      const newTableErrors = enquiryDetailsData.map((row, index) => {
-        const rowErrors = {};
-        if (!row.partCode) {
-          rowErrors.partCode = 'Part Code is required';
-          enquiryDetailsDataValid = false;
-        }
-        if (!row.partDescription) {
-          rowErrors.partDescription = 'Part Description is required';
-          enquiryDetailsDataValid = false;
-        }
-        if (!row.drawingNo) {
-          rowErrors.drawingNo = 'Drawing No is required';
-          enquiryDetailsDataValid = false;
-        }
-        if (!row.revisionNo) {
-          rowErrors.revisionNo = 'Revision No is required';
-          enquiryDetailsDataValid = false;
-        }
-        if (!row.unit) {
-          rowErrors.unit = 'Unit is required';
-          enquiryDetailsDataValid = false;
-        }
-        if (!row.requireQty) {
-          rowErrors.requireQty = 'Require Qty is required';
-          enquiryDetailsDataValid = false;
-        }
-        if (!row.deliveryDate) {
-          rowErrors.deliveryDate = 'Delivery Date is required';
-          enquiryDetailsDataValid = false;
-        }
-        if (!row.remarks) {
-          rowErrors.remarks = 'Remarks is required';
-          enquiryDetailsDataValid = false;
-        }
+    const newTableErrors = enquiryDetailsData.map((row, index) => {
+      const rowErrors = {};
+      if (!row.partCode) {
+        rowErrors.partCode = 'Part Code is required';
+        enquiryDetailsDataValid = false;
+      }
+      if (!row.partDescription) {
+        rowErrors.partDescription = 'Part Description is required';
+        enquiryDetailsDataValid = false;
+      }
+      if (!row.drawingNo) {
+        rowErrors.drawingNo = 'Drawing No is required';
+        enquiryDetailsDataValid = false;
+      }
+      if (!row.requireQty) {
+        rowErrors.requireQty = 'Require Qty is required';
+        enquiryDetailsDataValid = false;
+      }
+      // if (!row.deliveryDate) {
+      //   rowErrors.deliveryDate = 'Delivery Date is required';
+      //   enquiryDetailsDataValid = false;
+      // }
 
-        return rowErrors;
-      });
-      setEnquiryDetailsErrors(newTableErrors);
-    }
+      return rowErrors;
+    });
+    setEnquiryDetailsErrors(newTableErrors);
 
     setFieldErrors(errors);
+    // let summaryValid = true;
+    // const summaryTableErrors = enquirySummaryDTO.map((row) => {
+    //   const rowErrors = {};
+    //   if (!row.additionalManPower) {
+    //     rowErrors.additionalManPower = 'Additional Man Power is required';
+    //     summaryValid = false;
+    //   }
+
+    //   return rowErrors;
+    // });
+    // setFieldErrors(errors);
+
+    // setEnquirySummaryErrors(summaryTableErrors);
 
     if (Object.keys(errors).length === 0 && enquiryDetailsDataValid) {
       setIsLoading(true);
 
-      // const detailsVo = partCodeData.map((row) => ({
-      //   ...(editId && { id: row.id }),
-      //   valueCode: row.valueCode,
-      //   valueDescription: row.valueDesc,
-      //   active: row.active === 'true' || row.active === true // Convert string 'true' to boolean true if necessary
-      // }));
+      const enquiryVO = enquiryDetailsData.map((row) => ({
+        ...(editId && { id: row.id }),
+        deliveryDate: row.deliveryDate,
+        drawingNo: row.drawingNo,
+        partCode: row.partCode,
+        partDescription: row.partDescription,
+        remarks: row.remarks,
+        requireQty: row.requireQty,
+        revisionNo: row.revisionNo,
+        unit: row.unit
+      }));
+      const enquirySummaryVO = enquirySummaryDTO.map((row) => ({
+        ...(editId && { id: row.id }),
+        additionalManPower: row.additionalManPower,
+        anyAdditionalInverstment: row.anyAdditionalInverstment,
+        conclusion: row.conclusion,
+        detailreview: row.detailreview,
+        expectedTimeForDeliverySample: dayjs(row.expectedTimeForDeliverySample).format('YYYY-MM-DD'),
+        initialReviewComments: row.initialReviewComments,
+        regularProduction: row.regularProduction,
+        remarks: row.remarks,
+        timeFrame: row.timeFrame
+      }));
 
       const saveFormData = {
         ...(editId && { id: editId }),
         active: formData.active,
-        listCode: formData.listCode,
-        listDescription: formData.listDescription,
-        // listOfValues1DTO: detailsVo,
+        contactName: formData.contactName,
+        contactNo: formData.contactNo,
         createdBy: loginUserName,
+        customer: formData.customer,
+        customerCode: formData.customerCode,
+        enquiryDetailsDTO: enquiryVO,
+        enquiryDueDate: dayjs(formData.enquiryDueDate).format('YYYY-MM-DD'),
+        enquirySummaryDTO: enquirySummaryVO,
+        enquiryType: formData.enquiryType,
         orgId: orgId
       };
 
       console.log('DATA TO SAVE IS:', saveFormData);
 
       try {
-        const response = await apiCalls('put', '/master/updateCreateListOfValues', saveFormData);
+        const response = await apiCalls('put', '/customerenquiry/createUpdateEnquiry', saveFormData);
         if (response.status === true) {
           console.log('Response:', response);
-          showToast('success', editId ? 'List of values updated successfully' : 'List of values created successfully');
-          // getAllListOfValuesByOrgId();
+          showToast('success', editId ? 'Customer Enquiry updated successfully' : 'Customer Enquiry created successfully');
+          getAllEnquiryByOrgId();
           handleClear();
           setIsLoading(false);
         } else {
-          showToast('error', response.paramObjectsMap.errorMessage || 'List of value creation failed');
+          showToast('error', response.paramObjectsMap.errorMessage || 'Customer Enquiry creation failed');
           setIsLoading(false);
         }
       } catch (error) {
         console.error('Error:', error);
-        showToast('error', 'List of value creation failed');
+        showToast('error', 'Customer Enquiry creation failed');
         setIsLoading(false);
       }
     } else {
       setFieldErrors(errors);
     }
-  };
-
-  // const getAllListOfValuesByOrgId = async () => {
-  //   try {
-  //     const result = await apiCalls('get', `/master/getListOfValuesByOrgId?orgId=${orgId}`);
-  //     setData(result.paramObjectsMap.listOfValuesVO || []);
-  //     showForm(true);
-  //     console.log('Test', result);
-  //   } catch (err) {
-  //     console.log('error', err);
-  //   }
-  // };
-
-  // const getListOfValueById = async (row) => {
-  //   console.log('first', row);
-  //   setShowForm(true);
-  //   try {
-  //     const result = await apiCalls('get', `/master/getListOfValuesById?id=${row.original.id}`);
-
-  //     if (result) {
-  //       const listValueVO = result.paramObjectsMap.listOfValuesVO[0];
-  //       setEditId(row.original.id);
-
-  //       setFormData({
-  //         listCode: listValueVO.listCode || '',
-  //         listDescription: listValueVO.listDescription || '',
-  //         active: listValueVO.active || false,
-  //         id: listValueVO.id || 0
-  //       });
-  //       setEnquiryDetailsData(
-  //         listValueVO.listOfValues1VO.map((cl) => ({
-  //           id: cl.id,
-  //           valueCode: cl.valueCode,
-  //           valueDesc: cl.valueDescription,
-  //           active: cl.active
-  //         }))
-  //       );
-
-  //       console.log('DataToEdit', listValueVO);
-  //     } else {
-  //       // Handle erro
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching data:', error);
-  //   }
-  // };
-
-  const handleList = () => {
-    setShowForm(!showForm);
-  };
-  const handleChange = (event, newValue) => {
-    setValue(newValue);
   };
 
   return (
@@ -425,8 +606,8 @@ const Enquiry = () => {
                     label="Customer Enquiry No"
                     name="customerEnquiryNo"
                     size="small"
+                    disabled
                     value={formData.customerEnquiryNo}
-                    onChange={handleInputChange}
                     inputProps={{ maxLength: 30 }}
                     error={!!fieldErrors.customerEnquiryNo}
                     helperText={fieldErrors.customerEnquiryNo}
@@ -439,14 +620,12 @@ const Enquiry = () => {
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DatePicker
                       label="Enquiry Date"
+                      disabled
                       value={formData.enquiryDate ? dayjs(formData.enquiryDate, 'YYYY-MM-DD') : null}
-                      onChange={(date) => handleDateChange('enquiryDate', date)}
                       slotProps={{
                         textField: { size: 'small', clearable: true }
                       }}
                       format="DD-MM-YYYY"
-                      error={!!fieldErrors.enquiryDate}
-                      helperText={fieldErrors.enquiryDate ? fieldErrors.enquiryDate : ''}
                     />
                   </LocalizationProvider>
                 </FormControl>
@@ -463,31 +642,44 @@ const Enquiry = () => {
                     name="enquiryType"
                     value={formData.enquiryType}
                   >
-                    <MenuItem value="Head Office">Head Office</MenuItem>
-                    <MenuItem value="Branch">Branch</MenuItem>
+                    <MenuItem value="CALL">CALL</MenuItem>
+                    <MenuItem value="MEETING">MEETING</MenuItem>
+                    <MenuItem value="E-MAIL">E-MAIL</MenuItem>
                   </Select>
                   {fieldErrors.enquiryType && <FormHelperText>{fieldErrors.enquiryType}</FormHelperText>}
                 </FormControl>
               </div>
-
               <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.customer}>
-                  <InputLabel id="customer">Customer</InputLabel>
-                  <Select
-                    labelId="customer"
-                    id="customer"
-                    label="Customer"
-                    onChange={handleInputChange}
-                    name="customer"
-                    value={formData.customer}
-                  >
-                    <MenuItem value="Head Office">Head Office</MenuItem>
-                    <MenuItem value="Branch">Branch</MenuItem>
-                  </Select>
-                  {fieldErrors.customer && <FormHelperText>{fieldErrors.customer}</FormHelperText>}
-                </FormControl>
+                <Autocomplete
+                  disablePortal
+                  options={companyList.map((option, index) => ({ ...option, key: index }))}
+                  getOptionLabel={(option) => option.customer || ''}
+                  sx={{ width: '100%' }}
+                  size="small"
+                  value={formData.customer ? companyList.find((c) => c.customer === formData.customer) : null}
+                  onChange={(event, newValue) => {
+                    handleInputChange({
+                      target: {
+                        name: 'customer',
+                        value: newValue ? newValue.customer : ''
+                      }
+                    });
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Customer"
+                      name="customer"
+                      error={!!fieldErrors.customer}
+                      helperText={fieldErrors.customer}
+                      InputProps={{
+                        ...params.InputProps,
+                        style: { height: 40 }
+                      }}
+                    />
+                  )}
+                />
               </div>
-
               <div className="col-md-3 mb-3">
                 <FormControl fullWidth variant="filled">
                   <TextField
@@ -495,6 +687,7 @@ const Enquiry = () => {
                     label="Customer Code"
                     name="customerCode"
                     size="small"
+                    disabled
                     value={formData.customerCode}
                     onChange={handleInputChange}
                     inputProps={{ maxLength: 30 }}
@@ -503,7 +696,6 @@ const Enquiry = () => {
                   />
                 </FormControl>
               </div>
-
               <div className="col-md-3 mb-3">
                 <FormControl fullWidth>
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -521,25 +713,37 @@ const Enquiry = () => {
                   </LocalizationProvider>
                 </FormControl>
               </div>
-
               <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.contactName}>
-                  <InputLabel id="contactName">Contact Name</InputLabel>
-                  <Select
-                    labelId="contactName"
-                    id="contactName"
-                    label="Contact Name"
-                    onChange={handleInputChange}
-                    name="contactName"
-                    value={formData.contactName}
-                  >
-                    <MenuItem value="Head Office">Head Office</MenuItem>
-                    <MenuItem value="Branch">Branch</MenuItem>
-                  </Select>
-                  {fieldErrors.contactName && <FormHelperText>{fieldErrors.contactName}</FormHelperText>}
-                </FormControl>
+                <Autocomplete
+                  disablePortal
+                  options={contactNameList.map((option, index) => ({ ...option, key: index }))}
+                  getOptionLabel={(option) => option.contactName || ''}
+                  sx={{ width: '100%' }}
+                  size="small"
+                  value={formData.contactName ? contactNameList.find((c) => c.contactName === formData.contactName) : null}
+                  onChange={(event, newValue) => {
+                    handleInputChange({
+                      target: {
+                        name: 'contactName',
+                        value: newValue ? newValue.contactName : ''
+                      }
+                    });
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Contact Name"
+                      name="contactName"
+                      error={!!fieldErrors.contactName}
+                      helperText={fieldErrors.contactName}
+                      InputProps={{
+                        ...params.InputProps,
+                        style: { height: 40 }
+                      }}
+                    />
+                  )}
+                />
               </div>
-
               <div className="col-md-3 mb-3">
                 <FormControl fullWidth variant="filled">
                   <TextField
@@ -547,6 +751,7 @@ const Enquiry = () => {
                     label="Contact No"
                     name="contactNo"
                     size="small"
+                    disabled
                     value={formData.contactNo}
                     onChange={handleInputChange}
                     inputProps={{ maxLength: 30 }}
@@ -616,279 +821,283 @@ const Enquiry = () => {
                                 </tr>
                               </thead>
                               <tbody>
-                                {enquiryDetailsData.map((row, index) => (
-                                  <tr key={row.id}>
-                                    <td className="border px-2 py-2 text-center">
-                                      <ActionButton
-                                        title="Delete"
-                                        icon={DeleteIcon}
-                                        onClick={() =>
-                                          handleDeleteRow(
-                                            row.id,
-                                            enquiryDetailsData,
-                                            setEnquiryDetailsData,
-                                            enquiryDetailsErrors,
-                                            setEnquiryDetailsErrors
-                                          )
-                                        }
-                                      />
-                                    </td>
-                                    <td className="text-center">
-                                      <div className="pt-2">{index + 1}</div>
-                                    </td>
-
-                                    {/* <td className="border px-2 py-2">
-                                      <Autocomplete
-                                        options={allAccountName}
-                                        getOptionLabel={(option) => option.accountName || ''}
-                                        groupBy={(option) => (option.accountName ? option.accountName[0].toUpperCase() : '')}
-                                        value={row.accountName ? allAccountName.find((a) => a.accountName === row.accountName) : null}
-                                        onChange={(event, newValue) => {
-                                          const value = newValue ? newValue.accountName : '';
-                                          setDetailsTableData((prev) =>
-                                            prev.map((r) => (r.id === row.id ? { ...r, accountName: value } : r))
-                                          );
-                                          setDetailsTableErrors((prevErrors) =>
-                                            prevErrors.map((err, idx) => (idx === index ? { ...err, accountName: '' } : err))
-                                          );
-                                        }}
-                                        size="small"
-                                        renderInput={(params) => (
-                                          <TextField
-                                            {...params}
-                                            label="Account Name"
-                                            variant="outlined"
-                                            error={!!detailsTableErrors[index]?.accountName}
-                                            helperText={detailsTableErrors[index]?.accountName}
-                                          />
-                                        )}
-                                        sx={{ width: 250 }}
-                                      />
-                                    </td> */}
-
-                                    <td className="border px-2 py-2">
-                                      <input
-                                        style={{ width: '150px' }}
-                                        type="text"
-                                        value={row.partCode}
-                                        onChange={(e) => {
-                                          const value = e.target.value;
-                                          setEnquiryDetailsData((prev) =>
-                                            prev.map((r) => (r.id === row.id ? { ...r, partCode: value } : r))
-                                          );
-                                          setEnquiryDetailsErrors((prev) => {
-                                            const newErrors = [...prev];
-                                            newErrors[index] = {
-                                              ...newErrors[index],
-                                              partCode: !value ? 'Part Code is required' : ''
-                                            };
-                                            return newErrors;
-                                          });
-                                        }}
-                                        className={enquiryDetailsErrors[index]?.partCode ? 'error form-control' : 'form-control'}
-                                      />
-                                      {enquiryDetailsErrors[index]?.partCode && (
-                                        <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                          {enquiryDetailsErrors[index].partCode}
-                                        </div>
-                                      )}
-                                    </td>
-                                    <td className="border px-2 py-2">
-                                      <input
-                                        style={{ width: '150px' }}
-                                        type="text"
-                                        value={row.partDescription}
-                                        onChange={(e) => {
-                                          const value = e.target.value;
-                                          setEnquiryDetailsData((prev) =>
-                                            prev.map((r) => (r.id === row.id ? { ...r, partDescription: value } : r))
-                                          );
-                                          setEnquiryDetailsErrors((prev) => {
-                                            const newErrors = [...prev];
-                                            newErrors[index] = {
-                                              ...newErrors[index],
-                                              partDescription: !value ? 'Part Description is required' : ''
-                                            };
-                                            return newErrors;
-                                          });
-                                        }}
-                                        className={enquiryDetailsErrors[index]?.partDescription ? 'error form-control' : 'form-control'}
-                                      />
-                                      {enquiryDetailsErrors[index]?.partDescription && (
-                                        <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                          {enquiryDetailsErrors[index].partDescription}
-                                        </div>
-                                      )}
-                                    </td>
-                                    <td className="border px-2 py-2">
-                                      <input
-                                        style={{ width: '150px' }}
-                                        type="text"
-                                        value={row.drawingNo}
-                                        onChange={(e) => {
-                                          const value = e.target.value;
-                                          setEnquiryDetailsData((prev) =>
-                                            prev.map((r) => (r.id === row.id ? { ...r, drawingNo: value } : r))
-                                          );
-                                          setEnquiryDetailsErrors((prev) => {
-                                            const newErrors = [...prev];
-                                            newErrors[index] = {
-                                              ...newErrors[index],
-                                              drawingNo: !value ? 'Drawing No is required' : ''
-                                            };
-                                            return newErrors;
-                                          });
-                                        }}
-                                        className={enquiryDetailsErrors[index]?.drawingNo ? 'error form-control' : 'form-control'}
-                                      />
-                                      {enquiryDetailsErrors[index]?.drawingNo && (
-                                        <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                          {enquiryDetailsErrors[index].drawingNo}
-                                        </div>
-                                      )}
-                                    </td>
-                                    <td className="border px-2 py-2">
-                                      <input
-                                        style={{ width: '150px' }}
-                                        type="text"
-                                        value={row.revisionNo}
-                                        onChange={(e) => {
-                                          const value = e.target.value;
-                                          setEnquiryDetailsData((prev) =>
-                                            prev.map((r) => (r.id === row.id ? { ...r, revisionNo: value } : r))
-                                          );
-                                          setEnquiryDetailsErrors((prev) => {
-                                            const newErrors = [...prev];
-                                            newErrors[index] = {
-                                              ...newErrors[index],
-                                              revisionNo: !value ? 'Revision No is required' : ''
-                                            };
-                                            return newErrors;
-                                          });
-                                        }}
-                                        className={enquiryDetailsErrors[index]?.revisionNo ? 'error form-control' : 'form-control'}
-                                      />
-                                      {enquiryDetailsErrors[index]?.revisionNo && (
-                                        <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                          {enquiryDetailsErrors[index].revisionNo}
-                                        </div>
-                                      )}
-                                    </td>
-                                    <td className="border px-2 py-2">
-                                      <input
-                                        style={{ width: '150px' }}
-                                        type="text"
-                                        value={row.unit}
-                                        onChange={(e) => {
-                                          const value = e.target.value;
-                                          setEnquiryDetailsData((prev) => prev.map((r) => (r.id === row.id ? { ...r, unit: value } : r)));
-                                          setEnquiryDetailsErrors((prev) => {
-                                            const newErrors = [...prev];
-                                            newErrors[index] = {
-                                              ...newErrors[index],
-                                              unit: !value ? 'Unit is required' : ''
-                                            };
-                                            return newErrors;
-                                          });
-                                        }}
-                                        className={enquiryDetailsErrors[index]?.unit ? 'error form-control' : 'form-control'}
-                                      />
-                                      {enquiryDetailsErrors[index]?.unit && (
-                                        <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                          {enquiryDetailsErrors[index].unit}
-                                        </div>
-                                      )}
-                                    </td>
-                                    <td className="border px-2 py-2">
-                                      <input
-                                        style={{ width: '150px' }}
-                                        type="text"
-                                        value={row.requireQty}
-                                        onChange={(e) => {
-                                          const value = e.target.value;
-                                          setEnquiryDetailsData((prev) =>
-                                            prev.map((r) => (r.id === row.id ? { ...r, requireQty: value } : r))
-                                          );
-                                          setEnquiryDetailsErrors((prev) => {
-                                            const newErrors = [...prev];
-                                            newErrors[index] = {
-                                              ...newErrors[index],
-                                              requireQty: !value ? 'Require Qty is required' : ''
-                                            };
-                                            return newErrors;
-                                          });
-                                        }}
-                                        className={enquiryDetailsErrors[index]?.requireQty ? 'error form-control' : 'form-control'}
-                                      />
-                                      {enquiryDetailsErrors[index]?.requireQty && (
-                                        <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                          {enquiryDetailsErrors[index].requireQty}
-                                        </div>
-                                      )}
-                                    </td>
-
-                                    <td className="border px-2 py-2">
-                                      <input
-                                        style={{ width: '150px' }}
-                                        type="date"
-                                        value={row.deliveryDate}
-                                        onChange={(e) => {
-                                          const date = e.target.value;
-
-                                          setEnquiryDetailsData((prev) =>
-                                            prev.map((r) =>
-                                              r.id === row.id ? { ...r, deliveryDate: date, endDate: date > r.endDate ? '' : r.endDate } : r
+                                {enquiryDetailsData.map((row, index) => {
+                                  const availablePartCodes = partCodeList.filter(
+                                    (option) => !enquiryDetailsData.some((data) => data.partCode === option.partNo && data.id !== row.id)
+                                  );
+                                  return (
+                                    <tr key={row.id}>
+                                      <td className="border px-2 py-2 text-center">
+                                        <ActionButton
+                                          title="Delete"
+                                          icon={DeleteIcon}
+                                          onClick={() =>
+                                            handleDeleteRow(
+                                              row.id,
+                                              enquiryDetailsData,
+                                              setEnquiryDetailsData,
+                                              enquiryDetailsErrors,
+                                              setEnquiryDetailsErrors
                                             )
-                                          );
+                                          }
+                                        />
+                                      </td>
+                                      <td className="text-center">
+                                        <div className="pt-2">{index + 1}</div>
+                                      </td>
+                                      <td className="border px-2 py-2">
+                                        <Autocomplete
+                                          disablePortal
+                                          options={availablePartCodes.map((option, index) => ({ ...option, key: index }))}
+                                          getOptionLabel={(option) => option.partNo || ''}
+                                          sx={{ width: '100%' }}
+                                          size="small"
+                                          value={partCodeList.find((c) => c.partNo === row.partCode) || null}
+                                          onChange={(event, newValue) => {
+                                            const selectedPartCode = newValue ? newValue.partNo : '';
+                                            const selectedPartDescription = newValue ? newValue.partDescription : '';
+                                            const selectedPartUnit = newValue ? newValue.unit : '';
+                                            setEnquiryDetailsData((prev) =>
+                                              prev.map((r) =>
+                                                r.id === row.id
+                                                  ? {
+                                                      ...r,
+                                                      partCode: selectedPartCode,
+                                                      partDescription: selectedPartDescription,
+                                                      unit: selectedPartUnit
+                                                    }
+                                                  : r
+                                              )
+                                            );
+                                            getDrawingNoAndRevisionNo(selectedPartCode, row.id);
+                                            setEnquiryDetailsErrors((prev) => {
+                                              const newErrors = [...prev];
+                                              newErrors[index] = {
+                                                ...newErrors[index],
+                                                partCode: !selectedPartCode ? 'Part Code is required' : ''
+                                              };
+                                              return newErrors;
+                                            });
+                                          }}
+                                          renderInput={(params) => (
+                                            <TextField
+                                              {...params}
+                                              label="Part Code"
+                                              name="partCode"
+                                              error={!!enquiryDetailsErrors[index]?.partCode}
+                                              helperText={enquiryDetailsErrors[index]?.partCode}
+                                              InputProps={{
+                                                ...params.InputProps,
+                                                style: { height: 40, width: 200 }
+                                              }}
+                                            />
+                                          )}
+                                        />
+                                      </td>
+                                      <td className="border px-2 py-2">
+                                        <input
+                                          style={{ width: '150px' }}
+                                          type="text"
+                                          value={row.partDescription}
+                                          readOnly
+                                          className="form-control"
+                                        />
+                                      </td>
+                                      <td className="border px-2 py-2">
+                                        <Autocomplete
+                                          disablePortal
+                                          options={(row.drawingNoList || []).map((option, index) => ({ ...option, key: index }))}
+                                          getOptionLabel={(option) => option.drawingNo || ''}
+                                          sx={{ width: '100%' }}
+                                          size="small"
+                                          value={(row.drawingNoList || []).find((c) => c.drawingNo === row.drawingNo) || null}
+                                          onChange={(event, newValue) => {
+                                            const selectedDrawingNo = newValue ? newValue.drawingNo : '';
+                                            const selectedRevisionNo = newValue ? newValue.revisionNo : '';
 
-                                          setEnquiryDetailsErrors((prev) => {
-                                            const newErrors = [...prev];
-                                            newErrors[index] = {
-                                              ...newErrors[index],
-                                              deliveryDate: !date ? 'Delivery Date is required' : ''
-                                            };
-                                            return newErrors;
-                                          });
-                                        }}
-                                        className={enquiryDetailsErrors[index]?.deliveryDate ? 'error form-control' : 'form-control'}
-                                        // onKeyDown={(e) => handleKeyDown(e, row, tdsTableData)}
-                                      />
-                                      {enquiryDetailsErrors[index]?.deliveryDate && (
-                                        <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                          {enquiryDetailsErrors[index].deliveryDate}
-                                        </div>
-                                      )}
-                                    </td>
+                                            setEnquiryDetailsData((prev) =>
+                                              prev.map((r) =>
+                                                r.id === row.id
+                                                  ? {
+                                                      ...r,
+                                                      drawingNo: selectedDrawingNo,
+                                                      revisionNo: selectedRevisionNo
+                                                    }
+                                                  : r
+                                              )
+                                            );
 
-                                    <td className="border px-2 py-2">
-                                      <input
-                                        style={{ width: '150px' }}
-                                        type="text"
-                                        value={row.remarks}
-                                        onChange={(e) => {
-                                          const value = e.target.value;
-                                          setEnquiryDetailsData((prev) =>
-                                            prev.map((r) => (r.id === row.id ? { ...r, remarks: value } : r))
-                                          );
-                                          setEnquiryDetailsErrors((prev) => {
-                                            const newErrors = [...prev];
-                                            newErrors[index] = {
-                                              ...newErrors[index],
-                                              remarks: !value ? 'Remarks is required' : ''
-                                            };
-                                            return newErrors;
-                                          });
-                                        }}
-                                        className={enquiryDetailsErrors[index]?.remarks ? 'error form-control' : 'form-control'}
-                                      />
-                                      {enquiryDetailsErrors[index]?.remarks && (
-                                        <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                          {enquiryDetailsErrors[index].remarks}
-                                        </div>
-                                      )}
-                                    </td>
-                                  </tr>
-                                ))}
+                                            setEnquiryDetailsErrors((prev) => {
+                                              const newErrors = [...prev];
+                                              newErrors[index] = {
+                                                ...newErrors[index],
+                                                drawingNo: !selectedDrawingNo ? 'Drawing No is required' : ''
+                                              };
+                                              return newErrors;
+                                            });
+                                          }}
+                                          renderInput={(params) => (
+                                            <TextField
+                                              {...params}
+                                              label="Drawing No"
+                                              name="drawingNo"
+                                              error={!!enquiryDetailsErrors[index]?.drawingNo}
+                                              helperText={enquiryDetailsErrors[index]?.drawingNo}
+                                              InputProps={{
+                                                ...params.InputProps,
+                                                style: { height: 40, width: 200 }
+                                              }}
+                                            />
+                                          )}
+                                        />
+                                      </td>
+                                      <td className="border px-2 py-2">
+                                        <input
+                                          style={{ width: '150px' }}
+                                          type="text"
+                                          value={row.revisionNo}
+                                          disabled
+                                          onChange={(e) => {
+                                            const value = e.target.value;
+                                            setEnquiryDetailsData((prev) =>
+                                              prev.map((r) => (r.id === row.id ? { ...r, revisionNo: value } : r))
+                                            );
+                                            setEnquiryDetailsErrors((prev) => {
+                                              const newErrors = [...prev];
+                                              newErrors[index] = {
+                                                ...newErrors[index],
+                                                revisionNo: !value ? 'Revision No is required' : ''
+                                              };
+                                              return newErrors;
+                                            });
+                                          }}
+                                          className={enquiryDetailsErrors[index]?.revisionNo ? 'error form-control' : 'form-control'}
+                                        />
+                                        {enquiryDetailsErrors[index]?.revisionNo && (
+                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                            {enquiryDetailsErrors[index].revisionNo}
+                                          </div>
+                                        )}
+                                      </td>
+                                      <td className="border px-2 py-2">
+                                        <input
+                                          style={{ width: '150px' }}
+                                          type="text"
+                                          value={row.unit}
+                                          disabled
+                                          onChange={(e) => {
+                                            const value = e.target.value;
+                                            setEnquiryDetailsData((prev) => prev.map((r) => (r.id === row.id ? { ...r, unit: value } : r)));
+                                            setEnquiryDetailsErrors((prev) => {
+                                              const newErrors = [...prev];
+                                              newErrors[index] = {
+                                                ...newErrors[index],
+                                                unit: !value ? 'Unit is required' : ''
+                                              };
+                                              return newErrors;
+                                            });
+                                          }}
+                                          className={enquiryDetailsErrors[index]?.unit ? 'error form-control' : 'form-control'}
+                                        />
+                                        {enquiryDetailsErrors[index]?.unit && (
+                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                            {enquiryDetailsErrors[index].unit}
+                                          </div>
+                                        )}
+                                      </td>
+                                      <td className="border px-2 py-2">
+                                        <input
+                                          style={{ width: '150px' }}
+                                          type="number"
+                                          value={row.requireQty}
+                                          onChange={(e) => {
+                                            const value = e.target.value;
+                                            setEnquiryDetailsData((prev) =>
+                                              prev.map((r) => (r.id === row.id ? { ...r, requireQty: value } : r))
+                                            );
+                                            setEnquiryDetailsErrors((prev) => {
+                                              const newErrors = [...prev];
+                                              newErrors[index] = {
+                                                ...newErrors[index],
+                                                requireQty: !value ? 'Require Qty is required' : ''
+                                              };
+                                              return newErrors;
+                                            });
+                                          }}
+                                          className={enquiryDetailsErrors[index]?.requireQty ? 'error form-control' : 'form-control'}
+                                        />
+                                        {enquiryDetailsErrors[index]?.requireQty && (
+                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                            {enquiryDetailsErrors[index].requireQty}
+                                          </div>
+                                        )}
+                                      </td>
+
+                                      <td className="border px-2 py-2">
+                                        <input
+                                          style={{ width: '150px' }}
+                                          type="date"
+                                          value={row.deliveryDate}
+                                          onChange={(e) => {
+                                            const date = e.target.value;
+
+                                            setEnquiryDetailsData((prev) =>
+                                              prev.map((r) =>
+                                                r.id === row.id
+                                                  ? { ...r, deliveryDate: date, endDate: date > r.endDate ? '' : r.endDate }
+                                                  : r
+                                              )
+                                            );
+
+                                            setEnquiryDetailsErrors((prev) => {
+                                              const newErrors = [...prev];
+                                              newErrors[index] = {
+                                                ...newErrors[index],
+                                                deliveryDate: !date ? 'Delivery Date is required' : ''
+                                              };
+                                              return newErrors;
+                                            });
+                                          }}
+                                          className={enquiryDetailsErrors[index]?.deliveryDate ? 'error form-control' : 'form-control'}
+                                          // onKeyDown={(e) => handleKeyDown(e, row, tdsTableData)}
+                                        />
+                                        {enquiryDetailsErrors[index]?.deliveryDate && (
+                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                            {enquiryDetailsErrors[index].deliveryDate}
+                                          </div>
+                                        )}
+                                      </td>
+
+                                      <td className="border px-2 py-2">
+                                        <input
+                                          style={{ width: '150px' }}
+                                          type="text"
+                                          value={row.remarks}
+                                          onChange={(e) => {
+                                            const value = e.target.value;
+                                            setEnquiryDetailsData((prev) =>
+                                              prev.map((r) => (r.id === row.id ? { ...r, remarks: value } : r))
+                                            );
+                                            setEnquiryDetailsErrors((prev) => {
+                                              const newErrors = [...prev];
+                                              newErrors[index] = {
+                                                ...newErrors[index],
+                                                remarks: !value ? 'Remarks is required' : ''
+                                              };
+                                              return newErrors;
+                                            });
+                                          }}
+                                          className={enquiryDetailsErrors[index]?.remarks ? 'error form-control' : 'form-control'}
+                                        />
+                                        {enquiryDetailsErrors[index]?.remarks && (
+                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                            {enquiryDetailsErrors[index].remarks}
+                                          </div>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
                               </tbody>
                             </table>
                           </div>
@@ -899,157 +1108,161 @@ const Enquiry = () => {
                 )}
                 {value === 1 && (
                   <>
-                    <div className="row d-flex">
-                      <div className="col-md-3 mb-3">
-                        <FormControl fullWidth variant="filled">
-                          <TextField
-                            id="anyAdditionalInv"
-                            label="Any Additional Investment"
-                            name="anyAdditionalInv"
-                            size="small"
-                            value={formData.anyAdditionalInv}
-                            onChange={handleInputChange}
-                            inputProps={{ maxLength: 30 }}
-                            error={!!fieldErrors.anyAdditionalInv}
-                            helperText={fieldErrors.anyAdditionalInv}
-                          />
-                        </FormControl>
+                    {enquirySummaryDTO.map((row, index) => (
+                      <div key={row.id}>
+                        <div className="row d-flex">
+                          <div className="col-md-3 mb-3">
+                            <FormControl fullWidth variant="filled">
+                              <TextField
+                                id="anyAdditionalInverstment"
+                                label="Any Additional Investment"
+                                name="anyAdditionalInverstment"
+                                size="small"
+                                type="number"
+                                inputProps={{ maxLength: 30 }}
+                                value={enquirySummaryDTO[index]?.anyAdditionalInverstment || ''}
+                                onChange={(e) => handleInputChange(e, 'enquirySummaryDTO', index)}
+                                error={!!enquirySummaryErrors[index]?.anyAdditionalInverstment}
+                                helperText={enquirySummaryErrors[index]?.anyAdditionalInverstment || ''}
+                              />
+                            </FormControl>
+                          </div>
+                          <div className="col-md-3 mb-3">
+                            <FormControl fullWidth variant="filled">
+                              <TextField
+                                id="additionalManPower"
+                                label="Additional Man Power"
+                                name="additionalManPower"
+                                size="small"
+                                inputProps={{ maxLength: 30 }}
+                                value={enquirySummaryDTO[index]?.additionalManPower || ''}
+                                onChange={(e) => handleInputChange(e, 'enquirySummaryDTO', index)}
+                                error={!!enquirySummaryErrors[index]?.additionalManPower}
+                                helperText={enquirySummaryErrors[index]?.additionalManPower || ''}
+                              />
+                            </FormControl>
+                          </div>
+                          <div className="col-md-3 mb-3">
+                            <FormControl fullWidth variant="filled">
+                              <TextField
+                                id="timeFrame"
+                                label="Time Frame"
+                                name="timeFrame"
+                                size="small"
+                                inputProps={{ maxLength: 30 }}
+                                value={enquirySummaryDTO[index]?.timeFrame || ''}
+                                onChange={(e) => handleInputChange(e, 'enquirySummaryDTO', index)}
+                                error={!!enquirySummaryErrors[index]?.timeFrame}
+                                helperText={enquirySummaryErrors[index]?.timeFrame || ''}
+                              />
+                            </FormControl>
+                          </div>
+                          <div className="col-md-3 mb-3">
+                            <FormControl fullWidth>
+                              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                                <DatePicker
+                                  label="Expected Time For Delivery Sample"
+                                  value={
+                                    enquirySummaryDTO[index]?.expectedTimeForDeliverySample
+                                      ? dayjs(enquirySummaryDTO[index]?.expectedTimeForDeliverySample, 'YYYY-MM-DD')
+                                      : null
+                                  }
+                                  onChange={(date) => handleDateChange('expectedTimeForDeliverySample', date, index)}
+                                  slotProps={{
+                                    textField: { size: 'small', clearable: true }
+                                  }}
+                                  format="DD-MM-YYYY"
+                                  error={!!fieldErrors.expectedTimeForDeliverySample}
+                                  helperText={fieldErrors.expectedTimeForDeliverySample ? fieldErrors.expectedTimeForDeliverySample : ''}
+                                />
+                              </LocalizationProvider>
+                            </FormControl>
+                          </div>
+                          <div className="col-md-3 mb-3">
+                            <FormControl fullWidth variant="filled">
+                              <TextField
+                                id="regularProduction"
+                                label="Regular Production"
+                                name="regularProduction"
+                                size="small"
+                                inputProps={{ maxLength: 30 }}
+                                value={enquirySummaryDTO[index]?.regularProduction || ''}
+                                onChange={(e) => handleInputChange(e, 'enquirySummaryDTO', index)}
+                                error={!!enquirySummaryErrors[index]?.regularProduction}
+                                helperText={enquirySummaryErrors[index]?.regularProduction || ''}
+                              />
+                            </FormControl>
+                          </div>
+                          <div className="col-md-3 mb-3">
+                            <FormControl fullWidth variant="filled">
+                              <TextField
+                                id="initialReviewComments"
+                                label="Initial Review Comments (Director Operator)"
+                                name="initialReviewComments"
+                                size="small"
+                                inputProps={{ maxLength: 30 }}
+                                value={enquirySummaryDTO[index]?.initialReviewComments || ''}
+                                onChange={(e) => handleInputChange(e, 'enquirySummaryDTO', index)}
+                                error={!!enquirySummaryErrors[index]?.initialReviewComments}
+                                helperText={enquirySummaryErrors[index]?.initialReviewComments || ''}
+                              />
+                            </FormControl>
+                          </div>
+                          <div className="col-md-3 mb-3">
+                            <FormControl fullWidth variant="filled">
+                              <TextField
+                                id="detailreview"
+                                label="Detail Review (Director Technical)"
+                                name="detailreview"
+                                size="small"
+                                inputProps={{ maxLength: 30 }}
+                                value={enquirySummaryDTO[index]?.detailreview || ''}
+                                onChange={(e) => handleInputChange(e, 'enquirySummaryDTO', index)}
+                                error={!!enquirySummaryErrors[index]?.detailreview}
+                                helperText={enquirySummaryErrors[index]?.detailreview || ''}
+                              />
+                            </FormControl>
+                          </div>
+                          <div className="col-md-3 mb-3">
+                            <FormControl fullWidth variant="filled">
+                              <TextField
+                                id="conclusion"
+                                label="Conclusion"
+                                name="conclusion"
+                                size="small"
+                                inputProps={{ maxLength: 30 }}
+                                value={enquirySummaryDTO[index]?.conclusion || ''}
+                                onChange={(e) => handleInputChange(e, 'enquirySummaryDTO', index)}
+                                error={!!enquirySummaryErrors[index]?.conclusion}
+                                helperText={enquirySummaryErrors[index]?.conclusion || ''}
+                              />
+                            </FormControl>
+                          </div>
+                          <div className="col-md-3 mb-3">
+                            <FormControl fullWidth variant="filled">
+                              <TextField
+                                id="remarks"
+                                label="Remarks"
+                                name="remarks"
+                                size="small"
+                                inputProps={{ maxLength: 30 }}
+                                value={enquirySummaryDTO[index]?.remarks || ''}
+                                onChange={(e) => handleInputChange(e, 'enquirySummaryDTO', index)}
+                                error={!!enquirySummaryErrors[index]?.remarks}
+                                helperText={enquirySummaryErrors[index]?.remarks || ''}
+                              />
+                            </FormControl>
+                          </div>
+                        </div>
                       </div>
-                      <div className="col-md-3 mb-3">
-                        <FormControl fullWidth variant="filled">
-                          <TextField
-                            id="additionalManPower"
-                            label="Additional Man Power"
-                            name="additionalManPower"
-                            size="small"
-                            value={formData.additionalManPower}
-                            onChange={handleInputChange}
-                            inputProps={{ maxLength: 30 }}
-                            error={!!fieldErrors.additionalManPower}
-                            helperText={fieldErrors.additionalManPower}
-                          />
-                        </FormControl>
-                      </div>
-                      <div className="col-md-3 mb-3">
-                        <FormControl fullWidth variant="filled">
-                          <TextField
-                            id="timeFrame"
-                            label="Time Frame"
-                            name="timeFrame"
-                            size="small"
-                            value={formData.timeFrame}
-                            onChange={handleInputChange}
-                            inputProps={{ maxLength: 30 }}
-                            error={!!fieldErrors.timeFrame}
-                            helperText={fieldErrors.timeFrame}
-                          />
-                        </FormControl>
-                      </div>
-                      <div className="col-md-3 mb-3">
-                        <FormControl fullWidth>
-                          <LocalizationProvider dateAdapter={AdapterDayjs}>
-                            <DatePicker
-                              label="Expected Time For Delivery Sample"
-                              value={formData.expectTimeForDelSample ? dayjs(formData.expectTimeForDelSample, 'YYYY-MM-DD') : null}
-                              onChange={(date) => handleDateChange('expectTimeForDelSample', date)}
-                              slotProps={{
-                                textField: { size: 'small', clearable: true }
-                              }}
-                              format="DD-MM-YYYY"
-                              error={!!fieldErrors.expectTimeForDelSample}
-                              helperText={fieldErrors.expectTimeForDelSample ? fieldErrors.expectTimeForDelSample : ''}
-                            />
-                          </LocalizationProvider>
-                        </FormControl>
-                      </div>
-                      <div className="col-md-3 mb-3">
-                        <FormControl fullWidth variant="filled">
-                          <TextField
-                            id="regularProduction"
-                            label="Regular Production"
-                            name="regularProduction"
-                            size="small"
-                            value={formData.regularProduction}
-                            onChange={handleInputChange}
-                            inputProps={{ maxLength: 30 }}
-                            error={!!fieldErrors.regularProduction}
-                            helperText={fieldErrors.regularProduction}
-                          />
-                        </FormControl>
-                      </div>
-                      <div className="col-md-3 mb-3">
-                        <FormControl fullWidth variant="filled">
-                          <TextField
-                            id="initialReviewComments"
-                            label="Initial Review Comments (Director Operator)"
-                            name="initialReviewComments"
-                            size="small"
-                            value={formData.initialReviewComments}
-                            onChange={handleInputChange}
-                            inputProps={{ maxLength: 30 }}
-                            error={!!fieldErrors.initialReviewComments}
-                            helperText={fieldErrors.initialReviewComments}
-                          />
-                        </FormControl>
-                      </div>
-                      <div className="col-md-3 mb-3">
-                        <FormControl fullWidth variant="filled">
-                          <TextField
-                            id="detailReview"
-                            label="Detail Review (Director Technical)"
-                            name="detailReview"
-                            size="small"
-                            value={formData.detailReview}
-                            onChange={handleInputChange}
-                            inputProps={{ maxLength: 30 }}
-                            error={!!fieldErrors.detailReview}
-                            helperText={fieldErrors.detailReview}
-                          />
-                        </FormControl>
-                      </div>
-                      <div className="col-md-3 mb-3">
-                        <FormControl fullWidth variant="filled">
-                          <TextField
-                            id="conclusion"
-                            label="Conclusion"
-                            name="conclusion"
-                            size="small"
-                            value={formData.conclusion}
-                            onChange={handleInputChange}
-                            inputProps={{ maxLength: 30 }}
-                            error={!!fieldErrors.conclusion}
-                            helperText={fieldErrors.conclusion}
-                          />
-                        </FormControl>
-                      </div>
-                      <div className="col-md-3 mb-3">
-                        <FormControl fullWidth variant="filled">
-                          <TextField
-                            id="enquiryRemarks"
-                            label="Remarks"
-                            name="enquiryRemarks"
-                            size="small"
-                            value={formData.enquiryRemarks}
-                            onChange={handleInputChange}
-                            inputProps={{ maxLength: 30 }}
-                            error={!!fieldErrors.enquiryRemarks}
-                            helperText={fieldErrors.enquiryRemarks}
-                          />
-                        </FormControl>
-                      </div>
-                    </div>
+                    ))}
                   </>
                 )}
               </Box>
             </div>
           </>
         ) : (
-          <CommonTable
-            data={data && data}
-            columns={columns}
-            blockEdit={true}
-            // toEdit={getListOfValueById}
-          />
+          <CommonTable data={data && data} columns={columns} blockEdit={true} toEdit={getEnquiryById} />
         )}
       </div>
     </div>

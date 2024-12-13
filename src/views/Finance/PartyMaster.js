@@ -424,9 +424,11 @@ export const PartyMaster = () => {
             businessPlace: detail.businessPlace || '',
             city: detail.city || '',
             contact: detail.contact || '',
+            contactPerson: detail.contactPerson || '',
             pincode: detail.pincode || '',
             state: detail.state || '',
-            stateGstIn: detail.stateGstIn || ''
+            stateGstIn: detail.stateGstIn || '',
+            taxType: detail.taxType || ''
           }))
         );
 
@@ -652,9 +654,11 @@ export const PartyMaster = () => {
         businessPlace: '',
         city: '',
         contact: '',
+        contactPerson: '',
         pincode: '',
         state: '',
-        stateGstIn: ''
+        stateGstIn: '',
+        taxType: ''
       }
     ]);
     setPartyAddressDataErrors([]);
@@ -1014,9 +1018,11 @@ export const PartyMaster = () => {
       businessPlace: '',
       city: '',
       contact: '',
+      contactPerson: '',
       pincode: '',
       state: '',
-      stateGstIn: ''
+      stateGstIn: '',
+      taxType: ''
     }
   ]);
 
@@ -1029,9 +1035,11 @@ export const PartyMaster = () => {
       businessPlace: '',
       city: '',
       contact: '',
+      contactPerson: '',
       pincode: '',
       state: '',
-      stateGstIn: ''
+      stateGstIn: '',
+      taxType: ''
     }
   ]);
 
@@ -1049,9 +1057,11 @@ export const PartyMaster = () => {
       businessPlace: '',
       city: '',
       contact: '',
+      contactPerson: '',
       pincode: '',
       state: '',
-      stateGstIn: ''
+      stateGstIn: '',
+      taxType: ''
     };
     setPartyAddressData([...partyAddressData, newRow]);
     setPartyAddressDataErrors([
@@ -1064,9 +1074,11 @@ export const PartyMaster = () => {
         businessPlace: '',
         city: '',
         contact: '',
+        contactPerson: '',
         pincode: '',
         state: '',
-        stateGstIn: ''
+        stateGstIn: '',
+        taxType: ''
       }
     ]);
   };
@@ -1540,6 +1552,10 @@ export const PartyMaster = () => {
         rowErrors.businessPlace = 'Business Place is required';
         partyAddressDataValid = false;
       }
+      if (!row.taxType) {
+        rowErrors.taxType = 'Tax Type is required';
+        partyAddressDataValid = false;
+      }
       if (!row.stateGstIn) {
         rowErrors.stateGstIn = 'State GstIn is required';
         partyAddressDataValid = false;
@@ -1570,6 +1586,10 @@ export const PartyMaster = () => {
       }
       if (!row.contact) {
         rowErrors.contact = 'Contact is required';
+        partyAddressDataValid = false;
+      }
+      if (!row.contactPerson) {
+        rowErrors.contactPerson = 'Contact Person is required';
         partyAddressDataValid = false;
       }
 
@@ -1745,9 +1765,11 @@ export const PartyMaster = () => {
         businessPlace: row.businessPlace,
         city: row.city,
         contact: row.contact,
+        contactPerson: row.contactPerson,
         pincode: row.pincode,
         state: row.state,
-        stateGstIn: row.stateGstIn
+        stateGstIn: row.stateGstIn,
+        taxType: row.taxType
       }));
 
       const partyStateDTO = partyStateData.map((row) => ({
@@ -2690,12 +2712,14 @@ export const PartyMaster = () => {
                                 <th className="table-header">State</th>
                                 <th className="table-header">City</th>
                                 <th className="table-header">Business Place</th>
+                                <th className="table-header">Tax Type</th>
                                 <th className="table-header">State GST IN</th>
                                 <th className="table-header">Address Type</th>
                                 <th className="table-header">Address Line1</th>
                                 <th className="table-header">Address Line2</th>
                                 <th className="table-header">Address Line3</th>
                                 <th className="table-header">Pin Code</th>
+                                <th className="table-header">Contact Person</th>
                                 <th className="table-header">Contact</th>
                               </tr>
                             </thead>
@@ -2800,6 +2824,26 @@ export const PartyMaster = () => {
                                   </td>
 
                                   <td className="border px-2 py-2">
+                                    <select
+                                      value={row.taxType}
+                                      style={{ width: '150px' }}
+                                      onChange={(e) => {
+                                        const updatedPartyAddressData = [...partyAddressData];
+                                        updatedPartyAddressData[index].taxType = e.target.value;
+                                        setPartyAddressData(updatedPartyAddressData);
+                                      }}
+                                      className={partyAddressDataErrors[index]?.taxType ? 'error form-control' : 'form-control'}
+                                    >
+                                      <option value="">--Select--</option>
+                                      <option value="INTER">INTER</option>
+                                      <option value="INTRA">INTRA</option>
+                                    </select>
+                                    {partyAddressDataErrors[index]?.taxType && (
+                                      <div style={{ color: 'red', fontSize: '12px' }}>{partyAddressDataErrors[index].taxType}</div>
+                                    )}
+                                  </td>
+
+                                  <td className="border px-2 py-2">
                                     <input
                                       type="text"
                                       value={row.stateGstIn}
@@ -2822,7 +2866,21 @@ export const PartyMaster = () => {
                                   </td>
 
                                   <td className="border px-2 py-2">
-                                    <input
+                                    <select
+                                      value={row.addressType}
+                                      style={{ width: '150px' }}
+                                      onChange={(e) => {
+                                        const updatedPartyAddressData = [...partyAddressData];
+                                        updatedPartyAddressData[index].addressType = e.target.value;
+                                        setPartyAddressData(updatedPartyAddressData);
+                                      }}
+                                      className={partyAddressDataErrors[index]?.addressType ? 'error form-control' : 'form-control'}
+                                    >
+                                      <option value="">--Select--</option>
+                                      <option value="SHIPPING">SHIPPING</option>
+                                      <option value="BILLING">BILLING</option>
+                                    </select>
+                                    {/* <input
                                       type="text"
                                       value={row.addressType}
                                       onChange={(e) => {
@@ -2841,7 +2899,7 @@ export const PartyMaster = () => {
                                       }}
                                       className={partyAddressDataErrors[index]?.addressType ? 'error form-control' : 'form-control'}
                                       style={{ width: '150px' }}
-                                    />
+                                    /> */}
                                     {partyAddressDataErrors[index]?.addressType && (
                                       <div style={{ color: 'red', fontSize: '12px' }}>{partyAddressDataErrors[index].addressType}</div>
                                     )}
@@ -2952,6 +3010,31 @@ export const PartyMaster = () => {
                                     />
                                     {partyAddressDataErrors[index]?.pincode && (
                                       <div style={{ color: 'red', fontSize: '12px' }}>{partyAddressDataErrors[index].pincode}</div>
+                                    )}
+                                  </td>
+                                  <td className="border px-2 py-2">
+                                    <input
+                                      type="text"
+                                      value={row.contactPerson}
+                                      onChange={(e) => {
+                                        const value = e.target.value;
+                                        setPartyAddressData((prev) =>
+                                          prev.map((r) => (r.id === row.id ? { ...r, contactPerson: value } : r))
+                                        );
+                                        setPartyAddressDataErrors((prev) => {
+                                          const newErrors = [...prev];
+                                          newErrors[index] = {
+                                            ...newErrors[index],
+                                            contactPerson: !value ? 'Contact Person is required' : ''
+                                          };
+                                          return newErrors;
+                                        });
+                                      }}
+                                      className={partyAddressDataErrors[index]?.contactPerson ? 'error form-control' : 'form-control'}
+                                      style={{ width: '150px' }}
+                                    />
+                                    {partyAddressDataErrors[index]?.contactPerson && (
+                                      <div style={{ color: 'red', fontSize: '12px' }}>{partyAddressDataErrors[index].contactPerson}</div>
                                     )}
                                   </td>
                                   <td className="border px-2 py-2">

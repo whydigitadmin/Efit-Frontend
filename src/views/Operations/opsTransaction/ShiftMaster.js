@@ -10,7 +10,7 @@ import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import TextField from '@mui/material/TextField';
 import apiCalls from 'apicall';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { LocalizationProvider, TimePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
@@ -19,7 +19,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import ActionButton from 'utils/ActionButton';
 import ToastComponent, { showToast } from 'utils/toast-component';
 import CommonListViewTable from 'views/basicMaster/CommonListViewTable';
-import { height } from '@mui/system';
 
 const ShiftMaster = () => {
   const [listViewData, setListViewData] = useState([]);
@@ -61,15 +60,26 @@ const ShiftMaster = () => {
   const [shiftMasterData, setShiftMasterData] = useState([
     {
       id: 1,
-      shiftTiming: '',
+      shiftTiming: ''
     }
   ]);
   const [shiftMasterErrors, setShiftMasterErrors] = useState([
     {
-      shiftTiming: '',
+      shiftTiming: ''
     }
   ]);
-  const calculateTimings = () => {
+
+  useEffect(() => {
+    if (!editId) {
+      calculateTimings();
+    }
+  }, [formData.fromHour, formData.toHour, editId]);
+
+  useEffect(() => {
+    getAllShiftMaster();
+  }, []);
+
+  const calculateTimings = useCallback(() => {
     const { fromHour, toHour } = formData;
 
     if (!fromHour || !toHour) return;
@@ -97,22 +107,16 @@ const ShiftMaster = () => {
 
     setFormData((prev) => ({ ...prev, timing: `${diffInHours} hrs` }));
     setShiftMasterData(childTableData);
-  };
-
-  useEffect(() => {
-    calculateTimings();
   }, [formData.fromHour, formData.toHour]);
-  useEffect(() => {
-    getAllShiftMaster();
-  }, []);
+
   const handleInputChange = (e) => {
     const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
-  
+
     const nameRegex = /^[A-Za-z- ]*$/;
-    const allRegex = /^[a-zA-Z0-9- ]*$/; 
-  
+    const allRegex = /^[a-zA-Z0-9- ]*$/;
+
     let errorMessage = '';
-  
+
     switch (name) {
       case 'shiftName':
       case 'shiftType':
@@ -138,22 +142,17 @@ const ShiftMaster = () => {
     if (errorMessage) {
       setFieldErrors((prevErrors) => ({
         ...prevErrors,
-        [name]: errorMessage,
+        [name]: errorMessage
       }));
     } else {
-      const transformedValue =
-        name === 'fromHour' || name === 'toHour'
-          ? value 
-          : typeof value === 'string'
-          ? value.toUpperCase() 
-          : value;
+      const transformedValue = name === 'fromHour' || name === 'toHour' ? value : typeof value === 'string' ? value.toUpperCase() : value;
       setFormData((prevState) => ({
         ...prevState,
-        [name]: type === 'checkbox' ? checked : transformedValue,
+        [name]: type === 'checkbox' ? checked : transformedValue
       }));
       setFieldErrors((prevErrors) => ({
         ...prevErrors,
-        [name]: '',
+        [name]: ''
       }));
     }
     if (type === 'text' || type === 'textarea') {
@@ -166,30 +165,29 @@ const ShiftMaster = () => {
     }
   };
   const getShiftMasterById = async (row) => {
-    console.log('Row selected:', row);
     try {
       console.log('Fetching shift data for ID:', row.original.id);
       const response = await apiCalls('get', `/efitmaster/getShiftById?id=${row.original.id}`);
       if (response.status === true) {
         setEditId(row.original.id);
         setListView(false);
-        const materType = response.paramObjectsMap.shiftVO[0];
-        console.log('Particular Shift data:',materType);
-        
-        if (materType) {
+        const shiftVO = response.paramObjectsMap.shiftVO[0];
+        console.log('Particular Shift data:', shiftVO);
+
+        if (shiftVO) {
           setFormData({
-            shiftName: materType.shiftName,
-            shiftType: materType.shiftType,
-            shiftCode: materType.shiftCode,
-            fromHour: materType.fromHour,
-            toHour: materType.toHour,
-            timing: materType.timing,
-            active: materType.active === 'Active' || materType.active === true,
+            shiftName: shiftVO.shiftName,
+            shiftType: shiftVO.shiftType,
+            shiftCode: shiftVO.shiftCode,
+            fromHour: shiftVO.fromHour,
+            toHour: shiftVO.toHour,
+            timing: shiftVO.timing,
+            active: shiftVO.active === 'Active' ? true : false
           });
           setShiftMasterData(
-            materType.shiftDetailsVO?.map((row) => ({
+            shiftVO.shiftDetailsVO?.map((row) => ({
               id: row.id,
-              shiftTiming: row.timingInHours,
+              shiftTiming: row.timingInHours
             })) || []
           );
         } else {
@@ -201,7 +199,6 @@ const ShiftMaster = () => {
     } catch (error) {
       console.error('Error fetching data:', error);
     }
-
   };
 
   const getAllShiftMaster = async () => {
@@ -218,6 +215,78 @@ const ShiftMaster = () => {
       console.error('Error fetching data:', error);
     }
   };
+
+  const handleClear = () => {
+    setFormData({
+      shiftName: '',
+      shiftType: '',
+      shiftCode: '',
+      fromHour: null,
+      toHour: null,
+      timing: '',
+      active: true
+    });
+    setFieldErrors({
+      shiftName: '',
+      shiftType: '',
+      shiftCode: '',
+      fromHour: '',
+      toHour: '',
+      timing: ''
+    });
+    setShiftMasterData([{ id: 1, shiftTiming: '' }]);
+    setShiftMasterErrors('');
+    setEditId('');
+  };
+
+  const handleAddRow = () => {
+    if (isLastRowEmpty(shiftMasterData)) {
+      displayRowError(shiftMasterData);
+      return;
+    }
+    const newRow = {
+      id: Date.now(),
+      shiftTiming: ''
+    };
+    setShiftMasterData([...shiftMasterData, newRow]);
+    setShiftMasterErrors([...shiftMasterErrors, { shiftTiming: '' }]);
+  };
+
+  const isLastRowEmpty = (table) => {
+    const lastRow = table[table.length - 1];
+    if (!lastRow) return false;
+    return !lastRow.shiftTiming;
+  };
+
+  const displayRowError = (table) => {
+    setShiftMasterErrors((prevErrors) => {
+      const newErrors = [...prevErrors];
+      newErrors[table.length - 1] = {
+        ...newErrors[table.length - 1],
+        shiftTiming: !table[table.length - 1].shiftTiming ? 'Timing is required' : ''
+      };
+      return newErrors;
+    });
+  };
+
+  const handleDeleteRow = (id, table, setTable, errorTable, setErrorTable) => {
+    const rowIndex = table.findIndex((row) => row.id === id);
+    if (rowIndex !== -1) {
+      const updatedData = table.filter((row) => row.id !== id);
+      const updatedErrors = errorTable.filter((_, index) => index !== rowIndex);
+      setTable(updatedData);
+      setErrorTable(updatedErrors);
+    }
+  };
+
+  const handleView = () => {
+    setListView(!listView);
+  };
+
+  const handleChange = (event, newValue) => {
+    setValue(newValue);
+  };
+
   const handleSave = async () => {
     // Validation for required fields
     const errors = {};
@@ -227,19 +296,19 @@ const ShiftMaster = () => {
     if (!formData.fromHour) errors.fromHour = 'From hour is required';
     if (!formData.toHour) errors.toHour = 'To Hour is required';
     if (!formData.timing) errors.timing = 'Timing is required';
-  
+
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       showToast('error', 'Please fix validation errors before saving.');
       return;
     }
-  
+
     // Validate shiftMasterData
     if (!shiftMasterData || !shiftMasterData.length) {
       showToast('error', 'Shift Timing Details are required.');
       return;
     }
-  
+
     const invalidTimings = shiftMasterData.filter((row) => !row.shiftTiming);
     if (invalidTimings.length) {
       showToast('error', 'All timing rows must be filled.');
@@ -247,7 +316,7 @@ const ShiftMaster = () => {
     }
     const ShiftMasterVO = shiftMasterData.map((row) => ({
       ...(editId && { id: row.id }),
-      timingInHours: row.shiftTiming,
+      timingInHours: row.shiftTiming
     }));
     const saveFormData = {
       ...(editId && { id: editId }),
@@ -263,9 +332,9 @@ const ShiftMaster = () => {
       // branch,
       // branchCode,
       finYear: finYear,
-      shiftDetailsDTO: ShiftMasterVO,
+      shiftDetailsDTO: ShiftMasterVO
     };
-  
+
     console.log('Save Form Data:', saveFormData);
     setIsLoading(true);
     try {
@@ -284,71 +353,7 @@ const ShiftMaster = () => {
       setIsLoading(false);
     }
   };
-  const handleClear = () => {
-    setFormData({
-      shiftName: '',
-      shiftType: '',
-      shiftCode: '',
-      fromHour: null,
-      toHour: null,
-      timing: '',
-      active: true
-    });
-    setFieldErrors({
-      shiftName: '',
-      shiftType: '',
-      shiftCode: '',
-      fromHour: '',
-      toHour: '',
-      timing: '',
-    });
-    setShiftMasterData([{ id: 1, shiftTiming: '' }]);
-    setShiftMasterErrors('');
-    setEditId('');
-  };
 
-  const handleAddRow = () => {
-    if (isLastRowEmpty(shiftMasterData)) {
-      displayRowError(shiftMasterData);
-      return;
-    }
-    const newRow = {
-      id: Date.now(),
-      shiftTiming: '',
-    };
-    setShiftMasterData([...shiftMasterData, newRow]);
-    setShiftMasterErrors([...shiftMasterErrors, { shiftTiming: '' }]);
-  };
-  const isLastRowEmpty = (table) => {
-    const lastRow = table[table.length - 1];
-    if (!lastRow) return false;
-    return !lastRow.shiftTiming;
-  };
-  const displayRowError = (table) => {
-    setShiftMasterErrors((prevErrors) => {
-      const newErrors = [...prevErrors];
-      newErrors[table.length - 1] = {
-        ...newErrors[table.length - 1],
-        shiftTiming: !table[table.length - 1].shiftTiming ? 'Timing is required' : '',
-      };
-      return newErrors;
-    });
-  };
-  const handleDeleteRow = (id, table, setTable, errorTable, setErrorTable) => {
-    const rowIndex = table.findIndex((row) => row.id === id);
-    if (rowIndex !== -1) {
-      const updatedData = table.filter((row) => row.id !== id);
-      const updatedErrors = errorTable.filter((_, index) => index !== rowIndex);
-      setTable(updatedData);
-      setErrorTable(updatedErrors);
-    }
-  };
-  const handleView = () => {
-    setListView(!listView);
-  };
-  const handleChange = (event, newValue) => {
-    setValue(newValue);
-  };
   return (
     <>
       <div>
@@ -365,54 +370,60 @@ const ShiftMaster = () => {
 
           {!listView ? (
             <>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <div className="row d-flex ml">
-                <div className="col-md-3 mb-3">
-                  <TextField
-                    id="outlined-textarea-zip"
-                    label="Shift Name"
-                    variant="outlined"
-                    size="small"
-                    fullWidth
-                    name="shiftName"
-                    value={formData.shiftName}
-                    onChange={handleInputChange}
-                    error={!!fieldErrors.shiftName}
-                    helperText={fieldErrors.shiftName}
-                    // inputProps={{ maxLength: 10 }}
-                  />
-                </div>
-                <div className="col-md-3 mb-3">
-                  <TextField
-                    id="outlined-textarea-zip"
-                    label="Shift Type"
-                    variant="outlined"
-                    size="small"
-                    fullWidth
-                    name="shiftType"
-                    value={formData.shiftType}
-                    onChange={handleInputChange}
-                    error={!!fieldErrors.shiftType}
-                    helperText={fieldErrors.shiftType}
-                    // inputProps={{ maxLength: 10 }}
-                  />
-                </div>
-                <div className="col-md-3 mb-3">
-                  <TextField
-                    id="outlined-textarea-zip"
-                    label="Shift Code"
-                    variant="outlined"
-                    size="small"
-                    fullWidth
-                    name="shiftCode"
-                    value={formData.shiftCode}
-                    onChange={handleInputChange}
-                    error={!!fieldErrors.shiftCode}
-                    helperText={fieldErrors.shiftCode}
-                    // inputProps={{ maxLength: 10 }}
-                  />
-                </div>
-                {/* <div className="col-md-3 mb-3">
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <div className="row d-flex ml">
+                  <div className="col-md-3 mb-3">
+                    <TextField
+                      id="outlined-textarea-zip"
+                      label="Shift Name"
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      name="shiftName"
+                      value={formData.shiftName}
+                      onChange={handleInputChange}
+                      error={!!fieldErrors.shiftName}
+                      helperText={fieldErrors.shiftName}
+                      // inputProps={{ maxLength: 10 }}
+                    />
+                  </div>
+                  <div className="col-md-3 mb-3">
+                    <TextField
+                      id="outlined-textarea-zip"
+                      label="Shift Type"
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      name="shiftType"
+                      value={formData.shiftType}
+                      onChange={handleInputChange}
+                      error={!!fieldErrors.shiftType}
+                      helperText={fieldErrors.shiftType}
+                      // inputProps={{ maxLength: 10 }}
+                    />
+                  </div>
+                  <div className="col-md-3 mb-3">
+                    <TextField
+                      id="outlined-textarea-zip"
+                      label="Shift Code"
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                      name="shiftCode"
+                      value={formData.shiftCode}
+                      onChange={handleInputChange}
+                      error={!!fieldErrors.shiftCode}
+                      helperText={fieldErrors.shiftCode}
+                      // inputProps={{ maxLength: 10 }}
+                    />
+                  </div>
+                  <div className="col-md-3 mb-3">
+                    <FormControlLabel
+                      control={<Checkbox checked={formData.active} onChange={handleInputChange} name="active" defaultChecked />}
+                      label="Active"
+                    />
+                  </div>
+                  {/* <div className="col-md-3 mb-3">
                   <TimePicker
                     label="From Hour"
                     value={formData.fromHour}
@@ -433,147 +444,167 @@ const ShiftMaster = () => {
                     )}
                   />
                 </div> */}
-                <div className="col-md-3 mb-3">
-  <TimePicker
-    label="From Hour"
-    value={formData.fromHour}
-    onChange={(newValue) => handleInputChange({ target: { name: 'fromHour', value: newValue } })}
-    ampm
-    renderInput={(params) => (
-      <TextField
-        {...params}
-        sx={{
-          "& .MuiOutlinedInput-root": {
-            height: "16px", // Adjust the height of the input field
-          },
-          "& .MuiInputBase-input": {
-            padding: "10px 14px", // Adjust padding for better appearance
-            fontSize: "0.9rem", // Optional: Reduce font size
-          },
-        }}
-        error={!formData.fromHour}
-        className="form-control"
-        helperText={!formData.fromHour ? "From hour is required" : ""}
-        size="small" // Ensures the input looks smaller overall
-      />
-    )}
-  />
-</div>
-
-                <div className="col-md-3 mb-3">
-                  <TimePicker
-                    label="To Hour"
-                    value={formData.toHour}
-                    onChange={(newValue) => handleInputChange({ target: { name: 'toHour', value: newValue } })}
-                    ampm
-                    renderInput={(params) => (
+                  {editId ? (
+                    <div className="col-md-3 mb-3">
                       <TextField
-                        {...params}
+                        id="outlined-textarea-zip"
+                        label="From Hour"
+                        variant="outlined"
                         size="small"
-                        error={!formData.toHour}
-                        helperText={!formData.toHour ? 'To hour is required' : ''}
+                        fullWidth
+                        name="fromHour"
+                        value={formData.fromHour}
+                        disabled
+                        // onChange={handleInputChange}
+                        error={!!fieldErrors.fromHour}
+                        helperText={fieldErrors.fromHour}
+                        // inputProps={{ maxLength: 10 }}
                       />
-                    )}
-                  />
+                    </div>
+                  ) : (
+                    <div className="col-md-3 mb-3">
+                      <TimePicker
+                        label="From Hour"
+                        value={formData.fromHour}
+                        onChange={(newValue) => handleInputChange({ target: { name: 'fromHour', value: newValue } })}
+                        ampm
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                height: '16px' // Adjust the height of the input field
+                              },
+                              '& .MuiInputBase-input': {
+                                padding: '10px 14px', // Adjust padding for better appearance
+                                fontSize: '0.9rem' // Optional: Reduce font size
+                              }
+                            }}
+                            error={!formData.fromHour}
+                            className="form-control"
+                            helperText={!formData.fromHour ? 'From hour is required' : ''}
+                            size="small" // Ensures the input looks smaller overall
+                          />
+                        )}
+                      />
+                    </div>
+                  )}
+                  {editId ? (
+                    <div className="col-md-3 mb-3">
+                      <TextField
+                        id="outlined-textarea-zip"
+                        label="To Hour"
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        name="toHour"
+                        value={formData.toHour}
+                        disabled
+                        // onChange={handleInputChange}
+                        error={!!fieldErrors.toHour}
+                        helperText={fieldErrors.toHour}
+                        // inputProps={{ maxLength: 10 }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="col-md-3 mb-3">
+                      <TimePicker
+                        label="To Hour"
+                        value={formData.toHour}
+                        onChange={(newValue) => handleInputChange({ target: { name: 'toHour', value: newValue } })}
+                        ampm
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            size="small"
+                            error={!formData.toHour}
+                            helperText={!formData.toHour ? 'To hour is required' : ''}
+                          />
+                        )}
+                      />
+                    </div>
+                  )}
+                  <div className="col-md-3 mb-3">
+                    <TextField label="Timing" value={formData.timing || ''} size="small" disabled fullWidth />
+                  </div>
                 </div>
-                <div className="col-md-3 mb-3">
-                  <TextField
-                    label="Timing"
-                    value={formData.timing}
-                    size="small"
-                    disabled
-                    fullWidth
-                  />
-                </div>
-                <div className="col-md-3 mb-3">
-                  <FormControlLabel
-                    control={<Checkbox checked={formData.active} onChange={handleInputChange} name="active" defaultChecked />}
-                    label="Active"
-                  />
-                </div>
-              </div>
 
-              <div className="row mt-2">
-                <Box sx={{ width: '100%' }}>
-                  <Tabs
-                    value={value}
-                    onChange={handleChange}
-                    textColor="secondary"
-                    indicatorColor="secondary"
-                    aria-label="secondary tabs example"
-                  >
-                    <Tab value={0} label="Shift Timing Details" />
-                  </Tabs>
-                </Box>
-                <Box sx={{ padding: 2 }}>
-
-                  {value === 0 && (
-                    <>
-                      <div className="row d-flex ml">
-                        <div className="mb-1">
-                          <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} />
-                          
-                        </div>
-                        <div className="row mt-2">
-                          <div className="col-lg-8">
-                            <div className="table-responsive">
-                              <table className="table table-bordered ">
-                                <thead>
-                                  <tr style={{ backgroundColor: '#673AB7' }}>
-                                    <th className="px-2 py-2 text-white text-center" style={{ width: '50px' }}>
-                                      Action
-                                    </th>
-                                    <th className="px-2 py-2 text-white text-center" style={{ width: '50px' }}>
-                                      S.No
-                                    </th>
-                                    <th className="px-3 py-2 text-white text-center" style={{ width: '300px' }} >
-                                      Timing
-                                    </th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {shiftMasterData.map((row, index) => (
-                                    <tr key={row.id}>
-                                      <td className="border px-2 py-2 text-center">
-                                        <ActionButton
-                                          title="Delete"
-                                          icon={DeleteIcon}
-                                          onClick={() =>
-                                            handleDeleteRow(
-                                              row.id,
-                                              shiftMasterData,
-                                              setShiftMasterData,
-                                              shiftMasterErrors,
-                                              setShiftMasterErrors
-                                            )
-                                          }
-                                        />
-                                      </td>
-                                      <td className="text-center">
-                                        <div className="pt-2">{index + 1}</div>
-                                      </td>
-                                      <td className='text-center'>{row.shiftTiming}</td>
+                <div className="row mt-2">
+                  <Box sx={{ width: '100%' }}>
+                    <Tabs
+                      value={value}
+                      onChange={handleChange}
+                      textColor="secondary"
+                      indicatorColor="secondary"
+                      aria-label="secondary tabs example"
+                    >
+                      <Tab value={0} label="Shift Timing Details" />
+                    </Tabs>
+                  </Box>
+                  <Box sx={{ padding: 2 }}>
+                    {value === 0 && (
+                      <>
+                        <div className="row d-flex ml">
+                          {/* {!editId && (
+                            <div className="mb-1">
+                              <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} />
+                            </div>
+                          )} */}
+                          <div className="row mt-2">
+                            <div className="col-lg-8">
+                              <div className="table-responsive">
+                                <table className="table table-bordered ">
+                                  <thead>
+                                    <tr style={{ backgroundColor: '#673AB7' }}>
+                                      <th className="px-2 py-2 text-white text-center" style={{ width: '50px' }}>
+                                        Action
+                                      </th>
+                                      <th className="px-2 py-2 text-white text-center" style={{ width: '50px' }}>
+                                        S.No
+                                      </th>
+                                      <th className="px-3 py-2 text-white text-center" style={{ width: '300px' }}>
+                                        Timing
+                                      </th>
                                     </tr>
-                                  ))}
-                                </tbody>
-                              </table>
+                                  </thead>
+                                  <tbody>
+                                    {shiftMasterData.map((row, index) => (
+                                      <tr key={row.id}>
+                                        <td className="border px-2 py-2 text-center">
+                                          <ActionButton
+                                            title="Delete"
+                                            icon={DeleteIcon}
+                                            onClick={() =>
+                                              handleDeleteRow(
+                                                row.id,
+                                                shiftMasterData,
+                                                setShiftMasterData,
+                                                shiftMasterErrors,
+                                                setShiftMasterErrors
+                                              )
+                                            }
+                                          />
+                                        </td>
+                                        <td className="text-center">
+                                          <div className="pt-2">{index + 1}</div>
+                                        </td>
+                                        <td className="text-center">{row.shiftTiming}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </>
-                  )}
-                </Box>
-              </div>
+                      </>
+                    )}
+                  </Box>
+                </div>
               </LocalizationProvider>
             </>
           ) : (
-            <CommonListViewTable
-              data={listViewData}
-              columns={listViewColumns}
-              blockEdit={true}
-              toEdit={getShiftMasterById}
-            />
+            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getShiftMasterById} />
           )}
         </div>
       </div>
