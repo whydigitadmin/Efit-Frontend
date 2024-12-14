@@ -25,7 +25,7 @@ import apiCalls from 'apicall';
 
 const BillOfMaterial = () => {
   const [showForm, setShowForm] = useState(true);
-  const [data, setData] = useState(true);
+  const [data, setData] = useState([]);
   const [branch, setBranch] = useState(localStorage.getItem('branch'));
   const [branchCode, setBranchCode] = useState(localStorage.getItem('branchcode'));
   const [finYear, setFinYear] = useState(localStorage.getItem('finYear'));
@@ -33,8 +33,9 @@ const BillOfMaterial = () => {
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [value, setValue] = useState(0);
   const [editId, setEditId] = useState('');
-  const [accountNames, setAccountNames] = useState([]);
-  const [routeCardList, setRouteCardList] = useState([]);
+  const [docId, setDocId] = useState('');
+  const [productCode, setProductCode] = useState([]);
+  const [itemName, setItem] = useState([]);
   const [formData, setFormData] = useState({
     active: true,
     docDate: dayjs(),
@@ -52,9 +53,7 @@ const BillOfMaterial = () => {
     productCode: '',
     productType: '',
     productName: '',
-    uom: '',
-    revision: false,
-    default: false
+    uom: ''
   });
 
   const listViewColumns = [
@@ -84,73 +83,65 @@ const BillOfMaterial = () => {
     }
   ]);
 
-  // useEffect(() => {
-  //   getGeneralJournalDocId();
-  //   getAllGeneralJournalByOrgId();
-  //   getAccountNameFromGroup();
-  // }, []);
-
-  const getGeneralJournalDocId = async () => {
+  useEffect(() => {
+    getBOMDocId();
+    getAllBOMByOrgId();
+    getItemName();
+  }, []);
+  const getBOMDocId = async () => {
     try {
       const response = await apiCalls(
         'get',
-        `/transaction/getGeneralJournalDocId?branchCode=${branchCode}&branch=${branch}&finYear=${finYear}&orgId=${orgId}`
+        `/efitmaster/getBomDocId?orgId=${orgId}`
       );
-      setFormData((prevData) => ({
-        ...prevData,
-        docId: response.paramObjectsMap.generalJournalDocId,
-        docDate: dayjs()
-      }));
+      setDocId(response.paramObjectsMap.bomDocId);
     } catch (error) {
       console.error('Error fetching gate passes:', error);
     }
   };
 
-  const getAllGeneralJournalByOrgId = async () => {
+  const getAllBOMByOrgId = async () => {
     try {
-      const result = await apiCalls('get', `/transaction/getAllGeneralJournalByOrgId?orgId=${orgId}`);
-      setData(result.paramObjectsMap.generalJournalVO || []);
+      const result = await apiCalls('get', `/efitmaster/getAllBomOrgId?orgId=${orgId}`);
+      setData(result.paramObjectsMap.bomVO || []);
     } catch (err) {
       console.log('error', err);
     }
   };
 
-  const getGeneralJournalById = async (row) => {
+  const getBOMById = async (row) => {
     setShowForm(true);
     try {
-      const result = await apiCalls('get', `/transaction/getGeneralJournalById?id=${row.original.id}`);
+      const result = await apiCalls('get', `/efitmaster/getAllBomId?id=${row.original.id}`);
 
       if (result) {
-        const glVO = result.paramObjectsMap.generalJournalVO[0];
+        const glVO = result.paramObjectsMap.bomVO[0];
         setEditId(row.original.id);
-
+        setDocId(glVO.docid)
         setFormData({
-          woNo: glVO.woNo || '',
           id: glVO.id || '',
           docDate: glVO.docDate ? dayjs(glVO.docDate, 'YYYY-MM-DD') : dayjs(),
-          docId: glVO.docId || '',
-          customerName: glVO.customerName || '',
-          customerPONo: glVO.customerPONo || '',
-          quotationNo: glVO.quotationNo || '',
-          currency: glVO.currency || '',
-          productionMgr: glVO.productionMgr || '',
-          refDate: glVO.refDate ? dayjs(glVO.refDate, 'YYYY-MM-DD') : dayjs(),
-          remarks: glVO.remarks || '',
-          orgId: glVO.orgId || ''
-          // active: glVO.active || false,
+          productType: glVO.productType || '',
+          productCode: glVO.productCode || '',
+          productName: glVO.productName || '',
+          uom: glVO.uom || '',
+          qty: glVO.qty || '',
+          orgId: glVO.orgId || '',
+          active: glVO.active === "Active" ? true : false,
+          revision: glVO.revision === "YES" ? true : false,
+          default: glVO.current === "YES" ? true : false,
+
         });
         setDetailsTableData(
-          glVO.particularsJournalVO.map((row) => ({
-            id: row.id,
-            accountsName: row.accountsName,
-            creditAmount: row.creditAmount,
-            debitAmount: row.debitAmount,
-            narration: row.narration,
-            subLedgerCode: row.subLedgerCode,
-            subledgerName: row.subledgerName
+          glVO.bomDetailsVO.map((row) => ({
+              id: row.id,
+              itemType: row.itemType,
+              item: row.itemCode,
+              itemDesc: row.itemDesc,
+              uom: row.uom,
+              qty: row.qty,
           }))
-        );
-
+      );      
         console.log('DataToEdit', glVO);
       } else {
         // Handle erro
@@ -160,40 +151,66 @@ const BillOfMaterial = () => {
     }
   };
 
-  const getAccountNameFromGroup = async () => {
+  const getProductCode = async (productType) => {
     try {
-      const response = await apiCalls('get', `/transaction/getAccountNameFromGroup?orgId=${orgId}`);
-      setAccountNames(response.paramObjectsMap.generalJournalVO);
-      console.log('generalJournalVO', response.paramObjectsMap.generalJournalVO);
+      const response = await apiCalls('get', `/efitmaster/getFGSFGPartDetailsForBom?orgId=${orgId}&productType=${productType}`);
+      setProductCode(response.paramObjectsMap.FgSfg || []);
+      console.log('Product Code', response.paramObjectsMap.FgSfg || []);
+    } catch (error) {
+      console.error('Error fetching gate passes:', error);
+    }
+  };
+  const getItemName = async () => {
+    try {
+      const response = await apiCalls('get', `/efitmaster/getSFGItemDetailsForBom?orgId=${orgId}`);
+      setItem(response.paramObjectsMap.SfgItem || []);
+      console.log('Item Name', response.paramObjectsMap.SfgItem || []);
     } catch (error) {
       console.error('Error fetching gate passes:', error);
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
-
+  const handleInputChange = (e, fieldType, index) => {
+    const { name, value, type, checked, selectionStart, selectionEnd } = e.target;
+    const inputValue = type === 'checkbox' ? checked : value;
     let errorMessage = '';
-
+    setFormData((prevData) => ({ ...prevData, [name]: inputValue }));
+    setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: false }));
+  
     if (errorMessage) {
-      setFieldErrors({ ...fieldErrors, [name]: errorMessage });
-    } else {
-      setFormData({ ...formData, [name]: value.toUpperCase() });
-
-      setFieldErrors({ ...fieldErrors, [name]: '' });
-
-      // Preserve the cursor position for text-based inputs
-      if (type === 'text' || type === 'textarea') {
-        setTimeout(() => {
-          const inputElement = document.getElementsByName(name)[0];
-          if (inputElement && inputElement.setSelectionRange) {
-            inputElement.setSelectionRange(selectionStart, selectionEnd);
-          }
-        }, 0);
-      }
+      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
+      return;
     }
+    switch (name) {
+      case 'productType': {
+        if (value) getProductCode(value);
+        break;
+      }
+      case 'productCode': {
+        const selectedProductCode = productCode.find((a) => a.itemname === value);
+        if (selectedProductCode) {
+          setFormData((prevData) => ({
+            ...prevData,
+            productName: selectedProductCode.itemdesc || '',
+            uom: selectedProductCode.primaryunit || ''
+          }));
+        }
+        break;
+      }
+      default:
+        break;
+    }
+    // Preserve cursor position for text inputs
+    if (type === 'text' || type === 'textarea') {
+      setTimeout(() => {
+        const inputElement = document.getElementsByName(name)[0];
+        if (inputElement?.setSelectionRange) {
+          inputElement.setSelectionRange(selectionStart, selectionEnd);
+        }
+      }, 0);
+    }
+    setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: '' }));
   };
-
   const handleDateChange = (field, date) => {
     const formattedDate = dayjs(date);
     console.log('formattedDate', formattedDate);
@@ -212,19 +229,16 @@ const BillOfMaterial = () => {
       revision: false,
       default: false
     });
-    // getAllActiveCurrency(orgId);
     setFieldErrors({
       productCode: '',
       productType: '',
       productName: '',
-      uom: '',
-      revision: false,
-      default: false
+      uom: ''
     });
     setDetailsTableData([{ id: 1, item: '', itemDesc: '', itemType: '', qty: '', uom: '' }]);
     setDetailsTableErrors('');
     setEditId('');
-    getGeneralJournalDocId();
+    getBOMDocId();
   };
 
   const handleAddRow = () => {
@@ -235,7 +249,10 @@ const BillOfMaterial = () => {
     const newRow = {
       id: Date.now(),
       item: '',
-      qty: ''
+      itemDesc: '',
+      itemType: '',
+      qty: '',
+      uom: ''
     };
     setDetailsTableData([...detailsTableData, newRow]);
     setDetailsTableErrors([...detailsTableErrors, { item: '', qty: '' }]);
@@ -246,7 +263,11 @@ const BillOfMaterial = () => {
     if (!lastRow) return false;
 
     if (table === detailsTableData) {
-      return !lastRow.item || !lastRow.qty;
+      return !lastRow.item || 
+            !lastRow.qty ||
+            !lastRow.itemDesc ||
+            !lastRow.itemType ||
+            !lastRow.uom 
     }
     return false;
   };
@@ -258,7 +279,10 @@ const BillOfMaterial = () => {
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
           item: !table[table.length - 1].item ? 'Item is required' : '',
-          qty: !table[table.length - 1].qty ? 'Qty is required' : ''
+          qty: !table[table.length - 1].qty ? 'Qty is required' : '',
+          itemDesc: !table[table.length - 1].itemDesc ? 'Item Desc is required' : '',
+          itemType: !table[table.length - 1].itemType ? 'Item Type is required' : '',
+          uom: !table[table.length - 1].uom ? 'UOM is required' : '',
         };
         return newErrors;
       });
@@ -312,9 +336,9 @@ const BillOfMaterial = () => {
     setDetailsTableErrors(newTableErrors);
 
     if (Object.keys(errors).length === 0 && detailTableDataValid) {
-      const GeneralJournalVO = detailsTableData.map((row) => ({
+      const bomDetailsVO = detailsTableData.map((row) => ({
         ...(editId && { id: row.id }),
-        item: row.item,
+        itemCode: row.item,
         itemDesc: row.itemDesc,
         itemType: row.itemType,
         qty: row.qty,
@@ -332,32 +356,30 @@ const BillOfMaterial = () => {
         uom: formData.uom,
         finYear: finYear,
         orgId: orgId,
-        // particularsJournalDTO: GeneralJournalVO,
+        bomDetailsDTO: bomDetailsVO,
         qty: formData.qty,
         revision: formData.revision,
-        default: formData.default,
-        machineName: formData.machineName
+        current: formData.default
       };
       console.log('DATA TO SAVE IS:', saveFormData);
       try {
-        const response = await apiCalls('put', `/transaction/updateCreateGeneralJournal`, saveFormData);
+        const response = await apiCalls('put', `/efitmaster/createUpdateBom`, saveFormData);
         if (response.status === true) {
           console.log('Response:', response);
-          showToast('success', editId ? 'General Journal Updated Successfully' : 'General Journal Created successfully');
-          getAllGeneralJournalByOrgId();
+          showToast('success', editId ? 'Bill of Material Updated Successfully' : 'Bill of Material Created successfully');
+          getAllBOMByOrgId();
           handleClear();
         } else {
-          showToast('error', response.paramObjectsMap.errorMessage || 'General Journal creation failed');
+          showToast('error', response.paramObjectsMap.errorMessage || 'Bill of Material creation failed');
         }
       } catch (error) {
         console.error('Error:', error);
-        showToast('error', 'General Journal creation failed');
+        showToast('error', 'Bill of Material creation failed');
       }
     } else {
       setFieldErrors(errors);
     }
   };
-
   return (
     <>
       <div>
@@ -371,19 +393,18 @@ const BillOfMaterial = () => {
             <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} />
             <ActionButton title="Save" icon={SaveIcon} onClick={handleSave} />
           </div>
-
           {showForm ? (
             <>
               <div className="row d-flex ml">
                 <div className="col-md-3 mb-3">
                   <TextField
                     id="outlined-textarea-zip"
-                    label="Document Id"
+                    label="Document No"
                     variant="outlined"
                     size="small"
                     fullWidth
                     name="docId"
-                    value={formData.docId}
+                    value={docId}
                     onChange={handleInputChange}
                     disabled
                     inputProps={{ maxLength: 10 }}
@@ -432,16 +453,16 @@ const BillOfMaterial = () => {
                 <div className="col-md-3 mb-3">
                   <Autocomplete
                     disablePortal
-                    options={routeCardList.map((option, index) => ({ ...option, key: index }))}
-                    getOptionLabel={(option) => option.partyname || ''}
+                    options={productCode.map((option, index) => ({ ...option, key: index }))}
+                    getOptionLabel={(option) => option.itemname || ''}
                     sx={{ width: '100%' }}
                     size="small"
-                    value={formData.productCode ? routeCardList.find((c) => c.partyname === formData.productCode) : null}
+                    value={formData.productCode ? productCode.find((c) => c.itemname === formData.productCode) : null}
                     onChange={(event, newValue) => {
                       handleInputChange({
                         target: {
                           name: 'productCode',
-                          value: newValue ? newValue.partyname : ''
+                          value: newValue ? newValue.itemname : ''
                         }
                       });
                     }}
@@ -527,7 +548,6 @@ const BillOfMaterial = () => {
                   />
                 </div>
               </div>
-
               <div className="row mt-2">
                 <Box sx={{ width: '100%' }}>
                   <Tabs
@@ -584,28 +604,56 @@ const BillOfMaterial = () => {
                                         <div className="pt-2">{index + 1}</div>
                                       </td>
                                       <td className="border px-2 py-2">
-                                        <select
-                                          value={row.item}
-                                          style={{ width: '150px' }}
-                                          className={detailsTableErrors[index]?.item ? 'error form-control' : 'form-control'}
-                                          onChange={(e) =>
+                                        <Autocomplete
+                                          disablePortal
+                                          options={itemName.map((option, index) => ({ ...option, key: index }))}
+                                          getOptionLabel={(option) => option.itemname || ''}
+                                          sx={{ width: '100%' }}
+                                          size="small"
+                                          value={itemName.find((c) => c.itemname === row.item) || null}
+                                          onChange={(event, newValue) => {
+                                            // handleInputChange({  });
+                                            const selectedItemName = newValue ? newValue.itemname : '';
+                                            const selectedItemDesc = newValue ? newValue.itemdesc : '';
+                                            const selectedItemType = newValue ? newValue.itemtype : '';
+                                            const selectedUOM = newValue ? newValue.primaryunit : '';
+                                          
                                             setDetailsTableData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, item: e.target.value } : r))
-                                            )
-                                          }
-                                        >
-                                          <option value="">-- Select --</option>
-                                          {accountNames.map((item) => (
-                                            <option key={item.id} value={item.accountName}>
-                                              {item.accountName}
-                                            </option>
-                                          ))}
-                                        </select>
-                                        {detailsTableErrors[index]?.item && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors[index].item}
-                                          </div>
-                                        )}
+                                              prev.map((r) =>
+                                                r.id === row.id
+                                                  ? {
+                                                      ...r,
+                                                      item: selectedItemName,
+                                                      itemType: selectedItemType,
+                                                      itemDesc: selectedItemDesc,
+                                                      uom: selectedUOM
+                                                    }
+                                                  : r
+                                              )
+                                            );
+                                            setDetailsTableErrors((prev) => {
+                                              const newErrors = [...prev];
+                                              newErrors[index] = {
+                                                ...newErrors[index],
+                                                item: !selectedItemName ? 'Item is required' : ''
+                                              };
+                                              return newErrors;
+                                            });
+                                          }}
+                                          renderInput={(params) => (
+                                            <TextField
+                                              {...params}
+                                              label="Item"
+                                              name="item"
+                                              error={!!detailsTableErrors[index]?.item}
+                                              helperText={detailsTableErrors[index]?.item}
+                                              InputProps={{
+                                                ...params.InputProps,
+                                                style: { height: 40, width: 200 }
+                                              }}
+                                            />
+                                          )}
+                                        />
                                       </td>
                                       <td className="border px-2 py-2">
                                         <input
@@ -637,6 +685,7 @@ const BillOfMaterial = () => {
                                       </td>
                                       <td className="border px-2 py-2">
                                         <input
+                                        disabled
                                           type="text"
                                           value={row.itemType}
                                           style={{ width: '150px' }}
@@ -663,6 +712,38 @@ const BillOfMaterial = () => {
                                         )}
                                       </td>
                                       <td className="border px-2 py-2">
+                                      <input
+                                        type="text"
+                                        value={row.qty}
+                                        style={{ width: '150px' }}
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          if (/^[0-9]*\.?[0-9]*$/.test(value)) {
+                                            setDetailsTableData((prev) =>
+                                              prev.map((r) => (r.id === row.id ? { ...r, qty: value } : r))
+                                            );
+                                            setDetailsTableErrors((prev) => {
+                                              const newErrors = [...prev];
+                                              newErrors[index] = {
+                                                ...newErrors[index],
+                                                qty: !value ? 'Qty is required' : '',
+                                              };
+                                              return newErrors;
+                                            });
+                                          }
+                                        }}
+                                        className={
+                                          detailsTableErrors[index]?.qty ? 'error form-control' : 'form-control'
+                                        }
+                                      />
+                                      {detailsTableErrors[index]?.qty && (
+                                        <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                          {detailsTableErrors[index].qty}
+                                        </div>
+                                      )}
+                                    </td>
+
+                                      {/* <td className="border px-2 py-2">
                                         <input
                                           type="text"
                                           value={row.qty}
@@ -686,7 +767,7 @@ const BillOfMaterial = () => {
                                             {detailsTableErrors[index].qty}
                                           </div>
                                         )}
-                                      </td>
+                                      </td> */}
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
@@ -727,7 +808,7 @@ const BillOfMaterial = () => {
               </div>
             </>
           ) : (
-            <CommonTable data={data} columns={listViewColumns} blockEdit={true} toEdit={getGeneralJournalById} />
+            <CommonTable data={data} columns={listViewColumns} blockEdit={true} toEdit={getBOMById} />
           )}
         </div>
       </div>
