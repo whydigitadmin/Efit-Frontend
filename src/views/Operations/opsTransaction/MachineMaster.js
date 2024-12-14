@@ -20,8 +20,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import {Modal, Box, Typography } from '@mui/material';
 import { FaCloudUploadAlt, FaEye } from 'react-icons/fa';
 import apiCalls from 'apicall'; 
-import { showToast } from 'utils/toast-component';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import ToastComponent, { showToast } from 'utils/toast-component';
 import CommonListViewTable from '../../basicMaster/CommonListViewTable';
 
 const VisuallyHiddenInput = ({ ...props }) => {
@@ -954,7 +953,7 @@ function MachineMaster() {
   return (
     <>
       <div>
-        {/* <ToastComponent /> */}
+        <ToastComponent />
       </div>
       <div className="card w-full p-6 bg-base-100 shadow-xl" style={{ padding: '20px' }}>
         <div className="row d-flex ml">
