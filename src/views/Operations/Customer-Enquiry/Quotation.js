@@ -241,19 +241,20 @@ const Quotation = () => {
       console.log('error', err);
     }
   };
-  
-  const getPartNoAndPartDesBasedOnEnquiryNo = async (customerId, enquiryNo) => {
-    try {
-      const result = await apiCalls('get', `/customerenquiry/getPartNoAndPartDesBasedOnEnquiryNo?customerCode=${customerId}&docId=${enquiryNo}&orgId=${orgId}`);
-      setPartNoList(result.paramObjectsMap.enquiryVO || []);
-    } catch (err) {
-      console.log('error', err);
-    }
-  };
   const getProductionManager = async (customer) => {
     try {
       const result = await apiCalls('get', `/customerenquiry/getProductionManager?orgId=${orgId}`);
       setProdManList(result.paramObjectsMap.employeeVO || []);
+    } catch (err) {
+      console.log('error', err);
+    }
+  };
+
+
+  const getPartNoAndPartDesBasedOnEnquiryNo = async (customerId, enquiryNo) => {
+    try {
+      const result = await apiCalls('get', `/customerenquiry/getPartNoAndPartDesBasedOnEnquiryNo?customerCode=${customerId}&docId=${enquiryNo}&orgId=${orgId}`);
+      setPartNoList(result.paramObjectsMap.enquiryVO || []);
     } catch (err) {
       console.log('error', err);
     }

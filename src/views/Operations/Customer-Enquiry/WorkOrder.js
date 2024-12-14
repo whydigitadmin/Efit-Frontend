@@ -26,16 +26,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import apiCalls from 'apicall';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import sampleFile from '../../../assets/sample-files/sample_data_buyerorder.xls';
-import CommonListViewTable from '../../basicMaster/CommonListViewTable';
-
-function PaperComponent(props) {
-  return (
-    <Draggable handle="#draggable-dialog-title" cancel={'[class*="MuiDialogContent-root"]'}>
-      <Paper {...props} />
-    </Draggable>
-  );
-}
-const label = { inputProps: { 'aria-label': 'Checkbox demo' } };
+import CommonListViewTable from '../../basicMaster/CommonListViewTable'; 
 
 function WorkOrder() {
   const [showForm, setShowForm] = useState(true);
@@ -56,7 +47,7 @@ function WorkOrder() {
   const [selectAll, setSelectAll] = useState(false);
   const [partyList, setPartyList] = useState([]);
   const [quotationList, setQuotationList] = useState([]);
-  const [partNoList, setPartNoList] = useState([]); 
+  const [partNoList, setPartNoList] = useState([]);
   const [docId, setDocId] = useState('');
 
   const handleCloseModal = () => {
@@ -64,7 +55,7 @@ function WorkOrder() {
   };
   const [selectedRows, setSelectedRows] = useState([]);
   const [formData, setFormData] = useState({
-    woNo:'',
+    woNo: '',
     docDate: dayjs(),
     customerName: '',
     customerPoNo: '',
@@ -80,7 +71,7 @@ function WorkOrder() {
   });
 
   const [fieldErrors, setFieldErrors] = useState({
-    woNo:'',
+    woNo: '',
     docDate: dayjs(),
     customerName: '',
     customerPoNo: '',
@@ -97,15 +88,30 @@ function WorkOrder() {
   const listViewColumns = [
     { accessorKey: 'docId', header: 'Document ID', size: 140 },
     { accessorKey: 'customerName', header: 'Customer Name', size: 140 },
-    { accessorKey: 'customerPoNo', header: 'Customer PO No', size: 140 },
-    { quotationNo: 'quotationNo', header: 'Quotation No', size: 140 },
-    { currency: 'currency', header: 'Currency', size: 140 },
-    { currency: 'customerDueDate', header: 'Customer Due Date', size: 140 },
-    { currency: 'vapDueDate', header: 'Vap Due Date', size: 140 },
-    { currency: 'productionManager', header: 'Production Mgr', size: 140 },
+    { accessorKey: 'customerPoNo', header: 'Customer PO No', size: 140 },  
   ];
-  const [companyList, setCustomerList] = useState([]);
-  const [fillGridData, setFillGridData] = useState([]);
+
+
+  useEffect(() => {
+    getAllQuotationByOrgId();
+  }, []);
+  const getAllQuotationByOrgId = async () => {
+    try {
+      const response = await apiCalls('get', `/customerenquiry/getAllWorkOrderByOrgId?orgId=${orgId}`);
+      console.log('API Response:', response);
+
+      if (response.status === true) {
+        setListViewData(response.paramObjectsMap.workOrderVO);
+      } else {
+        console.error('API Error:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+
+
 
   const [itemParticularsData, setItemParticularsData] = useState([
     {
@@ -158,19 +164,13 @@ function WorkOrder() {
 
     return partNoList.filter((part) => !selectedPartNos.includes(part.partCode));
   };
-  const handleSaveSelectedRows = async () => { }
-  const handleSelectAll = () => { }
-  const getMachineMasterById = () => { }
-
-
-
-
-
+  
   const handleClear = () => {
     setFormData({
       docDate: dayjs(),
       customerName: '',
       customerPoNo: '',
+      customerCode:'',
       quotationNo: '',
       currency: '',
       productionManager: '',
@@ -179,12 +179,13 @@ function WorkOrder() {
       // 2nd table
       customerSpecialRequirement: ''
     });
-    // getWorkOrderDocId();
+    getWorkOrderDocId();
     setFieldErrors({
       customerName: '',
       customerPoNo: '',
       quotationNo: '',
       currency: '',
+      customerCode:'',
       productionManager: '',
       customerDueDate: dayjs(),
       vapDueDate: dayjs(),
@@ -409,10 +410,10 @@ function WorkOrder() {
     } catch (err) {
       console.log('error', err);
     }
-  }; 
+  };
   useEffect(() => {
     getWorkOrderDocId();
-  },[])
+  }, [])
   const getWorkOrderDocId = async () => {
     try {
       const response = await apiCalls('get', `/customerenquiry/getWorkOrderDocId?orgId=${orgId}`);
@@ -422,109 +423,71 @@ function WorkOrder() {
     }
   };
 
+
   const handleSave = async () => {
     const errors = {};
-    if (!formData.customerName) {
-      errors.customerName = 'Customer Name is required';
-    }
-    if (!formData.customerPoNo) {
-      errors.customerPoNo = 'Customer Po No  is required';
-    }
-    if (!formData.quotationNo) {
-      errors.quotationNo = 'Quotation No is required';
-    }
-    if (!formData.currency) {
-      errors.currency = 'Currency is required';
-    }  
-    if (!formData.productionManager) {
-      errors.productionManager = 'Production Mgr  is required';
-    }
- 
-    if (!formData.customerSpecialRequirement) {
-      errors.customerSpecialRequirement = 'Customer Special Requirement is required';
-    } 
 
+    // Validating main form fields
+    if (!formData.customerName) errors.customerName = 'Customer Name is required';
+    if (!formData.customerPoNo) errors.customerPoNo = 'Customer PO No is required';
+    if (!formData.quotationNo) errors.quotationNo = 'Quotation No is required';
+    if (!formData.currency) errors.currency = 'Currency is required';
+    if (!formData.productionManager) errors.productionManager = 'Production Manager is required';
+    if (!formData.customerSpecialRequirement) errors.customerSpecialRequirement = 'Customer Special Requirement is required';
+
+    // Validating Item Particulars Table
     let quotationTableDataValid = true;
     const newQuotationTableErrors = itemParticularsData.map((row) => {
       const rowErrors = {};
-      if (!row.partNo) {
-        rowErrors.partNo = 'Part No is required';
-        quotationTableDataValid = false;
-      }
-      if (!row.partName) {
-        rowErrors.partName = 'Part name is required';
-        quotationTableDataValid = false;
-      }
-      if (!row.drawingNo) {
-        rowErrors.drawingNo = 'Drawing No is required';
-        quotationTableDataValid = false;
-      }
-      if (!row.revisionNo) {
-        rowErrors.revisionNo = 'Revision No  is required';
-        quotationTableDataValid = false;
-      }
-      if (!row.uom) {
-        rowErrors.uom = 'UOM is required';
-        quotationTableDataValid = false;
-      }
-      if (!row.ordQty) {
-        rowErrors.ordQty = 'Ord Qty is required';
-        quotationTableDataValid = false;
-      }
-      if (!row.freeQty) {
-        rowErrors.freeQty = 'Free Qty is required';
-        quotationTableDataValid = false;
-      }
-      if (!row.availableStockQty) {
-        rowErrors.availableStockQty = 'Available Stock Qty is required';
-        quotationTableDataValid = false;
-      }
-      if (!row.requiredQty) {
-        rowErrors.requiredQty = 'Required Qty Qty is required';
-        quotationTableDataValid = false;
-      }
+      if (!row.partNo) rowErrors.partNo = 'Part No is required';
+      if (!row.partName) rowErrors.partName = 'Part Name is required';
+      if (!row.drawingNo) rowErrors.drawingNo = 'Drawing No is required';
+      if (!row.revisionNo) rowErrors.revisionNo = 'Revision No is required';
+      if (!row.uom) rowErrors.uom = 'UOM is required';
+      if (!row.ordQty) rowErrors.ordQty = 'Ord Qty is required';
+      if (!row.freeQty) rowErrors.freeQty = 'Free Qty is required';
+      if (!row.availableStockQty) rowErrors.availableStockQty = 'Available Stock Qty is required';
+
+      if (Object.keys(rowErrors).length > 0) quotationTableDataValid = false;
       return rowErrors;
     });
 
+    // Validating Terms and Conditions Table
     let detailTableDataValid2 = true;
-    const newAttachmentTableErrors = itemParticularsData.map((row) => {
+    const newAttachmentTableErrors = termsandConditionsData.map((row) => {
       const rowErrors = {};
-      if (!row.template) {
-        rowErrors.template = 'Template Name is required';
-        detailTableDataValid2 = false;
-      }
-      if (!row.description) {
-        rowErrors.description = 'Description is required';
-        detailTableDataValid2 = false;
-      }
+      if (!row.template) rowErrors.template = 'Template is required';
+      if (!row.description) rowErrors.description = 'Description is required';
+
+      if (Object.keys(rowErrors).length > 0) detailTableDataValid2 = false;
       return rowErrors;
     });
+
+    // Setting errors to state
     setFieldErrors(errors);
     setItemParticularsErrors(newQuotationTableErrors);
     setTermsandConditionsErrors(newAttachmentTableErrors);
 
-    if (Object.keys(errors).length === 0 && (detailTableDataValid2 && quotationTableDataValid)) {
-      const itemParticularsVO = itemParticularsData.map((row) => ({
-        ...(editId && { id: row.id }),  
-        //creditBase: parseInt(row.creditBase),
+    // Proceed if all validations pass
+    if (Object.keys(errors).length === 0 && quotationTableDataValid && detailTableDataValid2) {
+      const itemParticularsDTO = itemParticularsData.map((row) => ({
+        availableStockQty: parseInt(row.availableStockQty, 10),
+        drawingNo: row.drawingNo,
+        freeQty: parseInt(row.freeQty, 10),
+        ordQty: parseInt(row.ordQty, 10),
+        partName: row.partName,
+        partNo: row.partNo,
+        revisionNo: row.revisionNo,
+        uom: row.uom,
+      }));
 
-          availableStockQty: parseInt(row.availableStockQty),
-          drawingNo: row.drawingNo,
-          freeQty: parseInt(row.freeQty),
-          ordQty: parseInt(row.ordQty),
-          partName: row.partName,
-          partNo: row.partNo,
-          revisionNo: row.revisionNo,
-          uom: row.uom,
-      }));
-      const termsAndConditionsVO = termsandConditionsData.map((row) => ({
-        ...(editId && { id: row.id }),
-        template: row.template,
+      const termsAndConditionsDTO = termsandConditionsData.map((row) => ({
         description: row.description,
+        template: row.template,
       }));
+
       const saveFormData = {
-        ...(editId && { id: editId }),
-        active: formData.active,
+        active: formData.active ?? true, // Default active to true
         createdBy: loginUserName,
         currency: formData.currency,
         customerCode: formData.customerCode,
@@ -532,77 +495,93 @@ function WorkOrder() {
         customerName: formData.customerName,
         customerPoNo: formData.customerPoNo,
         customerSpecialRequirement: formData.customerSpecialRequirement,
-        orgId: parseInt(formData.orgId),
+        itemParticularsDTO,
+        orgId: orgId,
         productionMgr: formData.productionManager,
         quotationNo: formData.quotationNo,
+        termsAndConditionsDTO,
         vapDueDate: dayjs(formData.vapDueDate).format('YYYY-MM-DD'),
-        // Table
-        itemParticularsDTO: itemParticularsVO,
-        termsAndConditionsDTO: termsAndConditionsVO,
       };
-      console.log('DATA TO SAVE IS:', saveFormData);
+
       try {
         const response = await apiCalls('put', `/customerenquiry/createUpdateWorkOrder`, saveFormData);
         if (response.status === true) {
-          console.log('Response:', response);
-          showToast('success', editId ? 'Work Order Updated Successfully' : 'Work Order Created successfully');
-          // getAllAdjustmentJournalByOrgId();
-          handleClear();
+          showToast('success', editId ? 'Work Order Updated Successfully' : 'Work Order Created Successfully');
+          handleClear(); // Clear the form after success
         } else {
-          showToast('error', response.paramObjectsMap.message || 'Work Order creation failed');
+          showToast('error', response.paramObjectsMap?.message || 'Work Order creation failed');
         }
       } catch (error) {
         console.error('Error:', error);
         showToast('error', 'Work Order creation failed');
       }
-    }else {
-      setFieldErrors(errors);
     }
   };
 
 
 
-  const getAllAdjustmentJournalById = async (row) => {
-    console.log('first', row);
+
+  const getWorkOrderById = async (row) => {
+    console.log('Row selected:', row);
     setShowForm(true);
-    // try {
-    //   const result = await apiCalls('get', `/transaction/getAdjustmentJournalById?id=${row.original.id}`);
+    try {
+      const result = await apiCalls('get', `/customerenquiry/getWorkOrderById?id=${row.original.id}`);
 
-    //   if (result) {
-    //     const adVO = result.paramObjectsMap.adjustmentJournalVO[0];
-    //     setEditId(row.original.id);
-    //     setDocId(adVO.docId);
-    //     setFormData({
-    //       docDate: adVO.docDate ? dayjs(adVO.docDate, 'YYYY-MM-DD') : dayjs(),
-    //       customerName: adVO.customerName,
-    //       customerPoNo: adVO.customerPoNo,
-    //       quotationNo: adVO.quotationNo,
-    //       currency: adVO.currency,
-    //       customerDueDate: adVO.customerDueDate ? dayjs(adVO.customerDueDate, 'YYYY-MM-DD') : dayjs(),
-    //       vapDueDate: adVO.vapDueDate ? dayjs(adVO.vapDueDate, 'YYYY-MM-DD') : dayjs(),
-    //       productionManager: adVO.productionManager,
-    //       orgId: adVO.orgId,
-    //     });
-    //     setItemParticularsData(
-    //       adVO.accountParticularsVO.map((row) => ({
-    //         id: row.id,
-    //         accountName: row.accountsName,
-    //         creditAmount: row.creditAmount,
-    //         debitAmount: row.debitAmount,
-    //         debitBase: row.debitBase,
-    //         creditBase: row.creditBase,
-    //         subLedgerCode: row.subLedgerCode,
-    //         subledgerName: row.subledgerName
-    //       }))
-    //     );
+      if (result && result.status && result.paramObjectsMap?.workOrderVO?.length) {
+        const WorOde = result.paramObjectsMap.workOrderVO[0];
 
-    //     console.log('DataToEdit', adVO);
-    //   } else {
-    //     // Handle erro
-    //   }
-    // } catch (error) {
-    //   console.error('Error fetching data:', error);
-    // }
+        console.log('DataToEdit', WorOde);
+
+        setEditId(WorOde.id);
+        setDocId(WorOde.docId);
+        getQuotationNumber(WorOde.customerCode); 
+        setFormData({
+          active: WorOde.active === "Active",
+          docDate: WorOde.docDate ? dayjs(WorOde.docDate, 'YYYY-MM-DD') : dayjs(),
+          customerName: WorOde.customerName,
+          customerCode: WorOde.customerCode,
+          customerPoNo: WorOde.customerPoNo,
+          quotationNo: WorOde.quotationNo,
+          currency: WorOde.currency, 
+          customerDueDate: WorOde.customerDueDate ? dayjs(WorOde.customerDueDate, 'YYYY-MM-DD') : dayjs(),
+          vapDueDate: WorOde.vapDueDate ? dayjs(WorOde.vapDueDate, 'YYYY-MM-DD') : dayjs(),
+          productionManager: WorOde.productionMgr, 
+          customerSpecialRequirement: WorOde.customerSpecialRequirement,  
+          orgId: WorOde.orgId,
+          createdBy: WorOde.createdBy, 
+        });
+
+
+        setItemParticularsData(
+          WorOde.itemParticularsVO?.map((row) => ({
+            id: row.id,
+            partNo: row.partNo,
+            partName: row.partName,
+            drawingNo: parseInt(row.drawingNo, 10) || 0,
+            revisionNo: row.revisionNo,
+            uom: row.uom,
+            ordQty: parseInt(row.ordQty, 10) || 0,
+            freeQty: parseInt(row.freeQty, 10) || 0,
+            availableStockQty: parseInt(row.availableStockQty, 10) || 0,
+            requiredQty: parseInt(row.requiredQty, 10) || 0, 
+          })) || []
+        );
+
+        setTermsandConditionsData(
+          WorOde.termsAndConditionsVO?.map((row) => ({
+            id: row.id,
+            template: row.template,
+            description: row.description, 
+          })) || []
+        );
+      } else {
+        console.error('No data found for the selected ID');
+        showToast('error', 'No data found for the selected ID');
+      }
+    }
+    catch (error) {
+      console.error('Error fetching data:', error);
+    }
   };
 
 
@@ -636,7 +615,6 @@ function WorkOrder() {
             <ActionButton title="List View" icon={FormatListBulletedTwoToneIcon} onClick={handleView} />
             <ActionButton title="Save" icon={SaveIcon} onClick={handleSave} />
           </div>
-
           {showForm ? (
             <>
               <div className="row d-flex ml">
@@ -856,6 +834,7 @@ function WorkOrder() {
                   />
                 </div>
               </div>
+
               <div className="row mt-2">
                 <Box sx={{ width: '100%' }}>
                   <Tabs
@@ -873,365 +852,340 @@ function WorkOrder() {
                 <Box sx={{ padding: 2 }}>
                   {value === 0 && (
                     <>
-                      <div className="row d-flex ml">
-                        <div className="mb-1">
-                          <ActionButton title="Add" icon={AddIcon} onClick={handleAddRowQuotation} />
-                          <ActionButton title="Upload" icon={CloudUploadIcon} onClick={handleBulkUploadOpen} />
-                        </div>
-                        {uploadOpen && (
-                          <CommonBulkUpload
-                            open={uploadOpen}
-                            handleClose={handleBulkUploadClose}
-                            title="Upload Files"
-                            uploadText="Upload file"
-                            downloadText="Sample File"
-                            onSubmit={handleSubmit}
-                            sampleFileDownload={sampleFile}
-                            handleFileUpload={handleFileUpload}
-                            screen="Machine Master"
-                          ></CommonBulkUpload>
-                        )}
-                        {listView ? (
-                          <div className="mt-4">
-                            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getMachineMasterById} />
-                          </div>
-                        ) : (
-                          <div className="row mt-2">
-                            <div className="col-lg-12">
-                              <div className="table-responsive">
-                                <table className="table table-bordered ">
-                                  <thead>
-                                    <tr style={{ backgroundColor: '#673AB7' }}>
-                                      {/* <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
+                      <div className="row mt-2">
+                        <div className="col-lg-12">
+                          <div className="table-responsive">
+                            <table className="table table-bordered ">
+                              <thead>
+                                <tr style={{ backgroundColor: '#673AB7' }}>
+                                  {/* <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
                                     Action
                                   </th> */}
-                                      <th className="table-header px-2 py-2 text-white text-center" style={{ width: '10px' }}>Action</th>
-                                      <th className="table-header px-2 py-2 text-white text-center" style={{ width: '50px' }}>S.No</th>
-                                      <th className="table-header px-2 py-2 text-white text-center">Part No</th>
-                                      <th className="table-header px-2 py-2 text-white text-center">Part name</th>
-                                      <th className="table-header px-2 py-2 text-white text-center">Drawing No</th>
-                                      <th className="table-header px-2 py-2 text-white text-center">Revision No</th>
-                                      <th className="table-header px-2 py-2 text-white text-center">
-                                        {
-                                          <span>
-                                            UOM <span className="asterisk">*</span>
-                                          </span>
+                                  <th className="table-header px-2 py-2 text-white text-center" style={{ width: '10px' }}>Action</th>
+                                  <th className="table-header px-2 py-2 text-white text-center" style={{ width: '50px' }}>S.No</th>
+                                  <th className="table-header px-2 py-2 text-white text-center">Part No</th>
+                                  <th className="table-header px-2 py-2 text-white text-center">Part name</th>
+                                  <th className="table-header px-2 py-2 text-white text-center">Drawing No</th>
+                                  <th className="table-header px-2 py-2 text-white text-center">Revision No</th>
+                                  <th className="table-header px-2 py-2 text-white text-center">
+                                    {
+                                      <span>
+                                        UOM <span className="asterisk">*</span>
+                                      </span>
+                                    }
+                                  </th>
+                                  <th className="table-header px-2 py-2 text-white text-center">
+                                    {
+                                      <span>
+                                        Ord Qty <span className="asterisk">*</span>
+                                      </span>
+                                    }
+                                  </th>
+                                  <th className="table-header px-2 py-2 text-white text-center">Free Qty</th>
+                                  <th className="table-header px-2 py-2 text-white text-center">Available Stock Qty</th>
+                                  <th className="table-header px-2 py-2 text-white text-center">Required Qty</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {itemParticularsData.map((row, index) => (
+                                  <tr key={row.id}>
+                                    <td className="col-md-1 border px-2 py-2 text-center">
+                                      <ActionButton
+                                        className=" mb-2"
+                                        title="Delete"
+                                        icon={DeleteIcon}
+                                        onClick={() =>
+                                          handleDeleteRow(
+                                            row.id,
+                                            itemParticularsData,
+                                            setItemParticularsData,
+                                            itemParticularsErrors,
+                                            setItemParticularsErrors
+                                          )
                                         }
-                                      </th>
-                                      <th className="table-header px-2 py-2 text-white text-center">
-                                        {
-                                          <span>
-                                            Ord Qty <span className="asterisk">*</span>
-                                          </span>
+                                      />
+                                    </td>
+                                    <td className="text-center">
+                                      <div className="pt-2">{index + 1}</div>
+                                    </td>
+                                    <td className="border px-2 py-2">
+                                      <select
+                                        value={row.partNo || ""}
+                                        style={{ width: "150px" }}
+                                        className={
+                                          itemParticularsErrors[index]?.partNo ? "error form-control" : "form-control"
                                         }
-                                      </th>
-                                      <th className="table-header px-2 py-2 text-white text-center">Free Qty</th>
-                                      <th className="table-header px-2 py-2 text-white text-center">Available Stock Qty</th>
-                                      <th className="table-header px-2 py-2 text-white text-center">Required Qty</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {itemParticularsData.map((row, index) => (
-                                      <tr key={row.id}>
-                                        <td className="col-md-1 border px-2 py-2 text-center">
-                                          <ActionButton
-                                            className=" mb-2"
-                                            title="Delete"
-                                            icon={DeleteIcon}
-                                            onClick={() =>
-                                              handleDeleteRow(
-                                                row.id,
-                                                itemParticularsData,
-                                                setItemParticularsData,
-                                                itemParticularsErrors,
-                                                setItemParticularsErrors
-                                              )
-                                            }
-                                          />
-                                        </td>
-                                        <td className="text-center">
-                                          <div className="pt-2">{index + 1}</div>
-                                        </td>
-                                        <td className="border px-2 py-2">
-                                          <select
-                                            value={row.partNo || ""}
-                                            style={{ width: "150px" }}
-                                            className={
-                                              itemParticularsErrors[index]?.partNo ? "error form-control" : "form-control"
-                                            }
-                                            onChange={(e) => {
-                                              const selectedPartNo = e.target.value;
+                                        onChange={(e) => {
+                                          const selectedPartNo = e.target.value;
 
-                                              // Find details for the selected part
-                                              const selectedPartDetails = partNoList.find(
-                                                (item) => item.partCode === selectedPartNo
-                                              );
+                                          // Find details for the selected part
+                                          const selectedPartDetails = partNoList.find(
+                                            (item) => item.partCode === selectedPartNo
+                                          );
 
-                                              // Update partNo and related fields
-                                              setItemParticularsData((prev) =>
-                                                prev.map((r, i) =>
-                                                  i === index
-                                                    ? {
-                                                      ...r,
-                                                      partNo: selectedPartDetails?.partCode || "",
-                                                      partName: selectedPartDetails?.partDescription || "",
-                                                      drawingNo: selectedPartDetails?.drawingNo || "",
-                                                      uom: selectedPartDetails?.uom || "",
-                                                      ordQty: selectedPartDetails?.orderQty || "",
-                                                      revisionNo: selectedPartDetails?.revisionNo || "",
-                                                      qtyOffered: selectedPartDetails?.qtyOffered || "",
-                                                      productionManager: selectedPartDetails?.productionManager || "",
-                                                    }
-                                                    : r
-                                                )
-                                              );
+                                          // Update partNo and related fields
+                                          setItemParticularsData((prev) =>
+                                            prev.map((r, i) =>
+                                              i === index
+                                                ? {
+                                                  ...r,
+                                                  partNo: selectedPartDetails?.partCode || "",
+                                                  partName: selectedPartDetails?.partDescription || "",
+                                                  drawingNo: selectedPartDetails?.drawingNo || "",
+                                                  uom: selectedPartDetails?.uom || "",
+                                                  ordQty: selectedPartDetails?.orderQty || "",
+                                                  revisionNo: selectedPartDetails?.revisionNo || "",
+                                                  qtyOffered: selectedPartDetails?.qtyOffered || "",
+                                                  productionManager: selectedPartDetails?.productionManager || "",
+                                                }
+                                                : r
+                                            )
+                                          );
 
-                                              // Update validation errors
-                                              setItemParticularsErrors((prev) => {
-                                                const newErrors = [...prev];
-                                                newErrors[index] = {
-                                                  ...newErrors[index],
-                                                  partNo: !selectedPartNo ? "Part No is required" : "",
-                                                };
-                                                return newErrors;
-                                              });
-                                            }}
-                                          >
-                                            <option value="">-- Select --</option>
-                                            {getAvailablePartNos(row.id).map((item) => (
-                                              <option key={item.id} value={item.partCode}>
-                                                {item.partCode}
-                                              </option>
-                                            ))}
-                                          </select>
-                                          {itemParticularsErrors[index]?.partNo && (
-                                            <div className="mt-2" style={{ color: "red", fontSize: "12px" }}>
-                                              {itemParticularsErrors[index].partNo}
-                                            </div>
-                                          )}
-                                        </td>
-                                        <td className="border px-2 py-2">
-                                          <input
-                                            style={{ width: '150px' }}
-                                            value={row.partName}
-                                            onChange={(e) => {
-                                              const value = e.target.value;
-                                              setItemParticularsData((prev) =>
-                                                prev.map((r) => (r.id === row.id ? { ...r, partName: value } : r))
-                                              );
-                                              setItemParticularsErrors((prev) => {
-                                                const newErrors = [...prev];
-                                                newErrors[index] = {
-                                                  ...newErrors[index],
-                                                  partName: !value ? 'Part name is required' : ''
-                                                };
-                                                return newErrors;
-                                              });
-                                            }}
-                                            className={itemParticularsErrors[index]?.partName ? 'error form-control' : 'form-control'}
-                                          />
-                                          {itemParticularsErrors[index]?.partName && (
-                                            <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                              {itemParticularsErrors[index].partName}
-                                            </div>
-                                          )}
-                                        </td>
-                                        <td className="border px-2 py-2">
-                                          <input
-                                            style={{ width: '150px' }}
-                                            value={row.drawingNo}
-                                            onChange={(e) => {
-                                              const value = e.target.value;
-                                              setItemParticularsData((prev) =>
-                                                prev.map((r) => (r.id === row.id ? { ...r, drawingNo: value } : r))
-                                              );
-                                              setItemParticularsErrors((prev) => {
-                                                const newErrors = [...prev];
-                                                newErrors[index] = {
-                                                  ...newErrors[index],
-                                                  drawingNo: !value ? 'Drawing No is required' : ''
-                                                };
-                                                return newErrors;
-                                              });
-                                            }}
-                                            className={itemParticularsErrors[index]?.drawingNo ? 'error form-control' : 'form-control'}
-                                          />
-                                          {itemParticularsErrors[index]?.drawingNo && (
-                                            <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                              {itemParticularsErrors[index].drawingNo}
-                                            </div>
-                                          )}
-                                        </td>
+                                          // Update validation errors
+                                          setItemParticularsErrors((prev) => {
+                                            const newErrors = [...prev];
+                                            newErrors[index] = {
+                                              ...newErrors[index],
+                                              partNo: !selectedPartNo ? "Part No is required" : "",
+                                            };
+                                            return newErrors;
+                                          });
+                                        }}
+                                      >
+                                        <option value="">-- Select --</option>
+                                        {getAvailablePartNos(row.id).map((item) => (
+                                          <option key={item.id} value={item.partCode}>
+                                            {item.partCode}
+                                          </option>
+                                        ))}
+                                      </select>
+                                      {itemParticularsErrors[index]?.partNo && (
+                                        <div className="mt-2" style={{ color: "red", fontSize: "12px" }}>
+                                          {itemParticularsErrors[index].partNo}
+                                        </div>
+                                      )}
+                                    </td>
+                                    <td className="border px-2 py-2">
+                                      <input
+                                        style={{ width: '150px' }}
+                                        value={row.partName}
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          setItemParticularsData((prev) =>
+                                            prev.map((r) => (r.id === row.id ? { ...r, partName: value } : r))
+                                          );
+                                          setItemParticularsErrors((prev) => {
+                                            const newErrors = [...prev];
+                                            newErrors[index] = {
+                                              ...newErrors[index],
+                                              partName: !value ? 'Part name is required' : ''
+                                            };
+                                            return newErrors;
+                                          });
+                                        }}
+                                        className={itemParticularsErrors[index]?.partName ? 'error form-control' : 'form-control'}
+                                      />
+                                      {itemParticularsErrors[index]?.partName && (
+                                        <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                          {itemParticularsErrors[index].partName}
+                                        </div>
+                                      )}
+                                    </td>
+                                    <td className="border px-2 py-2">
+                                      <input
+                                        style={{ width: '150px' }}
+                                        value={row.drawingNo}
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          setItemParticularsData((prev) =>
+                                            prev.map((r) => (r.id === row.id ? { ...r, drawingNo: value } : r))
+                                          );
+                                          setItemParticularsErrors((prev) => {
+                                            const newErrors = [...prev];
+                                            newErrors[index] = {
+                                              ...newErrors[index],
+                                              drawingNo: !value ? 'Drawing No is required' : ''
+                                            };
+                                            return newErrors;
+                                          });
+                                        }}
+                                        className={itemParticularsErrors[index]?.drawingNo ? 'error form-control' : 'form-control'}
+                                      />
+                                      {itemParticularsErrors[index]?.drawingNo && (
+                                        <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                          {itemParticularsErrors[index].drawingNo}
+                                        </div>
+                                      )}
+                                    </td>
 
-                                        <td className="border px-2 py-2">
-                                          <input
-                                            style={{ width: '150px' }}
-                                            value={row.revisionNo}
-                                            onChange={(e) => {
-                                              const value = e.target.value;
-                                              setItemParticularsData((prev) =>
-                                                prev.map((r) => (r.id === row.id ? { ...r, revisionNo: value } : r))
-                                              );
-                                              setItemParticularsErrors((prev) => {
-                                                const newErrors = [...prev];
-                                                newErrors[index] = {
-                                                  ...newErrors[index],
-                                                  revisionNo: !value ? 'Revision No is required' : ''
-                                                };
-                                                return newErrors;
-                                              });
-                                            }}
-                                            className={itemParticularsErrors[index]?.revisionNo ? 'error form-control' : 'form-control'}
-                                          />
-                                          {itemParticularsErrors[index]?.revisionNo && (
-                                            <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                              {itemParticularsErrors[index].revisionNo}
-                                            </div>
-                                          )}
-                                        </td><td className="border px-2 py-2">
-                                          <input
-                                            style={{ width: '150px' }}
-                                            value={row.uom}
-                                            onChange={(e) => {
-                                              const value = e.target.value;
-                                              setItemParticularsData((prev) =>
-                                                prev.map((r) => (r.id === row.id ? { ...r, uom: value } : r))
-                                              );
-                                              setItemParticularsErrors((prev) => {
-                                                const newErrors = [...prev];
-                                                newErrors[index] = {
-                                                  ...newErrors[index],
-                                                  uom: !value ? 'UOM is required' : ''
-                                                };
-                                                return newErrors;
-                                              });
-                                            }}
-                                            className={itemParticularsErrors[index]?.uom ? 'error form-control' : 'form-control'}
-                                          />
-                                          {itemParticularsErrors[index]?.uom && (
-                                            <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                              {itemParticularsErrors[index].uom}
-                                            </div>
-                                          )}
-                                        </td>
-                                        <td className="border px-2 py-2">
-                                          <input
-                                            style={{ width: '150px' }}
-                                            value={row.ordQty}
-                                            onChange={(e) => {
-                                              const value = e.target.value;
-                                              setItemParticularsData((prev) =>
-                                                prev.map((r) => (r.id === row.id ? { ...r, ordQty: value } : r))
-                                              );
-                                              setItemParticularsErrors((prev) => {
-                                                const newErrors = [...prev];
-                                                newErrors[index] = {
-                                                  ...newErrors[index],
-                                                  ordQty: !value ? 'Ord Qty is required' : ''
-                                                };
-                                                return newErrors;
-                                              });
-                                            }}
-                                            className={itemParticularsErrors[index]?.ordQty ? 'error form-control' : 'form-control'}
-                                          />
-                                          {itemParticularsErrors[index]?.ordQty && (
-                                            <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                              {itemParticularsErrors[index].ordQty}
-                                            </div>
-                                          )}
-                                        </td>
-                                        <td className="border px-2 py-2">
-                                          <input
-                                            style={{ width: '150px' }}
-                                            value={row.freeQty}
-                                            onChange={(e) => {
-                                              const value = e.target.value;
-                                              setItemParticularsData((prev) =>
-                                                prev.map((r) => (r.id === row.id ? { ...r, freeQty: value } : r))
-                                              );
-                                              setItemParticularsErrors((prev) => {
-                                                const newErrors = [...prev];
-                                                newErrors[index] = {
-                                                  ...newErrors[index],
-                                                  freeQty: !value ? 'Free Qty is required' : ''
-                                                };
-                                                return newErrors;
-                                              });
-                                            }}
-                                            className={itemParticularsErrors[index]?.freeQty ? 'error form-control' : 'form-control'}
-                                          />
-                                          {itemParticularsErrors[index]?.freeQty && (
-                                            <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                              {itemParticularsErrors[index].freeQty}
-                                            </div>
-                                          )}
-                                        </td>
-                                        <td className="border px-2 py-2">
-                                          <input
-                                            style={{ width: '150px' }}
-                                            value={row.availableStockQty}
-                                            onChange={(e) => {
-                                              const value = e.target.value;
-                                              setItemParticularsData((prev) =>
-                                                prev.map((r) => (r.id === row.id ? { ...r, availableStockQty: value } : r))
-                                              );
-                                              setItemParticularsErrors((prev) => {
-                                                const newErrors = [...prev];
-                                                newErrors[index] = {
-                                                  ...newErrors[index],
-                                                  availableStockQty: !value ? 'Available Stock Qty is required' : ''
-                                                };
-                                                return newErrors;
-                                              });
-                                            }}
-                                            className={itemParticularsErrors[index]?.availableStockQty ? 'error form-control' : 'form-control'}
-                                          />
-                                          {itemParticularsErrors[index]?.availableStockQty && (
-                                            <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                              {itemParticularsErrors[index].availableStockQty}
-                                            </div>
-                                          )}
-                                        </td>
-                                        <td className="border px-2 py-2">
-                                          <input
-                                            style={{ width: '150px' }}
-                                            value={row.requiredQty}
-                                            onChange={(e) => {
-                                              const value = e.target.value;
-                                              setItemParticularsData((prev) =>
-                                                prev.map((r) => (r.id === row.id ? { ...r, requiredQty: value } : r))
-                                              );
-                                              setItemParticularsErrors((prev) => {
-                                                const newErrors = [...prev];
-                                                newErrors[index] = {
-                                                  ...newErrors[index],
-                                                  requiredQty: !value ? 'Available Stock Qty is required' : ''
-                                                };
-                                                return newErrors;
-                                              });
-                                            }}
-                                            className={itemParticularsErrors[index]?.requiredQty ? 'error form-control' : 'form-control'}
-                                          />
-                                          {itemParticularsErrors[index]?.requiredQty && (
-                                            <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                              {itemParticularsErrors[index].requiredQty}
-                                            </div>
-                                          )}
-                                        </td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            </div>
+                                    <td className="border px-2 py-2">
+                                      <input
+                                        style={{ width: '150px' }}
+                                        value={row.revisionNo}
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          setItemParticularsData((prev) =>
+                                            prev.map((r) => (r.id === row.id ? { ...r, revisionNo: value } : r))
+                                          );
+                                          setItemParticularsErrors((prev) => {
+                                            const newErrors = [...prev];
+                                            newErrors[index] = {
+                                              ...newErrors[index],
+                                              revisionNo: !value ? 'Revision No is required' : ''
+                                            };
+                                            return newErrors;
+                                          });
+                                        }}
+                                        className={itemParticularsErrors[index]?.revisionNo ? 'error form-control' : 'form-control'}
+                                      />
+                                      {itemParticularsErrors[index]?.revisionNo && (
+                                        <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                          {itemParticularsErrors[index].revisionNo}
+                                        </div>
+                                      )}
+                                    </td><td className="border px-2 py-2">
+                                      <input
+                                        style={{ width: '150px' }}
+                                        value={row.uom}
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          setItemParticularsData((prev) =>
+                                            prev.map((r) => (r.id === row.id ? { ...r, uom: value } : r))
+                                          );
+                                          setItemParticularsErrors((prev) => {
+                                            const newErrors = [...prev];
+                                            newErrors[index] = {
+                                              ...newErrors[index],
+                                              uom: !value ? 'UOM is required' : ''
+                                            };
+                                            return newErrors;
+                                          });
+                                        }}
+                                        className={itemParticularsErrors[index]?.uom ? 'error form-control' : 'form-control'}
+                                      />
+                                      {itemParticularsErrors[index]?.uom && (
+                                        <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                          {itemParticularsErrors[index].uom}
+                                        </div>
+                                      )}
+                                    </td>
+                                    <td className="border px-2 py-2">
+                                      <input
+                                        style={{ width: '150px' }}
+                                        value={row.ordQty}
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          setItemParticularsData((prev) =>
+                                            prev.map((r) => (r.id === row.id ? { ...r, ordQty: value } : r))
+                                          );
+                                          setItemParticularsErrors((prev) => {
+                                            const newErrors = [...prev];
+                                            newErrors[index] = {
+                                              ...newErrors[index],
+                                              ordQty: !value ? 'Ord Qty is required' : ''
+                                            };
+                                            return newErrors;
+                                          });
+                                        }}
+                                        className={itemParticularsErrors[index]?.ordQty ? 'error form-control' : 'form-control'}
+                                      />
+                                      {itemParticularsErrors[index]?.ordQty && (
+                                        <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                          {itemParticularsErrors[index].ordQty}
+                                        </div>
+                                      )}
+                                    </td>
+                                    <td className="border px-2 py-2">
+                                      <input
+                                        style={{ width: '150px' }}
+                                        value={row.freeQty}
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          setItemParticularsData((prev) =>
+                                            prev.map((r) => (r.id === row.id ? { ...r, freeQty: value } : r))
+                                          );
+                                          setItemParticularsErrors((prev) => {
+                                            const newErrors = [...prev];
+                                            newErrors[index] = {
+                                              ...newErrors[index],
+                                              freeQty: !value ? 'Free Qty is required' : ''
+                                            };
+                                            return newErrors;
+                                          });
+                                        }}
+                                        className={itemParticularsErrors[index]?.freeQty ? 'error form-control' : 'form-control'}
+                                      />
+                                      {itemParticularsErrors[index]?.freeQty && (
+                                        <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                          {itemParticularsErrors[index].freeQty}
+                                        </div>
+                                      )}
+                                    </td>
+                                    <td className="border px-2 py-2">
+                                      <input
+                                        style={{ width: '150px' }}
+                                        value={row.availableStockQty}
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          setItemParticularsData((prev) =>
+                                            prev.map((r) => (r.id === row.id ? { ...r, availableStockQty: value } : r))
+                                          );
+                                          setItemParticularsErrors((prev) => {
+                                            const newErrors = [...prev];
+                                            newErrors[index] = {
+                                              ...newErrors[index],
+                                              availableStockQty: !value ? 'Available Stock Qty is required' : ''
+                                            };
+                                            return newErrors;
+                                          });
+                                        }}
+                                        className={itemParticularsErrors[index]?.availableStockQty ? 'error form-control' : 'form-control'}
+                                      />
+                                      {itemParticularsErrors[index]?.availableStockQty && (
+                                        <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                          {itemParticularsErrors[index].availableStockQty}
+                                        </div>
+                                      )}
+                                    </td>
+                                    <td className="border px-2 py-2">
+                                      <input
+                                        style={{ width: '150px' }}
+                                        value={row.requiredQty}
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          setItemParticularsData((prev) =>
+                                            prev.map((r) => (r.id === row.id ? { ...r, requiredQty: value } : r))
+                                          );
+                                          setItemParticularsErrors((prev) => {
+                                            const newErrors = [...prev];
+                                            newErrors[index] = {
+                                              ...newErrors[index],
+                                              requiredQty: !value ? 'Available Stock Qty is required' : ''
+                                            };
+                                            return newErrors;
+                                          });
+                                        }}
+                                        className={itemParticularsErrors[index]?.requiredQty ? 'error form-control' : 'form-control'}
+                                      />
+                                      {itemParticularsErrors[index]?.requiredQty && (
+                                        <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                          {itemParticularsErrors[index].requiredQty}
+                                        </div>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
                           </div>
-                        )}
+                        </div>
                       </div>
                     </>
                   )}
-                  {value === 1 && (
-                    <>
-                      <div className="row d-flex ml">
+                      {value === 1 && (
+                        <>
+                         <div className="row d-flex ml">
                         <div className="mb-1">
                           <ActionButton title="Add" icon={AddIcon} onClick={handleAddRowAttachment} />
                         </div>
@@ -1277,45 +1231,61 @@ function WorkOrder() {
                                         <div className="pt-2">{index + 1}</div>
                                       </td>
                                       <td className="border px-2 py-2">
-                                        <FormControl fullWidth size="small">
-                                          <InputLabel id="template">Template</InputLabel>
+                                        <FormControl fullWidth size="small" error={!!termsandConditionsErrors[index]?.template}>
+                                          <InputLabel id={`template-label-${index}`}>Template</InputLabel>
                                           <Select
-                                            labelId="template"
-                                            id="template"
+                                            labelId={`template-label-${index}`}
+                                            id={`template-${index}`}
                                             label="Template"
-                                            onChange={handleInputChange}
-                                            name="template"
-                                            value={formData.template}
+                                            onChange={(e) => {
+                                              const value = e.target.value;
+                                              setTermsandConditionsData((prev) =>
+                                                prev.map((r, i) => (i === index ? { ...r, template: value } : r))
+                                              );
+                                              setTermsandConditionsErrors((prev) =>
+                                                prev.map((r, i) =>
+                                                  i === index
+                                                    ? { ...r, template: value ? '' : 'Template is required' }
+                                                    : r
+                                                )
+                                              );
+                                            }}
+                                            value={termsandConditionsData[index]?.template || ''} // Ensure the correct value
                                           >
-                                            <MenuItem value="INTRA">---</MenuItem>
+                                            <MenuItem value="">---</MenuItem>
                                             <MenuItem value="INTRA">INTRA</MenuItem>
                                             <MenuItem value="INTER">INTER</MenuItem>
                                           </Select>
-                                          {fieldErrors.template && <FormHelperText style={{ color: 'red' }}>{fieldErrors.template}</FormHelperText>}
+                                          {termsandConditionsErrors[index]?.template && (
+                                            <FormHelperText>{termsandConditionsErrors[index].template}</FormHelperText>
+                                          )}
                                         </FormControl>
                                       </td>
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"
-                                          value={row.description}
+                                          value={termsandConditionsData[index]?.description || ''}
                                           className="form-control"
-                                          onChange = {(e) => {
+                                          onChange={(e) => {
                                             const value = e.target.value;
                                             setTermsandConditionsData((prev) =>
-                                                prev.map((r) => (r.id === row.id ? { ...r, description: value } : r))
+                                              prev.map((r, i) => (i === index ? { ...r, description: value } : r))
                                             );
-                                            setTermsandConditionsErrors((prev) => {
-                                                const newErrors = [...prev];
-                                                newErrors[index] = {
-                                                    ...newErrors[index],
-                                                    description: !value ? 'Description is required' : ''
-                                                };
-                                                return newErrors;
-                                            });
-                                        }}
-                                          style={{ width: "150px" }} 
+                                            setTermsandConditionsErrors((prev) =>
+                                              prev.map((r, i) =>
+                                                i === index
+                                                  ? { ...r, description: value ? '' : 'Description is required' }
+                                                  : r
+                                              )
+                                            );
+                                          }}
+                                          style={{ width: "150px" }}
                                         />
+                                        {termsandConditionsErrors[index]?.description && (
+                                          <div style={{ color: 'red' }}>{termsandConditionsErrors[index].description}</div>
+                                        )}
                                       </td>
+
                                     </tr>
                                   ))}
                                 </tbody>
@@ -1324,11 +1294,11 @@ function WorkOrder() {
                           </div>
                         </div>
                       </div>
-                    </>
-                  )}
-                  {value === 2 && (
-                    <>
-                      <div className="row d-flex ml">
+                        </>
+                      )}
+                        {value === 2 && (
+                          <>
+                          <div className="row d-flex ml">
                         <div className="row mt-2">
                           <>
                             <div className="row">
@@ -1352,24 +1322,21 @@ function WorkOrder() {
                           </>
                         </div>
                       </div>
-                    </>
-                  )}
+                          </>
+                        )}
                 </Box>
               </div>
+
             </>
           ) : (
-            <CommonTable data={data} columns={listViewColumns} blockEdit={true} toEdit={getAllAdjustmentJournalById} />
+
+            <div className="mt-4">
+              <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getWorkOrderById} />
+            </div>
           )}
+
+
         </div>
-        <Dialog
-          open={modalOpen}
-          maxWidth={'md'}
-          fullWidth={true}
-          onClose={handleCloseModal}
-          PaperComponent={PaperComponent}
-          aria-labelledby="draggable-dialog-title"
-        >
-        </Dialog>
       </div>
     </>
 
