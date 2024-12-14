@@ -89,6 +89,8 @@ function WorkOrder() {
     { accessorKey: 'docId', header: 'Document ID', size: 140 },
     { accessorKey: 'customerName', header: 'Customer Name', size: 140 },
     { accessorKey: 'customerPoNo', header: 'Customer PO No', size: 140 },  
+    { accessorKey: 'quotationNo', header: 'Quotation No', size: 140 },  
+    { accessorKey: 'currency', header: 'Currency', size: 140 },  
   ];
 
 
@@ -534,7 +536,8 @@ function WorkOrder() {
 
         setEditId(WorOde.id);
         setDocId(WorOde.docId);
-        getQuotationNumber(WorOde.customerCode); 
+        getQuotationNumber(WorOde.customerCode);
+         
         setFormData({
           active: WorOde.active === "Active",
           docDate: WorOde.docDate ? dayjs(WorOde.docDate, 'YYYY-MM-DD') : dayjs(),
