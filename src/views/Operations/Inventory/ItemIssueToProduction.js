@@ -81,7 +81,7 @@ function ItemIssueToProduction () {
   const listViewColumns = [
     { accessorKey: 'routeCardNo', header: 'Route Card Number', size: 140 },
     { accessorKey: 'docDate', header: 'Document Date', size: 140 },
-    { accessorKey: 'docNo', header: 'Document No', size: 140 }
+    { accessorKey: 'docId', header: 'Document No', size: 140 }
   ];
 
   const [itemIssueToProduction, setItemIssueToProduction] = useState([
@@ -125,9 +125,8 @@ function ItemIssueToProduction () {
   const handleSelectAll = () => {}
   const getMachineMasterById = () => {}
   useEffect(() => {
-    
-    // getAdjustmentJournaldocNO();
-    // getAllAdjustmentJournalByOrgId();
+    getItemIssueToProductiondocNo();
+    getAllItemIssueToProductionByOrgId();
     // getAllAccountName();
   }, []);
 
@@ -170,7 +169,7 @@ function ItemIssueToProduction () {
     ]);
     setItemIssueToProductionTableErrors('');
     setEditId('');
-    getAdjustmentJournaldocNO();
+    getItemIssueToProductiondocNo();
   };
 
   const handleInputChange = (e) => {
@@ -339,23 +338,23 @@ function ItemIssueToProduction () {
         productionDetailsTableDataValid = false;
       }
       if (!row.holdQuantity) {
-        rowErrors.holdQuantity = 'Hold Quantity is required';
+        rowErrors.holdQuantity = 'Hold Qty is required';
         productionDetailsTableDataValid = false;
       }
       if (!row.availableQuantity) {
-        rowErrors.availableQuantity = 'Available Quantity is required';
+        rowErrors.availableQuantity = 'Available Qty is required';
         productionDetailsTableDataValid = false;
       }
       if (!row.requiredQuantity) {
-        rowErrors.requiredQuantity = 'Required Quantity is required';
+        rowErrors.requiredQuantity = 'Required Qty is required';
         productionDetailsTableDataValid = false;
       }
       if (!row.issueQuantity) {
-        rowErrors.issueQuantity = 'Issue Quantity is required';
+        rowErrors.issueQuantity = 'Issue Qty is required';
         productionDetailsTableDataValid = false;
       }
       if (!row.pendingQuantity) {
-        rowErrors.pendingQuantity = 'Pending Quantity is required';
+        rowErrors.pendingQuantity = 'Pending Qty is required';
         productionDetailsTableDataValid = false;
       }
       
@@ -365,53 +364,54 @@ function ItemIssueToProduction () {
     setItemIssueToProductionTableErrors(newitemIssueToProductionTableErrors);
 
     if (Object.keys(errors).length === 0 && (productionDetailsTableDataValid) ) {
-          const AdjustmentVO = itemIssueToProduction.map((row) => ({
+          const ItemIssueToProductionVO = itemIssueToProduction.map((row) => ({
             ...(editId && { id: row.id }),
-            accountsName: row.accountName,
-            creditAmount: parseInt(row.creditAmount),
-            debitAmount: parseInt(row.debitAmount),
-            debitBase: parseInt(row.debitBase),
-            creditBase: parseInt(row.creditBase),
-            subLedgerCode: row.subLedgerCode,
-            subledgerName: row.subledgerName
+            unit: row.unit,
+            avgQty: parseInt(row.availableQuantity),
+            holdQty: parseInt(row.holdQuantity),
+            issueQty: parseInt(row.issueQuantity),
+            pendingQty: parseInt(row.pendingQuantity),
+            reqQty: parseInt(row.requiredQuantity),
+            item: row.item,
+            itemDesc: row.itemDesc
       }));
       
       const saveFormData = {
         ...(editId && { id: editId }),
-        // branch: branch,
-        //       branchCode: branchCode,
-        //       createdBy: loginUserName,
-        //       finYear: finYear,
-        //       orgId: orgId,
-        //       accountParticularsDTO: AdjustmentJournalVO,
-        //       adjustmentType: formData.adjustmentType,
-        //       currency: formData.currency,
-        //       exRate: parseInt(formData.exRate),
-        //       refDate: dayjs(formData.refDate).format('YYYY-MM-DD'),
-        //       refNo: formData.refNo,
-        //       suppRefDate: dayjs(formData.suppRefDate).format('YYYY-MM-DD'),
-        //       suppRefNo: formData.suppRefNo,
-        //       remarks: formData.remarks
+        branch: branch,
+              branchCode: branchCode,
+              createdBy: loginUserName,
+              finYear: finYear,
+              orgId: orgId,
+              itemIssueToProductionDetailsDTO: ItemIssueToProductionVO,
+              fgItemDesc: formData.fgItemDesc,
+              fgItemId: formData.sfgItemId,
+              fgQty: parseInt(formData.fgQty),
+              fromLocation: formData.fromLocation,
+              preparedBy: formData.preparedBy,
+              remarks: formData.remarks,
+              routeCardNo: formData.routeCardNo,
+              workorder: formData.workOrder
       };
       console.log('DATA TO SAVE IS:', saveFormData);
       try {
-              const response = await apiCalls('put', `transaction/updateCreateAdjustmentJournal`, saveFormData);
+              const response = await apiCalls('put', `/inventory/updateCreateItemIssToProd`, saveFormData);
               if (response.status === true) {
                 console.log('Response:', response);
-                showToast('success', editId ? 'Adjustment Journal Updated Successfully' : 'Adjustment Journal Created successfully');
-                getAllAdjustmentJournalByOrgId();
+                showToast('success', editId ? 'Item Issue to Production Updated Successfully' : 'Item Issue to Production Created successfully');
+                getAllItemIssueToProductionByOrgId();
                 handleClear();
               } else {
-                showToast('error', response.paramObjectsMap.message || 'Adjustment Journal creation failed');
+                showToast('error', response.paramObjectsMap.message || 'Item Issue to Production creation failed');
               }
             } catch (error) {
               console.error('Error:', error);
-              showToast('error', 'Adjustment Journal creation failed');
+              showToast('error', 'Item Issue to Production creation failed');
             }
-    } else {
-      setFieldErrors(errors);
-    }
-  };
+            } else {
+              setFieldErrors(errors);
+            }
+  }
   const getAllItem = async () => {
     try {
       const response = await apiCalls('get', `/transaction/getOperationNameFromGroup?orgId=${orgId}`);
@@ -427,24 +427,24 @@ function ItemIssueToProduction () {
       console.error('Error fetching data:', error);
     }
   };
-  const getAdjustmentJournaldocNO = async () => {
+  const getItemIssueToProductiondocNo = async () => {
     try {
       const response = await apiCalls(
         'get',
-        `/transaction/getAdjustmentJournaldocNO?branchCode=${branchCode}&branch=${branch}&finYear=${finYear}&orgId=${orgId}`
+        `/inventory/getItemIssueToProductionDocId?orgId=${orgId}`
       );
-      setDocNo(response.paramObjectsMap.adjustmentJournaldocNO);
+      setDocNo(response.paramObjectsMap.ItemIssueToProductionDocId);
     } catch (error) {
       console.error('Error fetching gate passes:', error);
     }
   };
 
-  const getAllAdjustmentJournalByOrgId = async () => {
+  const getAllItemIssueToProductionByOrgId = async () => {
     try {
-      const result = await apiCalls('get', `/transaction/getAllAdjustmentJournalByOrgId?orgId=${orgId}`);
-      setData(result.paramObjectsMap.adjustmentJournalVO || []);
+      const result = await apiCalls('get', `/inventory/getItemIssToProdByOrgId?orgId=${orgId}`);
+      setData(result.paramObjectsMap.itemIssueToProductionVO || []);
       // showForm(true);
-      console.log('adjustmentJournalVO', result);
+      console.log('ItemIssueToProductionVO', result);
     } catch (err) {
       console.log('error', err);
     }
@@ -582,6 +582,7 @@ function ItemIssueToProduction () {
                           {item.routeCardNo}
                         </MenuItem>
                       ))}
+                      
                     </Select>
                     {fieldErrors.routeCardNo && <FormHelperText style={{ color: 'red' }}>Route Card No is required</FormHelperText>}
                   </FormControl>
