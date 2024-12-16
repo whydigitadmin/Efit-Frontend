@@ -75,7 +75,8 @@ const Header = ({ handleLeftDrawerToggle }) => {
             marginBottom: '8px'
           }}
         ></span>
-        <h6>FINANCE</h6>
+        {/* <h6>FINANCE</h6> */}
+        <h6>EFIT</h6>
       </div>
       <NotificationSection />
       <GlobalSection />

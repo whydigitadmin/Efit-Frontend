@@ -51,8 +51,11 @@ const Login = () => {
                     <Grid container direction={matchDownSM ? 'column-reverse' : 'row'} alignItems="center" justifyContent="center">
                       <Grid item>
                         <Stack alignItems="center" justifyContent="center" spacing={1}>
-                          <div style={bevanRegularStyle} className="my-2 mt-3">
+                          {/* <div style={bevanRegularStyle} className="my-2 mt-3">
                             Finance
+                          </div> */}
+                          <div style={bevanRegularStyle} className="my-2 mt-3">
+                            EFIT-SaaS
                           </div>
                           <Stack alignItems="center" justifyContent="center" spacing={1}>
                             <Typography color={theme.palette.secondary.main} gutterBottom variant={matchDownSM ? 'h5' : 'h4'}>

@@ -109,7 +109,7 @@ const DrawingMaster = () => {
   ]);
 
   const columns = [
-    { accessorKey: 'docNo', header: 'Drawing Id', size: 140 },
+    { accessorKey: 'docId', header: 'Drawing Id', size: 140 },
     { accessorKey: 'fgPartNo', header: 'Fg Part No', size: 140 },
     { accessorKey: 'fgPartName', header: 'Fg Part Name', size: 140 },
     { accessorKey: 'drawingNo', header: 'Drawing No', size: 140 },
@@ -130,26 +130,47 @@ const DrawingMaster = () => {
   //   setFieldErrors({ ...fieldErrors, [name]: false });
   // };
 
+  // const handleInputChange = (e) => {
+  //   const { name, value, type, checked } = e.target;
+  //   const inputValue = type === 'checkbox' ? checked : value;
+
+  //   // Update the form data for the selected field
+  //   setFormData({ ...formData, [name]: inputValue });
+
+  //   // If the 'fgPartNo' field changes, update the 'fgPartName' based on selected item
+  //   if (name === 'fgPartNo') {
+  //     const selectedFgPart = fgPartNameList.find((fg) => fg.itemName === inputValue);
+  //     if (selectedFgPart) {
+  //       setFormData({
+  //         ...formData,
+  //         fgPartName: selectedFgPart.itemDesc // Set the itemDesc value
+  //       });
+  //     }
+  //   }
+
+  //   // Reset any field errors for the updated field
+  //   setFieldErrors({ ...fieldErrors, [name]: false });
+  // };
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     const inputValue = type === 'checkbox' ? checked : value;
-  
+
     // Update the form data for the selected field
-    setFormData({ ...formData, [name]: inputValue });
-  
+    setFormData((prevData) => ({ ...prevData, [name]: inputValue }));
+
     // If the 'fgPartNo' field changes, update the 'fgPartName' based on selected item
     if (name === 'fgPartNo') {
-      const selectedFgPart = fgPartNameList.find(fg => fg.itemName === inputValue);
+      const selectedFgPart = fgPartNameList.find((fg) => fg.itemName === inputValue);
       if (selectedFgPart) {
-        setFormData({
-          ...formData,
+        setFormData((prevData) => ({
+          ...prevData,
           fgPartName: selectedFgPart.itemDesc // Set the itemDesc value
-        });
+        }));
       }
     }
-  
+
     // Reset any field errors for the updated field
-    setFieldErrors({ ...fieldErrors, [name]: false });
+    setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: false }));
   };
 
   const handleDateChange = (name, date) => {
@@ -475,6 +496,7 @@ const DrawingMaster = () => {
 
       const saveFormData = {
         ...(editId && { id: editId }),
+        active: formData.active,
         // docDate: formData.docDate,
         fgPartNo: formData.fgPartNo,
         fgPartName: formData.fgPartName,
@@ -517,7 +539,7 @@ const DrawingMaster = () => {
             // Wait for the file upload to complete
             await handleSubAttachFileUpload(generatedId);
           } else {
-            console.log('handleFileUpload failed');
+            console.log('handleSubAttachFileUpload failed');
           }
 
           // Refresh data and reset form
@@ -587,10 +609,9 @@ const DrawingMaster = () => {
           fgPartName: drawingValueVO.fgPartName || '',
           drawingNo: drawingValueVO.drawingNo || '',
           drawingRevNo: drawingValueVO.drawingRevNo || '',
-          // effDate: drawingValueVO.effDate || '',
           effDate: drawingValueVO.effDate ? dayjs(drawingValueVO.effDate, 'YYYY-MM-DD') : dayjs(),
           partNo: drawingValueVO.partNo || '',
-          active: drawingValueVO.active || false
+          active: drawingValueVO.active === 'Active' ? true : false
         });
         setDrawingDocumentsData(
           drawingValueVO.drawingMaster1VO.map((cl) => ({
@@ -813,7 +834,7 @@ const DrawingMaster = () => {
                                     S.No
                                   </th>
                                   <th className="px-2 py-2 text-white text-center" style={{ width: '150px' }}>
-                                    FileName
+                                    File Name
                                   </th>
                                   <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
                                     Attachments
@@ -1137,25 +1158,29 @@ const DrawingMaster = () => {
                                     </td>
                                     <td className="border px-2 py-2">
                                       {row.subAttachments ? (
-                                        <img
-                                          src={`data:image/jpeg;base64,${row.subAttachments}`}
-                                          alt="Product"
-                                          className="my-2 w-25 h-25"
-                                          onError={(e) => {
-                                            e.target.src = dummyImageURL;
-                                          }}
-                                        />
+                                        <div className="d-flex justify-content-center mb-2">
+                                          <img
+                                            src={`data:image/jpeg;base64,${row.subAttachments}`}
+                                            alt="Product"
+                                            className="my-2 w-25 h-25"
+                                            onError={(e) => {
+                                              e.target.src = dummyImageURL;
+                                            }}
+                                          />
+                                        </div>
                                       ) : (
-                                        <Button
-                                          component="label"
-                                          variant="contained"
-                                          color="secondary"
-                                          startIcon={<FaCloudUploadAlt />}
-                                          style={{ textTransform: 'none', padding: '6px 12px' }}
-                                        >
-                                          Upload File
-                                          <VisuallyHiddenInput />
-                                        </Button>
+                                        <div className="d-flex justify-content-center mb-2">
+                                          <Button
+                                            component="label"
+                                            variant="contained"
+                                            color="secondary"
+                                            startIcon={<FaCloudUploadAlt />}
+                                            style={{ textTransform: 'none', padding: '6px 12px' }}
+                                          >
+                                            Upload File
+                                            <VisuallyHiddenInput onChange={(e) => handleSubAttachImgFileUpload(e.target.files)} />
+                                          </Button>
+                                        </div>
                                         // <input
                                         //   type="file"
                                         //   id="file-input"
