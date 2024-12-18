@@ -88,7 +88,7 @@ const Enquiry = () => {
       additionalManPower: '',
       anyAdditionalInverstment: '',
       conclusion: '',
-      detailreview: '',
+      detailReview: '',
       expectedTimeForDeliverySample: null,
       initialReviewComments: '',
       regularProduction: '',
@@ -102,7 +102,7 @@ const Enquiry = () => {
       additionalManPower: '',
       anyAdditionalInverstment: '',
       conclusion: '',
-      detailreview: '',
+      detailReview: '',
       expectedTimeForDeliverySample: null,
       initialReviewComments: '',
       regularProduction: '',
@@ -241,7 +241,7 @@ const Enquiry = () => {
             additionalManPower: cl.additionalManPower,
             anyAdditionalInverstment: cl.anyAdditionalInverstment,
             conclusion: cl.conclusion,
-            detailreview: cl.detailreview,
+            detailReview: cl.detailReview,
             expectedTimeForDeliverySample: cl.expectedTimeForDeliverySample,
             initialReviewComments: cl.initialReviewComments,
             regularProduction: cl.regularProduction,
@@ -453,7 +453,7 @@ const Enquiry = () => {
         additionalManPower: '',
         anyAdditionalInverstment: '',
         conclusion: '',
-        detailreview: '',
+        detailReview: '',
         expectedTimeForDeliverySample: null,
         initialReviewComments: '',
         regularProduction: '',
@@ -539,7 +539,7 @@ const Enquiry = () => {
         additionalManPower: row.additionalManPower,
         anyAdditionalInverstment: row.anyAdditionalInverstment,
         conclusion: row.conclusion,
-        detailreview: row.detailreview,
+        detailReview: row.detailReview,
         expectedTimeForDeliverySample: dayjs(row.expectedTimeForDeliverySample).format('YYYY-MM-DD'),
         initialReviewComments: row.initialReviewComments,
         regularProduction: row.regularProduction,
@@ -1211,15 +1211,15 @@ const Enquiry = () => {
                           <div className="col-md-3 mb-3">
                             <FormControl fullWidth variant="filled">
                               <TextField
-                                id="detailreview"
+                                id="detailReview"
                                 label="Detail Review (Director Technical)"
-                                name="detailreview"
+                                name="detailReview"
                                 size="small"
                                 inputProps={{ maxLength: 30 }}
-                                value={enquirySummaryDTO[index]?.detailreview || ''}
+                                value={enquirySummaryDTO[index]?.detailReview || ''}
                                 onChange={(e) => handleInputChange(e, 'enquirySummaryDTO', index)}
-                                error={!!enquirySummaryErrors[index]?.detailreview}
-                                helperText={enquirySummaryErrors[index]?.detailreview || ''}
+                                error={!!enquirySummaryErrors[index]?.detailReview}
+                                helperText={enquirySummaryErrors[index]?.detailReview || ''}
                               />
                             </FormControl>
                           </div>
