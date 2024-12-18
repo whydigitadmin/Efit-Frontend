@@ -669,6 +669,7 @@ function WorkOrder() {
                           currency: newValue.currency,
                           customerName: newValue.customer,
                           customerCode: newValue.customerCode,
+                          // productionmanager: newValue.productionManager,
                         });
                         getQuotationNumber(newValue.customerCode);
                       } else {
@@ -676,6 +677,7 @@ function WorkOrder() {
                           ...formData,
                           currency: '',
                           customerName: '',
+                          // productionManager: '',
                         });
                       }
                     }}
@@ -741,12 +743,14 @@ function WorkOrder() {
                           setFormData({
                             ...formData,
                             quotationNo: newValue.quotationNo,
+                            productionManager: newValue.productionmanager,
                           });
                           getWorkOrderPartNo(formData.customerCode, newValue.quotationNo);
                         } else {
                           setFormData({
                             ...formData,
                             quotationNo: '',
+                            productionManager: '',
                           });
                         }
                       }}

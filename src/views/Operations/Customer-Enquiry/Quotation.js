@@ -180,7 +180,7 @@ const Quotation = () => {
           contactNo: Quot.contactNo,
           currency: Quot.currency,
           productionManager: Quot.productionManager,
-          validTill: Quot.vaidTill ? dayjs(Quot.vaidTill, 'YYYY-MM-DD') : dayjs(),
+          validTill: Quot.validTill ? dayjs(Quot.validTill, 'YYYY-MM-DD') : dayjs(),
           docDate: Quot.docDate ? dayjs(Quot.docDate, 'YYYY-MM-DD') : dayjs(),
           grossAmount: Quot.grossAmount,
           netAmount: Quot.netAmount,
@@ -298,8 +298,7 @@ const Quotation = () => {
       customerId: '',
       orgId: orgId,
       validTill: null,
-      docDate: dayjs(),
-      validTill: null,
+      docDate: dayjs(), 
       netAmount: '',
       taxCode: '',
       kindAttention: '',
@@ -526,7 +525,7 @@ const Quotation = () => {
         productionManager: formData.productionManager,
         quotationDetailsDTO: quotedetailsVo,
         taxCode: formData.taxCode,
-        vaidTill: dayjs(formData.validTill).format('YYYY-MM-DD'),
+        validTill: dayjs(formData.validTill).format('YYYY-MM-DD'),
       };
 
       console.log("DATA TO SAVE IS:", saveFormData);
