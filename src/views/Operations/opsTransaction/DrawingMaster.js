@@ -48,6 +48,8 @@ const DrawingMaster = () => {
   const [uploadSubFileOpen, setUploadSubFileOpen] = useState(false);
   const [selectedPartImgFiles, setSelectedPartImgFiles] = useState([]);
   const [partImgUploadedFiles, setPartImgUploadedFiles] = useState([]);
+  const [selectedSubPartImgFiles, setSelectedSubPartImgFiles] = useState([]);
+  const [subPartImgUploadedFiles, setSubPartImgUploadedFiles] = useState([]);
   const [selectedSubAttachFiles, setSelectedSubAttachFiles] = useState([]);
   const [subAttachUploadedFiles, setSubAttachUploadedFiles] = useState([]);
   const [docId, setDocId] = useState('');
@@ -55,6 +57,7 @@ const DrawingMaster = () => {
   const [uploadedFileNames, setUploadedFileNames] = useState([]);
   const [openPreviewModal, setOpenPreviewModal] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [subSelectedFile, setSubSelectedFile] = useState(null);
   const [fgPartNameList, setFgPartNameList] = useState([]);
 
   const [formData, setFormData] = useState({
@@ -199,9 +202,9 @@ const DrawingMaster = () => {
     setUploadSubFileOpen(false); // Close dialog
   };
 
-  const handleSubFileUpload = (event) => {
-    console.log(event.target.files[0]);
-  };
+  // const handleSubFileUpload = (event) => {
+  //   console.log(event.target.files[0]);
+  // };
 
   const handleSubFileSubmit = () => {
     console.log('Submit clicked');
@@ -230,14 +233,14 @@ const DrawingMaster = () => {
       attachments: ''
     };
     setDrawingDocumentsData([...drawingDocumentsData, newRow]);
-    setDrawingDocumentsErrors([...drawingDocumentsErrors, { fileName: '', attachments: '' }]);
+    setDrawingDocumentsErrors([...drawingDocumentsErrors, { fileName: ''}]);
   };
   const isLastRowEmpty = (table) => {
     const lastRow = table[table.length - 1];
     if (!lastRow) return false;
 
     if (table === drawingDocumentsData) {
-      return !lastRow.fileName || !lastRow.attachments;
+      return !lastRow.fileName;
     }
     return false;
   };
@@ -249,23 +252,40 @@ const DrawingMaster = () => {
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
           fileName: !table[table.length - 1].fileName ? 'File Name is required' : '',
-          attachments: !table[table.length - 1].attachments ? 'Attachments is required' : ''
+          // attachments: !table[table.length - 1].attachments ? 'Attachments is required' : ''
         };
         return newErrors;
       });
     }
   };
 
+  // const handleDeleteRow = (id, table, setTable, errorTable, setErrorTable) => {
+  //   const rowIndex = table.findIndex((row) => row.id === id);
+  //   // If the row exists, proceed to delete
+  //   if (rowIndex !== -1) {
+  //     const updatedData = table.filter((row) => row.id !== id);
+  //     const updatedErrors = errorTable.filter((_, index) => index !== rowIndex);
+  //     setTable(updatedData);
+  //     setErrorTable(updatedErrors);
+  //   }
+  // };
+
   const handleDeleteRow = (id, table, setTable, errorTable, setErrorTable) => {
     const rowIndex = table.findIndex((row) => row.id === id);
-    // If the row exists, proceed to delete
+  
     if (rowIndex !== -1) {
       const updatedData = table.filter((row) => row.id !== id);
-      const updatedErrors = errorTable.filter((_, index) => index !== rowIndex);
       setTable(updatedData);
-      setErrorTable(updatedErrors);
+  
+      if (Array.isArray(errorTable)) {
+        const updatedErrors = errorTable.filter((_, index) => index !== rowIndex);
+        setErrorTable(updatedErrors);
+      } else {
+        console.error("errorTable is not an array. Skipping update.");
+      }
     }
   };
+  
 
   const handleSubFileAddRow = () => {
     if (isLastRowEmptySubFile(subFileDocumentsData)) {
@@ -275,17 +295,17 @@ const DrawingMaster = () => {
     const newRow = {
       id: Date.now(),
       subFileName: '',
-      subAttachments: ''
+      // subAttachments: ''
     };
     setSubFileDocumentsData([...subFileDocumentsData, newRow]);
-    setSubFileDocumentsErrors([...subFileDocumentsErrors, { subFileName: '', subAttachments: '' }]);
+    setSubFileDocumentsErrors([...subFileDocumentsErrors, { subFileName: ''}]);
   };
   const isLastRowEmptySubFile = (table) => {
     const lastRow = table[table.length - 1];
     if (!lastRow) return false;
 
     if (table === subFileDocumentsData) {
-      return !lastRow.subFileName || !lastRow.subAttachments;
+      return !lastRow.subFileName;
     }
     return false;
   };
@@ -297,23 +317,41 @@ const DrawingMaster = () => {
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
           subFileName: !table[table.length - 1].subFileName ? 'Sub File Name is required' : '',
-          subAttachments: !table[table.length - 1].subAttachments ? 'Attachments is required' : ''
+          // subAttachments: !table[table.length - 1].subAttachments ? 'Attachments is required' : ''
         };
         return newErrors;
       });
     }
   };
 
+  // const handleSubFileDeleteRow = (id, table, setTable, errorTable, setErrorTable) => {
+  //   const rowIndex = table.findIndex((row) => row.id === id);
+  //   // If the row exists, proceed to delete
+  //   if (rowIndex !== -1) {
+  //     const updatedData = table.filter((row) => row.id !== id);
+  //     const updatedErrors = errorTable.filter((_, index) => index !== rowIndex);
+  //     setTable(updatedData);
+  //     setErrorTable(updatedErrors);
+  //   }
+  // };
+
   const handleSubFileDeleteRow = (id, table, setTable, errorTable, setErrorTable) => {
     const rowIndex = table.findIndex((row) => row.id === id);
-    // If the row exists, proceed to delete
+  
     if (rowIndex !== -1) {
       const updatedData = table.filter((row) => row.id !== id);
-      const updatedErrors = errorTable.filter((_, index) => index !== rowIndex);
       setTable(updatedData);
-      setErrorTable(updatedErrors);
+  
+      if (Array.isArray(errorTable)) {
+        const updatedErrors = errorTable.filter((_, index) => index !== rowIndex);
+        setErrorTable(updatedErrors);
+      } else {
+        console.error("errorTable is not an array. Skipping update.");
+      }
     }
   };
+
+  
 
   const handleClear = () => {
     setFormData({
@@ -344,6 +382,7 @@ const DrawingMaster = () => {
       }
     ]);
     setSelectedPartImgFiles([]);
+    setSelectedSubPartImgFiles([]);
     setSubFileDocumentsErrors('');
     getDrawingMasterDocId();
     setEditId('');
@@ -385,6 +424,101 @@ const DrawingMaster = () => {
       showToast('error', 'Failed to upload file');
     }
   };
+
+  const handleSubFileUpload = async (generatedSubId) => {
+    if (!generatedSubId) {
+      console.warn('Sub Generated ID is missing');
+      showToast('error', 'Sub Generated ID is required');
+      return;
+    }
+
+    // Prepare FormData
+    const formData = new FormData();
+    for (let i = 0; i < subPartImgUploadedFiles.length; i++) {
+      formData.append('file', subPartImgUploadedFiles[i]);
+    }
+
+    try {
+      // Make the API call using the apiCalls helper function
+      const response = await apiCalls(
+        'post',
+        `/machinemaster/uploadAttachementsInBloob1?id=${generatedSubId}`,
+        formData,
+        {}, // No query parameters needed
+        { 'Content-Type': 'multipart/form-data' } // Optional; the browser sets this when using FormData
+      );
+
+      console.log('File Upload Response:', response);
+
+      if (response.status === true) {
+        showToast('success', response.message || 'Sub Attachment File uploaded successfully!');
+      } else {
+        console.warn('Sub Attachment File upload failed:', response);
+        showToast('error', 'Sub Attachment File upload failed');
+      }
+    } catch (error) {
+      console.error('Sub Attachment File Upload Error:', error);
+      showToast('error', 'Failed to upload file');
+    }
+  };
+
+  // const handleFileUpload = async (generatedId) => {
+  //   if (!generatedId) {
+  //     console.warn('Generated ID is missing');
+  //     showToast('error', 'Generated ID is required');
+  //     return;
+  //   }
+
+  //   const formData = new FormData();
+  //   selectedPartImgFiles.forEach((file) => formData.append('file', file));
+
+  //   try {
+  //     const response = await apiCalls(
+  //       'post',
+  //       `/machinemaster/uploadAttachementsInBloob?id=${generatedId}`,
+  //       formData,
+  //       {},
+  //       { 'Content-Type': 'multipart/form-data' }
+  //     );
+
+  //     if (response.status === true) {
+  //       showToast('success', 'File uploaded successfully!');
+  //     } else {
+  //       showToast('error', 'File upload failed');
+  //     }
+  //   } catch (error) {
+  //     showToast('error', 'Failed to upload file');
+  //   }
+  // };
+
+  // const handleSubFileUpload = async (generatedSubId) => {
+  //   if (!generatedSubId) {
+  //     console.warn('Sub Generated ID is missing');
+  //     showToast('error', 'Sub Generated ID is required');
+  //     return;
+  //   }
+
+  //   const formData = new FormData();
+  //   selectedSubPartImgFiles.forEach((file) => formData.append('file', file));
+
+  //   try {
+  //     const response = await apiCalls(
+  //       'post',
+  //       `/machinemaster/uploadAttachementsInBloob1?id=${generatedSubId}`,
+  //       formData,
+  //       {},
+  //       { 'Content-Type': 'multipart/form-data' }
+  //     );
+
+  //     if (response.status === true) {
+  //       showToast('success', 'Sub Attachment File uploaded successfully!');
+  //     } else {
+  //       showToast('error', 'Sub Attachment File upload failed');
+  //     }
+  //   } catch (error) {
+  //     showToast('error', 'Failed to upload file');
+  //   }
+  // };
 
   const handleSubAttachFileUpload = async (generatedId) => {
     if (!generatedId) {
@@ -433,14 +567,33 @@ const DrawingMaster = () => {
     setSelectedPartImgFiles(fileNames);
   };
 
+  const handleSubPartImgFileUpload = (files) => {
+    console.log('Test');
+    setSubPartImgUploadedFiles(files);
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+    }
+    const fileNames = Array.from(files).map((file) => file.name);
+    setSelectedSubPartImgFiles(fileNames);
+  };
+
   const handlePreview = (file) => {
     setSelectedFile(file);
+    setOpenPreviewModal(true);
+  };
+
+  const handleSubPreview = (file) => {
+    setSubSelectedFile(file);
     setOpenPreviewModal(true);
   };
 
   const handleCloseModal = () => {
     setOpenPreviewModal(false);
     setSelectedFile(null);
+  };
+  const handleSubCloseModal = () => {
+    setOpenPreviewModal(false);
+    setSubSelectedFile(null);
   };
 
   // const handlePartImgFileUpload = (files) => {
@@ -486,12 +639,14 @@ const DrawingMaster = () => {
 
       const detailsVo = drawingDocumentsData.map((row) => ({
         ...(editId && { id: row.id }),
-        fileName: row.fileName
+        fileName: row.fileName,
+        attachements: row.attachements,
       }));
 
       const detailsSubFileVo = subFileDocumentsData.map((row) => ({
         ...(editId && { id: row.id }),
-        fileName: row.subFileName
+        fileName: row.subFileName,
+        attachements: row.subAttachments,
       }));
 
       const saveFormData = {
@@ -522,7 +677,8 @@ const DrawingMaster = () => {
           showToast('success', editId ? 'Drawing Master updated successfully' : 'Drawing Master created successfully');
 
           // Extract the generated ID
-          const generatedId = saveResponse?.paramObjectsMap.drawingMasterVO.id;
+          const generatedId = saveResponse?.paramObjectsMap.drawingMasterVO.drawingMaster1VO[0].id;
+          const generatedSubId = saveResponse?.paramObjectsMap.drawingMasterVO.drawingMaster2VO[0].id;
 
           if (generatedId && selectedPartImgFiles.length > 0) {
             console.log('Generated ID:', generatedId);
@@ -533,13 +689,13 @@ const DrawingMaster = () => {
             console.log('handleFileUpload failed');
           }
 
-          if (generatedId && selectedSubAttachFiles.length > 0) {
-            console.log('Generated ID:', generatedId);
+          if (generatedSubId && selectedSubPartImgFiles.length > 0) {
+            console.log('Generated ID:', generatedSubId);
 
             // Wait for the file upload to complete
-            await handleSubAttachFileUpload(generatedId);
+            await handleSubFileUpload(generatedSubId);
           } else {
-            console.log('handleSubAttachFileUpload failed');
+            console.log('handleSubFileUpload failed');
           }
 
           // Refresh data and reset form
@@ -557,6 +713,87 @@ const DrawingMaster = () => {
     }
   };
 
+  // const handleSave = async () => {
+  //   const errors = {};
+  
+  //   // Validate required fields
+  //   if (!formData.fgPartNo) errors.fgPartNo = 'Fg Part No is required';
+  //   if (!formData.fgPartName) errors.fgPartName = 'Fg Part Name is required';
+  //   if (!formData.drawingNo) errors.drawingNo = 'Drawing No is required';
+  //   if (!formData.drawingRevNo) errors.drawingRevNo = 'Drawing Rev No is required';
+  //   if (!formData.effDate) errors.effDate = 'Effective Date is required';
+  //   if (!formData.partNo) errors.partNo = 'Part No is required';
+  
+  //   setFieldErrors(errors);
+  
+  //   if (Object.keys(errors).length === 0) {
+  //     setIsLoading(true);
+  
+  //     const detailsVo = drawingDocumentsData.map((row) => ({
+  //       ...(editId && { id: row.id }),
+  //       fileName: row.fileName || '', // Retain existing file name if present
+  //       attachments: row.attachments || '' // Retain existing attachment if present
+  //     }));
+  
+  //     const detailsSubFileVo = subFileDocumentsData.map((row) => ({
+  //       ...(editId && { id: row.id }),
+  //       fileName: row.subFileName || '', // Retain existing sub-file name if present
+  //       attachments: row.subAttachments || '' // Retain existing sub-attachment if present
+  //     }));
+  
+  //     const saveFormData = {
+  //       ...(editId && { id: editId }),
+  //       active: formData.active,
+  //       fgPartNo: formData.fgPartNo,
+  //       fgPartName: formData.fgPartName,
+  //       drawingNo: formData.drawingNo,
+  //       drawingRevNo: formData.drawingRevNo,
+  //       effDate: formData.effDate.format('YYYY-MM-DD'),
+  //       partNo: formData.partNo,
+  //       drawingMaster1DTO: detailsVo,
+  //       drawingMaster2DTO: detailsSubFileVo,
+  //       cancelRemarks: 'null',
+  //       createdBy: loginUserName,
+  //       orgId: orgId
+  //     };
+  
+  //     console.log('Saving Form Data:', saveFormData);
+  
+  //     try {
+  //       // Save data to the server
+  //       const saveResponse = await apiCalls('put', '/machinemaster/updateDrawingMaster', saveFormData);
+  
+  //       if (saveResponse.status === true) {
+  //         console.log('Save Response:', saveResponse);
+  //         showToast('success', editId ? 'Drawing Master updated successfully' : 'Drawing Master created successfully');
+  
+  //         // Extract the generated IDs for uploading files
+  //         const generatedId = saveResponse?.paramObjectsMap.drawingMasterVO.drawingMaster1VO[0]?.id;
+  //         const generatedSubId = saveResponse?.paramObjectsMap.drawingMasterVO.drawingMaster2VO[0]?.id;
+  
+  //         if (generatedId && selectedPartImgFiles.length > 0) {
+  //           await handleFileUpload(generatedId);
+  //         }
+  
+  //         if (generatedSubId && selectedSubPartImgFiles.length > 0) {
+  //           await handleSubFileUpload(generatedSubId);
+  //         }
+  
+  //         // Refresh data and reset form
+  //         getAllDrawingMasterByOrgId();
+  //         handleClear();
+  //       } else {
+  //         showToast('error', saveResponse.paramObjectsMap?.errorMessage || 'Drawing Master creation failed');
+  //       }
+  //     } catch (error) {
+  //       console.error('Error during save:', error);
+  //       showToast('error', 'Drawing Master creation failed');
+  //     } finally {
+  //       setIsLoading(false);
+  //     }
+  //   }
+  // };  
+
   const getAllFgPartNameByOrgId = async () => {
     try {
       const response = await apiCalls('get', `/machinemaster/getFGSFGPartDetailsForDrawingMaster?orgId=${orgId}`);
@@ -569,15 +806,6 @@ const DrawingMaster = () => {
       }
     } catch (error) {
       console.error('Error fetching data:', error);
-    }
-  };
-
-  const getDrawingMasterDocId = async () => {
-    try {
-      const response = await apiCalls('get', `/machinemaster/getDrawingMasterDocId?orgId=${orgId}`);
-      setDocId(response.paramObjectsMap.drawingMasterDocId);
-    } catch (error) {
-      console.error('Error fetching departmentDocId:', error);
     }
   };
 
@@ -601,7 +829,6 @@ const DrawingMaster = () => {
       if (result) {
         const drawingValueVO = result.paramObjectsMap.drawingMasterVO;
         setEditId(row.original.id);
-        setDocId(drawingValueVO.docId);
         setFormData({
           id: drawingValueVO.id || '',
           docDate: drawingValueVO.docDate || '',
@@ -613,6 +840,7 @@ const DrawingMaster = () => {
           partNo: drawingValueVO.partNo || '',
           active: drawingValueVO.active === 'Active' ? true : false
         });
+        setDocId(drawingValueVO.docId);
         setDrawingDocumentsData(
           drawingValueVO.drawingMaster1VO.map((cl) => ({
             id: cl.id,
@@ -634,6 +862,15 @@ const DrawingMaster = () => {
       }
     } catch (error) {
       console.error('Error fetching data:', error);
+    }
+  };
+
+  const getDrawingMasterDocId = async () => {
+    try {
+      const response = await apiCalls('get', `/machinemaster/getDrawingMasterDocId?orgId=${orgId}`);
+      setDocId(response.paramObjectsMap.drawingMasterDocId);
+    } catch (error) {
+      console.error('Error fetching departmentDocId:', error);
     }
   };
 
@@ -767,6 +1004,7 @@ const DrawingMaster = () => {
                         textField: { size: 'small', clearable: true }
                       }}
                       format="DD-MM-YYYY"
+                      // format="YYYY-MM-DD"
                       error={!!fieldErrors.effDate}
                       helperText={fieldErrors.effDate ? fieldErrors.effDate : ''}
                     />
@@ -1056,7 +1294,7 @@ const DrawingMaster = () => {
                                             <img
                                               src={`data:image/jpeg;base64,${selectedFile}`}
                                               alt="Preview"
-                                              style={{ width: '100%', height: 'auto' }}
+                                              style={{ width: '50%', height: 'auto' }}
                                             />
                                           ) : (
                                             <Typography>No preview available</Typography>
@@ -1156,7 +1394,7 @@ const DrawingMaster = () => {
                                         </div>
                                       )}
                                     </td>
-                                    <td className="border px-2 py-2">
+                                    {/* <td className="border px-2 py-2">
                                       {row.subAttachments ? (
                                         <div className="d-flex justify-content-center mb-2">
                                           <img
@@ -1188,6 +1426,82 @@ const DrawingMaster = () => {
                                         //   onChange={(e) => handleSubAttachImgFileUpload(e.target.files)}
                                         // />
                                       )}
+                                    </td> */}
+                                    <td className="border px-2 py-2">
+                                      {row.subAttachments ? (
+                                        <>
+                                          <div className="d-flex justify-content-center mb-2">
+                                            <Button
+                                              variant="contained"
+                                              color="secondary"
+                                              startIcon={<FaEye />}
+                                              onClick={() => handleSubPreview(row.subAttachments)}
+                                              style={{ textTransform: 'none' }}
+                                            >
+                                              Preview
+                                            </Button>
+                                          </div>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <div className="d-flex justify-content-center mb-2">
+                                            <Button
+                                              component="label"
+                                              variant="contained"
+                                              color="secondary"
+                                              startIcon={<FaCloudUploadAlt />}
+                                              style={{ textTransform: 'none', padding: '6px 12px' }}
+                                            >
+                                              Upload File
+                                              <VisuallyHiddenInput onChange={(e) => handleSubPartImgFileUpload(e.target.files)} />
+                                            </Button>
+                                          </div>
+                                          {selectedSubPartImgFiles.length > 0 && (
+                                            <div className="d-flex justify-content-center uploaded-files mt-2">
+                                              <Typography variant="body2">Uploaded Files:</Typography>
+                                              {selectedSubPartImgFiles.map((fileName, index) => (
+                                                <div key={index}>{fileName}</div>
+                                              ))}
+                                            </div>
+                                          )}
+                                        </>
+                                      )}
+
+                                      {/* Modal for file preview */}
+                                      <Modal open={openPreviewModal} onClose={handleSubCloseModal}>
+                                        <Box
+                                          sx={{
+                                            position: 'absolute',
+                                            top: '50%',
+                                            left: '50%',
+                                            transform: 'translate(-50%, -50%)',
+                                            width: '50%',
+                                            height: 'auto',
+                                            bgcolor: 'background.paper',
+                                            boxShadow: 24,
+                                            p: 4,
+                                            overflow: 'auto'
+                                          }}
+                                        >
+                                          {subSelectedFile ? (
+                                            <img
+                                              src={`data:image/jpeg;base64,${subSelectedFile}`}
+                                              alt="Preview"
+                                              style={{ width: '50%', height: 'auto' }}
+                                            />
+                                          ) : (
+                                            <Typography>No preview available</Typography>
+                                          )}
+                                          <Button
+                                            className="secondary"
+                                            onClick={handleSubCloseModal}
+                                            style={{ marginTop: '20px' }}
+                                            variant="outlined"
+                                          >
+                                            Close
+                                          </Button>
+                                        </Box>
+                                      </Modal>
                                     </td>
                                   </tr>
                                 ))}
