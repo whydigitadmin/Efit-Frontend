@@ -1,30 +1,28 @@
+import AddIcon from '@mui/icons-material/Add';
 import ClearIcon from '@mui/icons-material/Clear';
+import DeleteIcon from '@mui/icons-material/Delete';
 import FormatListBulletedTwoToneIcon from '@mui/icons-material/FormatListBulletedTwoTone';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
-import { Button, Checkbox, FormControl, FormControlLabel, FormGroup, TextField, Modal, Typography } from '@mui/material';
-import apiCalls from 'apicall';
-import { useEffect, useRef, useState } from 'react';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import ActionButton from 'utils/ActionButton';
-import CommonTable from 'views/basicMaster/CommonTable';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
+import { Button, Checkbox, FormControl, FormControlLabel, FormHelperText, Modal, TextField, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
-import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { showToast } from 'utils/toast-component';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { FormHelperText } from '@mui/material';
-import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
-import InputLabel from '@mui/material/InputLabel';
+import apiCalls from 'apicall';
 import dayjs from 'dayjs';
-import CommonBulkUpload from 'utils/CommonBulkUpload';
+import { useEffect, useState } from 'react';
 import { FaCloudUploadAlt, FaEye } from 'react-icons/fa';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import ActionButton from 'utils/ActionButton';
+import { showToast } from 'utils/toast-component';
+import CommonTable from 'views/basicMaster/CommonTable';
 
 // const VisuallyHiddenInput = ({ ...props }) => {
 //   <input type="file" style={{ display: 'none' }} {...props} />;
@@ -233,7 +231,7 @@ const DrawingMaster = () => {
       attachments: ''
     };
     setDrawingDocumentsData([...drawingDocumentsData, newRow]);
-    setDrawingDocumentsErrors([...drawingDocumentsErrors, { fileName: ''}]);
+    setDrawingDocumentsErrors([...drawingDocumentsErrors, { fileName: '' }]);
   };
   const isLastRowEmpty = (table) => {
     const lastRow = table[table.length - 1];
@@ -251,7 +249,7 @@ const DrawingMaster = () => {
         const newErrors = [...prevErrors];
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
-          fileName: !table[table.length - 1].fileName ? 'File Name is required' : '',
+          fileName: !table[table.length - 1].fileName ? 'File Name is required' : ''
           // attachments: !table[table.length - 1].attachments ? 'Attachments is required' : ''
         };
         return newErrors;
@@ -272,20 +270,19 @@ const DrawingMaster = () => {
 
   const handleDeleteRow = (id, table, setTable, errorTable, setErrorTable) => {
     const rowIndex = table.findIndex((row) => row.id === id);
-  
+
     if (rowIndex !== -1) {
       const updatedData = table.filter((row) => row.id !== id);
       setTable(updatedData);
-  
+
       if (Array.isArray(errorTable)) {
         const updatedErrors = errorTable.filter((_, index) => index !== rowIndex);
         setErrorTable(updatedErrors);
       } else {
-        console.error("errorTable is not an array. Skipping update.");
+        console.error('errorTable is not an array. Skipping update.');
       }
     }
   };
-  
 
   const handleSubFileAddRow = () => {
     if (isLastRowEmptySubFile(subFileDocumentsData)) {
@@ -294,11 +291,11 @@ const DrawingMaster = () => {
     }
     const newRow = {
       id: Date.now(),
-      subFileName: '',
+      subFileName: ''
       // subAttachments: ''
     };
     setSubFileDocumentsData([...subFileDocumentsData, newRow]);
-    setSubFileDocumentsErrors([...subFileDocumentsErrors, { subFileName: ''}]);
+    setSubFileDocumentsErrors([...subFileDocumentsErrors, { subFileName: '' }]);
   };
   const isLastRowEmptySubFile = (table) => {
     const lastRow = table[table.length - 1];
@@ -316,7 +313,7 @@ const DrawingMaster = () => {
         const newErrors = [...prevErrors];
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
-          subFileName: !table[table.length - 1].subFileName ? 'Sub File Name is required' : '',
+          subFileName: !table[table.length - 1].subFileName ? 'Sub File Name is required' : ''
           // subAttachments: !table[table.length - 1].subAttachments ? 'Attachments is required' : ''
         };
         return newErrors;
@@ -337,21 +334,19 @@ const DrawingMaster = () => {
 
   const handleSubFileDeleteRow = (id, table, setTable, errorTable, setErrorTable) => {
     const rowIndex = table.findIndex((row) => row.id === id);
-  
+
     if (rowIndex !== -1) {
       const updatedData = table.filter((row) => row.id !== id);
       setTable(updatedData);
-  
+
       if (Array.isArray(errorTable)) {
         const updatedErrors = errorTable.filter((_, index) => index !== rowIndex);
         setErrorTable(updatedErrors);
       } else {
-        console.error("errorTable is not an array. Skipping update.");
+        console.error('errorTable is not an array. Skipping update.');
       }
     }
   };
-
-  
 
   const handleClear = () => {
     setFormData({
@@ -623,36 +618,35 @@ const DrawingMaster = () => {
 
   const handleSave = async () => {
     const errors = {};
-
+  
     // Validate required fields
-    if (!formData.fgPartNo) errors.fgPartNo = 'Fg Part No is required';
-    if (!formData.fgPartName) errors.fgPartName = 'Fg Part Name is required';
+    if (!formData.fgPartNo) errors.fgPartNo = 'FG Part No is required';
+    if (!formData.fgPartName) errors.fgPartName = 'FG Part Name is required';
     if (!formData.drawingNo) errors.drawingNo = 'Drawing No is required';
     if (!formData.drawingRevNo) errors.drawingRevNo = 'Drawing Rev No is required';
     if (!formData.effDate) errors.effDate = 'Effective Date is required';
     if (!formData.partNo) errors.partNo = 'Part No is required';
-
+  
     setFieldErrors(errors);
-
+  
     if (Object.keys(errors).length === 0) {
       setIsLoading(true);
-
+  
       const detailsVo = drawingDocumentsData.map((row) => ({
         ...(editId && { id: row.id }),
         fileName: row.fileName,
-        attachements: row.attachements,
+        attachements: row.attachments // Ensure this is correctly populated
       }));
-
+  
       const detailsSubFileVo = subFileDocumentsData.map((row) => ({
         ...(editId && { id: row.id }),
         fileName: row.subFileName,
-        attachements: row.subAttachments,
+        attachements: row.subAttachments // Ensure this is correctly populated
       }));
-
+  
       const saveFormData = {
         ...(editId && { id: editId }),
         active: formData.active,
-        // docDate: formData.docDate,
         fgPartNo: formData.fgPartNo,
         fgPartName: formData.fgPartName,
         drawingNo: formData.drawingNo,
@@ -665,40 +659,35 @@ const DrawingMaster = () => {
         createdBy: loginUserName,
         orgId: orgId
       };
-
+  
       console.log('Saving Form Data:', saveFormData);
-
+  
       try {
-        // Save data to the server
         const saveResponse = await apiCalls('put', '/machinemaster/updateDrawingMaster', saveFormData);
-
+  
         if (saveResponse.status === true) {
           console.log('Save Response:', saveResponse);
           showToast('success', editId ? 'Drawing Master updated successfully' : 'Drawing Master created successfully');
-
-          // Extract the generated ID
-          const generatedId = saveResponse?.paramObjectsMap.drawingMasterVO.drawingMaster1VO[0].id;
-          const generatedSubId = saveResponse?.paramObjectsMap.drawingMasterVO.drawingMaster2VO[0].id;
-
-          if (generatedId && selectedPartImgFiles.length > 0) {
-            console.log('Generated ID:', generatedId);
-
-            // Wait for the file upload to complete
-            await handleFileUpload(generatedId);
-          } else {
-            console.log('handleFileUpload failed');
+  
+          const generatedIds = saveResponse?.paramObjectsMap?.drawingMasterVO?.drawingMaster1VO.map((vo) => vo.id) || [];
+          const generatedSubIds = saveResponse?.paramObjectsMap?.drawingMasterVO?.drawingMaster2VO.map((vo) => vo.id) || [];
+  
+          // Call handleFileUpload for all generated IDs
+          for (const id of generatedIds) {
+            if (id) {
+              console.log('Uploading files for ID:', id);
+              await handleFileUpload(id);
+            }
           }
-
-          if (generatedSubId && selectedSubPartImgFiles.length > 0) {
-            console.log('Generated ID:', generatedSubId);
-
-            // Wait for the file upload to complete
-            await handleSubFileUpload(generatedSubId);
-          } else {
-            console.log('handleSubFileUpload failed');
+  
+          // Call handleSubFileUpload for all generated Sub IDs
+          for (const subId of generatedSubIds) {
+            if (subId) {
+              console.log('Uploading sub files for Sub ID:', subId);
+              await handleSubFileUpload(subId);
+            }
           }
-
-          // Refresh data and reset form
+  
           getAllDrawingMasterByOrgId();
           handleClear();
         } else {
@@ -712,10 +701,10 @@ const DrawingMaster = () => {
       }
     }
   };
-
-  // const handleSave = async () => {
-  //   const errors = {};
   
+
+  //   const errors = {};
+
   //   // Validate required fields
   //   if (!formData.fgPartNo) errors.fgPartNo = 'Fg Part No is required';
   //   if (!formData.fgPartName) errors.fgPartName = 'Fg Part Name is required';
@@ -723,24 +712,24 @@ const DrawingMaster = () => {
   //   if (!formData.drawingRevNo) errors.drawingRevNo = 'Drawing Rev No is required';
   //   if (!formData.effDate) errors.effDate = 'Effective Date is required';
   //   if (!formData.partNo) errors.partNo = 'Part No is required';
-  
+
   //   setFieldErrors(errors);
-  
+
   //   if (Object.keys(errors).length === 0) {
   //     setIsLoading(true);
-  
+
   //     const detailsVo = drawingDocumentsData.map((row) => ({
   //       ...(editId && { id: row.id }),
   //       fileName: row.fileName || '', // Retain existing file name if present
   //       attachments: row.attachments || '' // Retain existing attachment if present
   //     }));
-  
+
   //     const detailsSubFileVo = subFileDocumentsData.map((row) => ({
   //       ...(editId && { id: row.id }),
   //       fileName: row.subFileName || '', // Retain existing sub-file name if present
   //       attachments: row.subAttachments || '' // Retain existing sub-attachment if present
   //     }));
-  
+
   //     const saveFormData = {
   //       ...(editId && { id: editId }),
   //       active: formData.active,
@@ -756,29 +745,29 @@ const DrawingMaster = () => {
   //       createdBy: loginUserName,
   //       orgId: orgId
   //     };
-  
+
   //     console.log('Saving Form Data:', saveFormData);
-  
+
   //     try {
   //       // Save data to the server
   //       const saveResponse = await apiCalls('put', '/machinemaster/updateDrawingMaster', saveFormData);
-  
+
   //       if (saveResponse.status === true) {
   //         console.log('Save Response:', saveResponse);
   //         showToast('success', editId ? 'Drawing Master updated successfully' : 'Drawing Master created successfully');
-  
+
   //         // Extract the generated IDs for uploading files
   //         const generatedId = saveResponse?.paramObjectsMap.drawingMasterVO.drawingMaster1VO[0]?.id;
   //         const generatedSubId = saveResponse?.paramObjectsMap.drawingMasterVO.drawingMaster2VO[0]?.id;
-  
+
   //         if (generatedId && selectedPartImgFiles.length > 0) {
   //           await handleFileUpload(generatedId);
   //         }
-  
+
   //         if (generatedSubId && selectedSubPartImgFiles.length > 0) {
   //           await handleSubFileUpload(generatedSubId);
   //         }
-  
+
   //         // Refresh data and reset form
   //         getAllDrawingMasterByOrgId();
   //         handleClear();
@@ -792,7 +781,7 @@ const DrawingMaster = () => {
   //       setIsLoading(false);
   //     }
   //   }
-  // };  
+  // };
 
   const getAllFgPartNameByOrgId = async () => {
     try {
@@ -812,7 +801,7 @@ const DrawingMaster = () => {
   const getAllDrawingMasterByOrgId = async () => {
     try {
       const result = await apiCalls('get', `/machinemaster/getAllDrawingMasterByOrgId?orgId=${orgId}`);
-      setData(result.paramObjectsMap.drawingMasterVO || []);
+      setData(result.paramObjectsMap.drawingMasterVO.reverse() || []);
       showForm(true);
       console.log('Test', result);
     } catch (err) {
