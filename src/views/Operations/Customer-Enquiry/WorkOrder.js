@@ -860,6 +860,9 @@ function WorkOrder() {
                   {value === 0 && (
                     <>
                       <div className="row mt-2">
+                      <div className="mb-1">
+                        <ActionButton title="Add" icon={AddIcon} onClick={handleAddRowQuotation} />
+                      </div>
                         <div className="col-lg-12">
                           <div className="table-responsive">
                             <table className="table table-bordered ">
