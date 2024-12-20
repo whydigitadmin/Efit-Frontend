@@ -74,7 +74,6 @@ const Enquiry = () => {
       partCode: '',
       partDescription: '',
       drawingNo: '',
-      drawingNoList: [],
       revisionNo: '',
       unit: '',
       requireQty: '',
@@ -221,20 +220,27 @@ const Enquiry = () => {
           active: listValueVO.active === 'Active' ? true : false,
           id: listValueVO.id || ''
         });
-        setEnquiryDetailsData(
-          listValueVO.enquiryDetailsVO.map((cl) => ({
-            id: cl.id,
-            partCode: cl.partCode,
-            partDescription: cl.partDescription,
-            drawingNo: cl.drawingNo,
-            revisionNo: cl.revisionNo,
-            unit: cl.unit,
-            requireQty: cl.requireQty,
-            deliveryDate: cl.deliveryDate,
-            remarks: cl.remarks,
-            active: cl.active
-          }))
-        );
+
+        const updatedEnquiryDetails = listValueVO.enquiryDetailsVO.map((cl) => ({
+          id: cl.id,
+          partCode: cl.partCode,
+          partDescription: cl.partDescription,
+          drawingNo: cl.drawingNo,
+          revisionNo: cl.revisionNo,
+          unit: cl.unit,
+          requireQty: cl.requireQty,
+          deliveryDate: cl.deliveryDate,
+          remarks: cl.remarks,
+          active: cl.active,
+          drawingNoList: []
+        }));
+
+        setEnquiryDetailsData(updatedEnquiryDetails);
+
+        updatedEnquiryDetails.forEach((item) => {
+          getDrawingNoAndRevisionNo(item.partCode, item.id);
+        });
+
         setEnquirySummaryDTO(
           listValueVO.enquirySummaryVO.map((cl) => ({
             id: cl.id,
@@ -761,7 +767,6 @@ const Enquiry = () => {
                 </FormControl>
               </div>
             </div>
-            {/* <TableComponent formData={formData} setFormData={setFormData} /> */}
             <div className="row mt-2">
               <Box sx={{ width: '100%' }}>
                 <Tabs
@@ -1059,7 +1064,6 @@ const Enquiry = () => {
                                             });
                                           }}
                                           className={enquiryDetailsErrors[index]?.deliveryDate ? 'error form-control' : 'form-control'}
-                                          // onKeyDown={(e) => handleKeyDown(e, row, tdsTableData)}
                                         />
                                         {enquiryDetailsErrors[index]?.deliveryDate && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
