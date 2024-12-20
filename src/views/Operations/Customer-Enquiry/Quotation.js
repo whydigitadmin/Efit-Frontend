@@ -166,9 +166,9 @@ const Quotation = () => {
         setEditId(Quot.id);
         setDocId(Quot.docId);
         getCustomerNameAndCode(Quot.customer);
-        getEnquiryNoAndDate(Quot.customerId);
+        getEnquiryNoAndDate(Quot.customerId, Quot.enquiryNo);
         getProductionManager(Quot.productionManager);
-        getPartNoAndPartDesBasedOnEnquiryNo(Quot.customerId, Quot.enquiryNo);
+        // getPartNoAndPartDesBasedOnEnquiryNo(Quot.customerId, Quot.enquiryNo);
         setFormData({
           active: Quot.active === "Active",
           taxCode: Quot.taxCode,
@@ -219,9 +219,7 @@ const Quotation = () => {
   };
 
   useEffect(() => {
-    getCustomerNameAndCode();
-    getEnquiryNoAndDate();
-    getProductionManager();
+    getCustomerNameAndCode(); 
   }, []);
 
 
@@ -504,7 +502,7 @@ const Quotation = () => {
         partDescription: row.partDescription,
         drawingNo: row.drawingNo,
         qtyOffered: parseInt(row.qtyOffered, 10),
-        revisionNo: parseInt(row.revisionNo, 10),
+        revisionNo: row.revisionNo, 
         unit: row.unit,
         unitPrice: parseFloat(row.unitPrice),
       }));
@@ -752,6 +750,7 @@ const Quotation = () => {
                       inputProps={{ maxLength: 30 }}
                       error={!!fieldErrors.kindAttention}
                       helperText={fieldErrors.kindAttention}
+                      disabled
                     />
                   </FormControl>
                 </div>

@@ -23,9 +23,11 @@ import { getAllActiveCurrency } from 'utils/CommonFunctions';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import CommonBulkUpload from 'utils/CommonBulkUpload';
 import { toast } from 'react-toastify';
+import { Autocomplete } from '@mui/material';
 
 const PurchaseEnquiry = () => {
   const [showForm, setShowForm] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [data, setData] = useState(true);
   const [branch, setBranch] = useState(localStorage.getItem('branch'));
   const [branchCode, setBranchCode] = useState(localStorage.getItem('branchcode'));
@@ -36,46 +38,58 @@ const PurchaseEnquiry = () => {
   const [editId, setEditId] = useState('');
   const [accountNames, setAccountNames] = useState([]);
   const [currencies, setCurrencies] = useState([]);
+  const [partyList, setPartyList] = useState([]);
+  const [workOrdNoList, setWorkOrdNoList] = useState([]);
+  const [pINoList, setPINoList] = useState([]);
+  const [supNameList, setSupNameList] = useState([]);
+  const [contactPersonList, setContactPersonList] = useState([]);
+  const [itemList, setItemList] = useState([]);
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [docId, setDocId] = useState('');
+  const [listViewData, setListViewData] = useState([]);
+
+
   const [formData, setFormData] = useState({
     active: true,
-    purchaseEnquiryNo: '',
     docDate: dayjs(),
-    docId: '',
-    exRate: '',
-    orgId: orgId,
-    refDate: null,
-    refNo: '',
-    remarks: '',
-    totalCreditAmount: 0,
-    totalDebitAmount: 0,
-    voucherSubType: ''
+    customerName: '',
+    workOrderNo: '',
+    pINo: '',
+    customerPONo: '',
+    fgItem: '',
+    supplierName: '',
+    contactPerson: '',
+    contactNo: '',
+    enquiryType: '',
+    expectedDeliveryDate: dayjs(),
+    expectDelDate: dayjs(),
+    narration: '',
+    supplierCode:"",
+    customerCode: '',
   });
-
   const [fieldErrors, setFieldErrors] = useState({
-    purchaseEnquiryNo: '',
-    docDate: new Date(),
-    exRate: '',
-    orgId: orgId,
-    refDate: null,
-    refNo: '',
-    remarks: '',
-    suppRefNo: '',
-    totalCreditAmount: 0,
-    totalDebitAmount: 0
+    active: true,
+    docDate: dayjs(),
+    customerName: '',
+    workOrderNo: '',
+    pINo: '',
+    customerPONo: '',
+    fgItem: '',
+    supplierName: '',
+    contactPerson: '',
+    contactNo: '',
+    enquiryType: '',
+    expectedDeliveryDate: dayjs(),
+    expectDelDate: dayjs(),
+    narration: '',
   });
-
   const listViewColumns = [
-    { accessorKey: 'purchaseEnquiryNo', header: 'Purchase Enquiry No', size: 140 },
-    { accessorKey: 'currency', header: 'Date  ', size: 140 },
-    { accessorKey: 'exRate', header: 'Customer Name', size: 140 },
-    { accessorKey: 'refNo', header: 'Work Order No', size: 140 },
-    { accessorKey: 'docId', header: 'P.I No', size: 140 },
-    { accessorKey: 'docId', header: 'Customer PO No', size: 140 },
-    { accessorKey: 'docId', header: 'FG Item', size: 140 },
-
+    { accessorKey: 'docId', header: 'docId', size: 180 },
+    { accessorKey: 'customerName', header: 'Customer Name', size: 140 },
+    { accessorKey: 'contactPerson', header: 'Contact Person', size: 140 },
+    { accessorKey: 'contactNo', header: 'Contact No', size: 140 },
+    { accessorKey: 'fgPartName', header: 'fgPartName', size: 140 },
   ];
-
   const [detailsTableData, setDetailsTableData] = useState([
     {
       id: 1,
@@ -83,34 +97,21 @@ const PurchaseEnquiry = () => {
       itemDesc: '',
       unit: '',
       qtyRequired: '',
-      remarks: ''
+      remarks: '',
     }
   ]);
   const [detailsTableErrors, setDetailsTableErrors] = useState([
     {
+      id: 1,
       item: '',
       itemDesc: '',
       unit: '',
       qtyRequired: '',
-      remarks: ''
+      remarks: '',
     }
   ]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const currencyData = await getAllActiveCurrency(orgId);
-        setCurrencies(currencyData);
-        console.log('currency', currencyData);
-      } catch (error) {
-        console.error('Error fetching country data:', error);
-      }
-    };
-
-    fetchData();
-    getGeneralJournalDocId();
-    getAllGeneralJournalByOrgId();
-    getAccountNameFromGroup();
   }, []);
 
   useEffect(() => {
@@ -124,85 +125,56 @@ const PurchaseEnquiry = () => {
     }));
   }, [detailsTableData]);
 
-  const getGeneralJournalDocId = async () => {
-    try {
-      const response = await apiCalls(
-        'get',
-        `/transaction/getGeneralJournalDocId?branchCode=${branchCode}&branch=${branch}&finYear=${finYear}&orgId=${orgId}`
-      );
-      setFormData((prevData) => ({
-        ...prevData,
-        docId: response.paramObjectsMap.generalJournalDocId,
-        docDate: dayjs()
-      }));
-    } catch (error) {
-      console.error('Error fetching gate passes:', error);
-    }
-  };
-
-  const getAllGeneralJournalByOrgId = async () => {
-    try {
-      const result = await apiCalls('get', `/transaction/getAllGeneralJournalByOrgId?orgId=${orgId}`);
-      setData(result.paramObjectsMap.generalJournalVO || []);
-    } catch (err) {
-      console.log('error', err);
-    }
-  };
-
-  const getGeneralJournalById = async (row) => {
+  const getAllPurchaseEnquiryById = async (row) => {
     setShowForm(true);
     try {
-      const result = await apiCalls('get', `/transaction/getGeneralJournalById?id=${row.original.id}`);
+      const result = await apiCalls('get', `/purchase/getAllPurchaseEnquiryById?id=${row.original.id}`);
 
-      if (result) {
-        const glVO = result.paramObjectsMap.generalJournalVO[0];
+      if (result && result.paramObjectsMap && result.paramObjectsMap.purchaseEnquiryVO) {
+        const purchEnq = result.paramObjectsMap.purchaseEnquiryVO;
+
         setEditId(row.original.id);
-
+        setDocId(purchEnq.docId); 
         setFormData({
-          voucherSubType: glVO.voucherSubType || '',
-          id: glVO.id || '',
-          purchaseEnquiryNo: glVO.purchaseEnquiryNo || '',
-          docDate: glVO.docDate ? dayjs(glVO.docDate, 'YYYY-MM-DD') : dayjs(),
-          docId: glVO.docId || '',
-          currency: glVO.currency || '',
-          exRate: glVO.exRate || '',
-          refNo: glVO.refNo || '',
-          refDate: glVO.refDate ? dayjs(glVO.refDate, 'YYYY-MM-DD') : dayjs(),
-          remarks: glVO.remarks || '',
-          orgId: glVO.orgId || '',
-          totalDebitAmount: glVO.totalDebitAmount || '',
-          totalCreditAmount: glVO.totalCreditAmount || ''
-          // active: glVO.active || false,
+          active: purchEnq.active || true,
+          docDate: purchEnq.docDate ? dayjs(purchEnq.docDate, 'YYYY-MM-DD') : dayjs(),
+          customerName: purchEnq.customerName || '',
+          customerName: purchEnq.customerName || '',
+          workOrderNo: purchEnq.workOrderNo || '',
+          pINo: purchEnq.purchaseIndentNo || '',
+          customerPONo: purchEnq.customerPoNo || '',
+          fgItem: purchEnq.fgPartName || '',
+          supplierName: purchEnq.supplierName || '',
+          contactPerson: purchEnq.contactPerson || '',
+          contactNo: purchEnq.contactNo || '',
+          enquiryType: purchEnq.enquiryType || '',
+          expectedDeliveryDate: purchEnq.expectedDeliveryDate
+            ? dayjs(purchEnq.expectedDeliveryDate, 'YYYY-MM-DD') : dayjs(),
+          expectDelDate: purchEnq.expectedDeliveryDate ? dayjs(purchEnq.expectedDeliveryDate, 'YYYY-MM-DD') : dayjs(),
+          narration: purchEnq.summary || '',
         });
+
+        // Update table data with response
         setDetailsTableData(
-          glVO.particularsJournalVO.map((row) => ({
-            id: row.id,
-            item: row.item,
-            itemDesc: row.itemDesc,
-            unit: row.unit,
-            qtyRequired: row.qtyRequired,
-            remarks: row.remarks
+          purchEnq.purchaseEnquiryDetailsVO.map((row) => ({
+            id: row.id || '',
+            item: row.item || '',
+            itemDesc: row.itemDesc || '',
+            unit: row.unit || '',
+            qtyRequired: row.qtyRequired || 0,
+            remarks: row.remarks || '',
           }))
         );
 
-        console.log('DataToEdit', glVO);
+        console.log('DataToEdit:', purchEnq);
       } else {
-        // Handle erro
+        console.warn('No data received or invalid structure');
       }
     } catch (error) {
       console.error('Error fetching data:', error);
     }
   };
 
-  const getAccountNameFromGroup = async () => {
-    try {
-      const response = await apiCalls('get', `/transaction/getAccountNameFromGroup?orgId=${orgId}`);
-      setAccountNames(response.paramObjectsMap.generalJournalVO);
-      console.log('generalJournalVO', response.paramObjectsMap.generalJournalVO);
-    } catch (error) {
-      console.error('Error fetching gate passes:', error);
-    }
-  };
 
   const handleDebitChange = (e, row, index) => {
     const value = e.target.value;
@@ -221,103 +193,96 @@ const PurchaseEnquiry = () => {
     }
   };
 
-  const handleCreditChange = (e, row, index) => {
-    const value = e.target.value;
 
-    if (/^\d{0,20}$/.test(value)) {
-      setDetailsTableData((prev) => prev.map((r) => (r.id === row.id ? { ...r, creditAmount: value, debitAmount: value ? '0' : '' } : r)));
 
-      setDetailsTableErrors((prev) => {
-        const newErrors = [...prev];
-        newErrors[index] = {
-          ...newErrors[index],
-          creditAmount: !value ? 'Item Desc is required' : ''
-        };
-        return newErrors;
-      });
-    }
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
-
+  const handleInputChange = (e, fieldType, index) => {
+    const { name, value, type, checked } = e.target;
+    const inputValue = type === 'checkbox' ? checked : value;
+    setFormData({ ...formData, [name]: inputValue });
+    setFieldErrors({ ...fieldErrors, [name]: false });
     let errorMessage = '';
+    const alphaNumericRegex = /^[A-Za-z0-9]*$/;
 
     if (errorMessage) {
-      setFieldErrors({ ...fieldErrors, [name]: errorMessage });
-    } else {
-      setFormData({ ...formData, [name]: value.toUpperCase() });
-
-      setFieldErrors({ ...fieldErrors, [name]: '' });
-
-      // Preserve the cursor position for text-based inputs
-      if (type === 'text' || type === 'textarea') {
-        setTimeout(() => {
-          const inputElement = document.getElementsByName(name)[0];
-          if (inputElement && inputElement.setSelectionRange) {
-            inputElement.setSelectionRange(selectionStart, selectionEnd);
-          }
-        }, 0);
-      }
+      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
     }
+    else {
+      if (name === 'customerName') {
+        const selectedCustomer = partyList.find((scr) => scr.customerName === value);
+
+        if (selectedCustomer) {
+          setFormData((prevData) => ({
+            ...prevData,
+            customerCode: selectedCustomer.customerCode,
+            customerName: selectedCustomer.customerName,
+          }));
+          getWorkOrderNoForPurchaseEnquiry(selectedCustomer.customerCode);
+        }
+      }
+
+      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: '' }));
+      // setWorkOrdNoList([]);
+    }
+    setWorkOrdNoList([]);
   };
 
   const handleDateChange = (field, date) => {
     const formattedDate = dayjs(date);
     console.log('formattedDate', formattedDate);
-    // const formattedDate = dayjs(date).format('YYYY-MM-DD');
     setFormData((prevData) => ({ ...prevData, [field]: formattedDate }));
   };
 
   const handleClear = () => {
     setFormData({
+      active: true,
       purchaseEnquiryNo: '',
       docDate: dayjs(),
       customerName: '',
       workOrderNo: '',
-      pINo:'',
-      customerPONo:'',
-      fgItem:'',
-      exRate: '',
-      orgId: orgId,
-      refDate: null,
-      refNo: '',
-      remarks: '',
-      totalCreditAmount: 0,
-      totalDebitAmount: 0,
-      voucherSubType: ''
+      pINo: '',
+      customerPONo: '',
+      fgItem: '',
+      supplierName: '',
+      contactPerson: '',
+      contactNo: '',
+      enquiryType: '',
+      expectedDeliveryDate: dayjs(),
+      expectDelDate: dayjs(),
+      narration: '',
     });
+    getWorkOrderDocId();
     getAllActiveCurrency(orgId);
     setFieldErrors({
-      purchaseEnquiryNo: '',
-      docDate: null,
-      customerName: '',
-      workOrderNo: '',
-      pINo:'',
-      customerPONo:'',
-      fgItem:'',
-      exRate: '',
+      date: dayjs(),
+      customerId: '',
       orgId: orgId,
-      refDate: '',
-      refNo: '',
-      remarks: '',
-      voucherSubType: ''
+      validTill: null,
+      netAmount: '',
+      taxCode: '',
+      grossAmount: '',
+      amountInWords: '',
     });
     setDetailsTableData([
-      { id: 1, item: '', itemDesc: '', unit: '', qtyRequired: '', remarks: '' }
+      {
+        id: 1,
+        item: '',
+        itemDesc: '',
+        unit: '',
+        qtyRequired: '',
+        remarks: '',
+      }
     ]);
     setDetailsTableErrors('');
     setEditId('');
-    getGeneralJournalDocId();
   };
-
-
-
   const handleAddRow = () => {
+    // Validate the last row before adding a new one
     if (isLastRowEmpty(detailsTableData)) {
-      displayRowError(detailsTableData);
-      return;
+      displayRowError(detailsTableData); // Set error for the last row if empty
+      return; // Prevent adding a new row
     }
+
+    // Add a new row if the validation passes
     const newRow = {
       id: Date.now(),
       item: '',
@@ -326,37 +291,41 @@ const PurchaseEnquiry = () => {
       qtyRequired: '',
       remarks: ''
     };
+
+    // Add new row to table data and initialize empty error state for it
     setDetailsTableData([...detailsTableData, newRow]);
-    setDetailsTableErrors([...detailsTableErrors, { item: '', itemDesc: '', qtyRequired: '', remarks: '' }]);
+    setDetailsTableErrors([
+      ...detailsTableErrors,
+      { item: '', itemDesc: '', qtyRequired: '', remarks: '' }
+    ]);
   };
 
+  // Helper function to check if the last row is empty
   const isLastRowEmpty = (table) => {
     const lastRow = table[table.length - 1];
     if (!lastRow) return false;
 
-    if (table === detailsTableData) {
-      return (
-        !lastRow.item ||
-        !lastRow.itemDesc ||
-        !lastRow.unit ||
-        !lastRow.qtyRequired ||
-        !lastRow.remarks
-      );
-    }
-    return false;
+    return (
+      !lastRow.item ||
+      !lastRow.itemDesc ||
+      !lastRow.unit ||
+      !lastRow.qtyRequired ||
+      !lastRow.remarks
+    );
   };
 
+  // Function to display errors for the last row if any field is empty
   const displayRowError = (table) => {
     if (table === detailsTableData) {
       setDetailsTableErrors((prevErrors) => {
         const newErrors = [...prevErrors];
-        newErrors[table.length - 1] = {
-          ...newErrors[table.length - 1],
-          item: !table[table.length - 1].item ? 'Item is required' : '',
-          itemDesc: !table[table.length - 1].itemDesc ? 'Item Desc is required' : '',
-          itemDesc: !table[table.length - 1].unit ? 'Unit is required' : '',
-          itemDesc: !table[table.length - 1].qtyRequired ? 'Qty Required is required' : '',
-          itemDesc: !table[table.length - 1].remarks ? 'Remarks is required' : '',
+        const lastRowIndex = table.length - 1;
+        newErrors[lastRowIndex] = {
+          item: !table[lastRowIndex].item ? 'Item is required' : '',
+          // itemDesc: !table[lastRowIndex].itemDesc ? 'Item Desc is required' : '',
+          // unit: !table[lastRowIndex].unit ? 'Unit is required' : '',
+          // qtyRequired: !table[lastRowIndex].qtyRequired ? 'Qty Required is required' : '',
+          remarks: !table[lastRowIndex].remarks ? 'Remarks is required' : '',
         };
         return newErrors;
       });
@@ -376,66 +345,118 @@ const PurchaseEnquiry = () => {
   const handleView = () => {
     setShowForm(!showForm);
   };
-
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
 
+  // DocId
+  const getWorkOrderDocId = async () => {
+    try {
+      const response = await apiCalls('get', `/customerenquiry/getWorkOrderDocId?orgId=${orgId}`);
+      setDocId(response.paramObjectsMap.workOrderDocId)
+    } catch (error) {
+      console.error('Error fetching departmentDocId:', error);
+    }
+  };
+
+  useEffect(() => {
+    getWorkOrderDocId();
+    getCustomerNameAndCode();
+  }, [])
+
+  const getCustomerNameAndCode = async () => {
+    try {
+      const result = await apiCalls('get', `/purchase/getCustomerNameForPurchaseIndent?orgId=${orgId}`);
+      setPartyList(result.paramObjectsMap.customerNameList || []);
+    } catch (err) {
+      console.log('error', err);
+    }
+  };
+
+  const getWorkOrderNoForPurchaseEnquiry = async (customerName) => {
+    try {
+      const result = await apiCalls('get', `/purchase/getWorkOrderNoForPurchaseEnquiry?customerCode=${customerName}&orgId=${orgId}`);
+      setWorkOrdNoList(result.paramObjectsMap.workOrderNo || []);
+    } catch (err) {
+      console.log('error', err);
+    }
+  };
+
+  const getPurchaseIndentNoForPurchaseEnquiry = async (customerName, workNo) => {
+    try {
+      const result = await apiCalls('get', `/purchase/getPurchaseIndentNoForPurchaseEnquiry?customerCode=${customerName}&workOrderNo=${workNo}&orgId=${orgId}`);
+      setPINoList(result.paramObjectsMap.purchaseIndentNo || []);
+    } catch (err) {
+      console.log('error', err);
+    }
+  };
+  // Table
+  const getItemDetailsForPurchaseEnquiry = async (fgItem, purchaseIndentNo) => {
+    try {
+      const result = await apiCalls('get', `/purchase/getItemDetailsForPurchaseEnquiry?fgItem=${fgItem}&orgId=${orgId}&purchaseIndentNo=${purchaseIndentNo}`);
+      setItemList(result.paramObjectsMap.itemDetails || []);
+    } catch (err) {
+      console.log('error', err);
+    }
+  };
+  useEffect(() => {
+    getSupplierNames();
+  }, [])
+  // getSupplierNames
+  const getSupplierNames = async () => {
+    try {
+      const result = await apiCalls('get', `/purchase/getSupplierNameForPurchaseEnquiry?orgId=${orgId}`);
+      setSupNameList(result.paramObjectsMap.SupplierNameList || []);
+    } catch (err) {
+      console.error("Error fetching Supplier Names:", err);
+    }
+  };
+
+  const getContactPersonDetails = async (supplierCode) => {
+    try {
+      const response = await apiCalls("get", `/purchase/getContactPersonDetailsForPurchaseEnquiry?orgId=${orgId}&supplierCode=${supplierCode}`);
+      const contactList = response.paramObjectsMap?.purchaseEnquiryVO || [];
+      setContactPersonList(contactList);
+    } catch (error) {
+      console.error("Error fetching contact person details:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (formData.supplierCode) {
+      getContactPersonDetails(formData.supplierCode);
+    }
+  }, [formData.supplierCode]);
+
+  // List
+  useEffect(() => {
+    getAllPurchaseEnquiryByOrgId();
+  }, []);
+  const getAllPurchaseEnquiryByOrgId = async () => {
+    try {
+      const response = await apiCalls('get', `/purchase/getAllPurchaseEnquiryByOrgId?orgId=${orgId}`);
+      console.log('API Response:', response);
+
+      if (response.status === true) {
+        setListViewData(response.paramObjectsMap.purchaseEnquiryVO);
+      } else {
+        console.error('API Error:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
   const handleSave = async () => {
     const errors = {};
-    if (!formData.customerName) {
-      errors.customerName = 'customer Name is required';
-    }
-    if (!formData.workOrderNo) {
-      errors.workOrderNo = 'Work Order No is required';
-    }
-    if (!formData.pINo) {
-      errors.pINo = 'p.I No is required';
-    }
-    if (!formData.customerPONo) {
-      errors.customerPONo = 'customer PO No is required';
-    }
-    if (!formData.fgItem) {
-      errors.fgItem = 'FG Item is required';
-    }
-    if (!formData.supplierName) {
-      errors.supplierName = 'Supplier Name is required';
-    }
-    if (!formData.contactPerson) {
-      errors.contactPerson = 'contact Person is required';
-    }
-    if (!formData.contactNo) {
-      errors.contactNo = 'Contact No is required';
-    }
-    if (!formData.enquiryType) {
-      errors.enquiryType = 'Enquiry Type is required';
-    }
-
-
-
+    let isValid = true;
+    if (!formData.customerName) errors.customerName = 'Customer Name is Required';
 
     let detailTableDataValid = true;
     const newTableErrors = detailsTableData.map((row) => {
       const rowErrors = {};
-      if (!row.item) {
-        rowErrors.item = 'Item is required';
-        detailTableDataValid = false;
-      }
-
-      if (!row.itemDesc) {
-        rowErrors.itemDesc = 'Item Desc is required';
-        detailTableDataValid = false;
-      }
-      if (!row.unit) {
-        rowErrors.unit = 'Unit is required';
-        detailTableDataValid = false;
-      }
-      if (!row.qtyRequired) {
-        rowErrors.qtyRequired = 'Qty Required is required';
-        detailTableDataValid = false;
-      }
       if (!row.remarks) {
-        rowErrors.remarks = 'Remarks is required';
+        rowErrors.remarks = 'Part No is Required';
         detailTableDataValid = false;
       }
 
@@ -446,52 +467,87 @@ const PurchaseEnquiry = () => {
     setDetailsTableErrors(newTableErrors);
 
     if (Object.keys(errors).length === 0 && detailTableDataValid) {
-      const GeneralJournalVO = detailsTableData.map((row) => ({
-        ...(editId && { id: row.id }),
+      setIsLoading(true);
+
+      const purchaseEnquiryVo = detailsTableData.map((row) => ({
+        ...(editId && { id: parseInt(row.id, 10) || undefined }),
         item: row.item,
         itemDesc: row.itemDesc,
+        qtyRequired: parseInt(row.qtyRequired, 10) || 0,
+        remarks: row.remarks,
         unit: row.unit,
-        qtyRequired: row.qtyRequired,
-        remarks: row.remarks
       }));
+
       const saveFormData = {
-        ...(editId && { id: editId }),
-        active: formData.active,
-        branch: branch,
-        branchCode: branchCode,
+        ...(editId && { id: parseInt(editId, 10) || undefined }),
+        active: true,
+        contactNo: formData.contactNo || '',
+        contactPerson: formData.contactPerson || '',
         createdBy: loginUserName,
-        currency: formData.currency,
-        exRate: formData.exRate,
-        finYear: finYear,
-        orgId: orgId,
-        particularsJournalDTO: GeneralJournalVO,
-        refDate: dayjs(formData.refDate).format('YYYY-MM-DD'),
-        refNo: formData.refNo,
-        remarks: formData.remarks,
-        totalCreditAmount: formData.totalCreditAmount,
-        totalDebitAmount: formData.totalDebitAmount,
-        voucherSubType: formData.voucherSubType
+        customerName: formData.customerName || '',
+        customerPoNo: formData.customerPONo || '',
+        enquiryDueDate: dayjs(formData.expectDelDate) || dayjs(),
+        enquiryType: formData.enquiryType || '',
+        expectedDeliveryDate: dayjs(formData.expectedDeliveryDate) || dayjs(),
+        fgPartName: formData.fgItem || '',
+        orgId: parseInt(orgId, 10),
+        purchaseIndentNo: formData.pINo || '',
+        supplierName: formData.supplierName || '',
+        workOrderNo: formData.workOrderNo || '',
+        summary: formData.narration,
+        purchaseEnquiryDetailsDTO: purchaseEnquiryVo,
+
+
+        customerCode: formData.customerCode || '',
+        supplierCode: formData.supplierCode || '',
+
       };
-      console.log('DATA TO SAVE IS:', saveFormData);
+
+      console.log("DATA TO SAVE IS:", saveFormData);
+
       try {
-        const response = await apiCalls('put', `/transaction/updateCreateGeneralJournal`, saveFormData);
+        const response = await apiCalls("put", "/purchase/updateCreatePurchaseEnquiry", saveFormData);
         if (response.status === true) {
-          console.log('Response:', response);
-          showToast('success', editId ? 'General Journal Updated Successfully' : 'General Journal Created successfully');
-          getAllGeneralJournalByOrgId();
+          console.log("Response:", response);
+          showToast(
+            "success",
+            editId
+              ? "Purchase Enquiry updated successfully"
+              : "Purchase Enquiry values created successfully"
+          );
+          getAllPurchaseEnquiryByOrgId();
           handleClear();
+          setIsLoading(false);
         } else {
-          showToast('error', response.paramObjectsMap.errorMessage || 'General Journal creation failed');
+          showToast("error", response.paramObjectsMap.errorMessage || "Purchase Enquiry value creation failed");
+          setIsLoading(false);
         }
       } catch (error) {
-        console.error('Error:', error);
-        showToast('error', 'General Journal creation failed');
+        console.error("Error:", error);
+        showToast("error", "Purchase Enquiry value creation failed");
+        setIsLoading(false);
       }
-    } else {
+    }
+    else {
       setFieldErrors(errors);
     }
   };
 
+const handleCustomerChange = (event, value) => {
+  setFormData((prev) => ({
+    ...prev,
+    customerName: value?.name || '',
+    customerCode: value?.code || '', // Assuming `value` has a `code` field
+  }));
+};
+
+const handleSupplierChange = (event, value) => {
+  setFormData((prev) => ({
+    ...prev,
+    supplierName: value?.name || '',
+    supplierCode: value?.code || '', // Assuming `value` has a `code` field
+  }));
+};
   const handleBulkUploadOpen = () => {
     setUploadOpen(true);
   };
@@ -508,7 +564,6 @@ const PurchaseEnquiry = () => {
     toast.success("File uploded sucessfully")
     console.log('Submit clicked');
     handleBulkUploadClose();
-    // getAllData();
   };
 
   return (
@@ -531,16 +586,14 @@ const PurchaseEnquiry = () => {
                 {/* Purchase Enquiry No */}
                 <div className="col-md-3 mb-3">
                   <TextField
-                    id="outlined-textarea-zip"
+                    id="woNo"
                     label="Purchase Enquiry No"
                     variant="outlined"
                     size="small"
                     fullWidth
-                    name="docId"
-                    value={formData.docId}
-                    onChange={handleInputChange}
+                    name="purchaseEnquiryNo"
+                    value={docId}
                     disabled
-                    inputProps={{ maxLength: 10 }}
                   />
                 </div>
                 {/* Date */}
@@ -562,85 +615,126 @@ const PurchaseEnquiry = () => {
                 </div>
                 {/* Customer Name */}
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.customerName}>
-                    <InputLabel id="demo-simple-select-label">
-                      {
-                        <span>
-                          Customer Name <span className="asterisk">*</span>
-                        </span>
-                      }
-                    </InputLabel>
-                    <Select
-                      labelId="demo-simple-select-label"
-                      id="demo-simple-select"
-                      label="Customer Name"
-                      onChange={handleInputChange}
-                      name="customerName"
-                      value={formData.customerName}
-                    >
-                      {currencies.map((item) => (
-                        <MenuItem key={item.id} value={item.customerName}>
-                          {item.customerName}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    {fieldErrors.customerName && <FormHelperText style={{ color: 'red' }}>customer Name is required</FormHelperText>}
-                  </FormControl>
+                  <Autocomplete
+                    disablePortal
+                    options={partyList.map((option, index) => ({ ...option, key: index }))}
+                    getOptionLabel={(option) => option.customerName || ''}
+                    sx={{ width: '100%' }}
+                    size="small"
+                    value={formData.customerName ? partyList.find((c) => c.customerName === formData.customerName) : null}
+                    onChange={(event, newValue) => {
+                      handleInputChange({
+                        target: {
+                          name: 'customerName',
+                          value: newValue ? newValue.customerName : '',
+                        },
+                      });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Customer Name"
+                        name="customerName"
+                        error={!!fieldErrors.customerName}
+                        helperText={fieldErrors.customerName}
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 },
+                        }}
+                      />
+                    )}
+                  />
                 </div>
                 {/* Work Order No */}
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.workOrderNo}>
-                    <InputLabel id="demo-simple-select-label">
-                      {
-                        <span>
-                          Work Order No
-                        </span>
-                      }
-                    </InputLabel>
-                    <Select
-                      labelId="demo-simple-select-label"
-                      id="demo-simple-select"
-                      label="Work Order No"
-                      onChange={handleInputChange}
-                      name="workOrderNo"
-                      value={formData.workOrderNo}
-                    >
-                      {currencies.map((item) => (
-                        <MenuItem key={item.id} value={item.workOrderNo}>
-                          {item.workOrderNo}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    {fieldErrors.workOrderNo && <FormHelperText style={{ color: 'red' }}>Work Order No is required</FormHelperText>}
-                  </FormControl>
-                </div>
+                  <Autocomplete
+                    disablePortal
+                    options={workOrdNoList.map((option, index) => ({
+                      ...option,
+                      key: index,
+                    }))}
+                    getOptionLabel={(option) => option.workOrderNo || ''}
+                    sx={{ width: '100%' }}
+                    size="small"
+                    value={workOrdNoList.find((qu) => qu.workOrderNo === formData.workOrderNo) || null}
+                    onChange={(event, newValue) => {
+                      console.log('Selected Work Order:', newValue);
+                      if (newValue) {
+                        setFormData((prevData) => {
+                          const updatedFormData = {
+                            ...prevData,
+                            workOrderNo: newValue.workOrderNo,
+                            customerPONo: newValue.customerPoNo,
+                            fgItem: newValue.fgPartDesc,
+                          };
 
+                          // Invoke the dependent function after state update
+                          getPurchaseIndentNoForPurchaseEnquiry(updatedFormData.customerCode, newValue.workOrderNo);
+
+                          return updatedFormData;
+                        });
+                      } else {
+                        setFormData((prevData) => ({
+                          ...prevData,
+                          workOrderNo: '',
+                          customerPONo: '',
+                          fgItem: '',
+                        }));
+                      }
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Work Order No"
+                        name="workOrderNo"
+                        error={!!fieldErrors.workOrderNo}
+                        helperText={fieldErrors.workOrderNo}
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 },
+                        }}
+                      />
+                    )}
+                  />
+                </div>
                 {/* P.I No */}
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.pINo}>
-                    <InputLabel id="demo-simple-select-label">
-                      {
-                        <span>
-                          P.I No
-                        </span>
+                  <Autocomplete
+                    disablePortal
+                    options={pINoList.map((option, index) => ({ ...option, key: index }))}
+                    getOptionLabel={(option) => option.purchaseIndentNo || ''}
+                    sx={{ width: '100%' }}
+                    size="small"
+                    value={
+                      formData.pINo
+                        ? pINoList.find((item) => item.purchaseIndentNo === formData.pINo) || null
+                        : null
+                    }
+                    onChange={(event, newValue) => {
+                      const selectedPINO = newValue ? newValue.purchaseIndentNo : '';
+                      setFormData({
+                        ...formData,
+                        pINo: selectedPINO,
+                      });
+
+                      if (selectedPINO) {
+                        getItemDetailsForPurchaseEnquiry(formData.fgItem, selectedPINO); // Pass fgItem along with pINo
                       }
-                    </InputLabel>
-                    <Select
-                      labelId="demo-simple-select-label"
-                      id="demo-simple-select"
-                      label=" P.I No"
-                      onChange={handleInputChange}
-                      name="pINo"
-                      value={formData.pINo}
-                    >
-                      {currencies.map((item) => (
-                        <MenuItem key={item.id} value={item.pINo}>
-                          {item.pINo}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    {fieldErrors.pINo && <FormHelperText style={{ color: 'red' }}>P.I No is required</FormHelperText>}
-                  </FormControl>
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="P.I No"
+                        name="pINo"
+                        error={!!fieldErrors.pINo} // Display error if there is a validation issue
+                        helperText={fieldErrors.pINo} // Show error message
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 },
+                        }}
+                      />
+                    )}
+                  />
                 </div>
 
                 {/* Customer PO No */}
@@ -657,7 +751,6 @@ const PurchaseEnquiry = () => {
                     helperText={fieldErrors.customerPONo}
                   />
                 </div>
-
                 {/* FG Item */}
                 <div className="col-md-3 mb-3">
                   <TextField
@@ -665,149 +758,166 @@ const PurchaseEnquiry = () => {
                     variant="outlined"
                     size="small"
                     fullWidth
-                    name="fgItem "
+                    name="fgItem"
                     value={formData.fgItem}
                     onChange={handleInputChange}
                     error={!!fieldErrors.fgItem}
                     helperText={fieldErrors.fgItem}
-                  // inputRef={UOMDescriptionRef}
                   />
                 </div>
-
                 {/* Supplier Name */}
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.supplierName}>
-                    <InputLabel id="demo-simple-select-label">
-                      {
-                        <span>
-                          Supplier Name <span className="asterisk">*</span>
-                        </span>
+                  <Autocomplete
+                    disablePortal
+                    options={supNameList}
+                    getOptionLabel={(option) => option.supplierName || ''}
+                    sx={{ width: '100%' }}
+                    size="small"
+                    value={supNameList.find((c) => c.supplierName === formData.supplierName) || null}
+                    onChange={(event, newValue) => {
+                      if (newValue) {
+                        setFormData({
+                          ...formData,
+                          supplierName: newValue.supplierName,
+                        });
+                        getContactPersonDetails(newValue.supplierCode);
+                      } else {
+                        setFormData({
+                          ...formData,
+                          supplierName: '',
+                        });
                       }
-                    </InputLabel>
-                    <Select
-                      labelId="demo-simple-select-label"
-                      id="demo-simple-select"
-                      label="Supplier Name"
-                      onChange={handleInputChange}
-                      name="supplierName"
-                      value={formData.supplierName}
-                    >
-                      {currencies.map((item) => (
-                        <MenuItem key={item.id} value={item.supplierName}>
-                          {item.supplierName}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    {fieldErrors.supplierName && <FormHelperText style={{ color: 'red' }}>Supplier Name is required</FormHelperText>}
-                  </FormControl>
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Supplier Name"
+                        name="supplierName"
+                        error={!!fieldErrors.supplierName}
+                        helperText={fieldErrors.supplierName}
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 },
+                        }}
+                      />
+                    )}
+                  />
                 </div>
 
                 {/* Contact Person */}
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.contactPerson}>
-                    <InputLabel id="demo-simple-select-label">
-                      {
-                        <span>
-                          Contact Person
-                        </span>
-                      }
-                    </InputLabel>
-                    <Select
-                      labelId="demo-simple-select-label"
-                      id="demo-simple-select"
-                      label=" Contact Person"
-                      onChange={handleInputChange}
-                      name="contactPerson"
-                      value={formData.contactPerson}
-                    >
-                      {currencies.map((item) => (
-                        <MenuItem key={item.id} value={item.contactPerson}>
-                          {item.contactPerson}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    {fieldErrors.contactPerson && <FormHelperText style={{ color: 'red' }}>Contact Person is required</FormHelperText>}
-                  </FormControl>
-                </div>
+                  <Autocomplete
+                    disablePortal
+                    options={contactPersonList}
+                    getOptionLabel={(option) => option.contactPerson || ""}
+                    sx={{ width: "100%" }}
+                    size="small"
+                    value={
+                      contactPersonList.find(
+                        (cp) => cp.contactPerson === formData.contactPerson
+                      ) || null
+                    }
+                    onChange={(event, newValue) => {
+                      console.log("Selected Contact Person:", newValue);
 
-                 {/* Contact No */}
-                 <div className="col-md-3 mb-3">
+                      if (newValue) {
+                        setFormData({
+                          ...formData,
+                          contactPerson: newValue.contactPerson,
+                          contactNo: newValue.contactNo,
+                          taxType: newValue.taxType,
+                        });
+                      } else {
+                        setFormData({
+                          ...formData,
+                          contactPerson: "",
+                          contactNo: "",
+                          taxType: "",
+                        });
+                      }
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Contact Person"
+                        name="contactPerson"
+                        error={!!fieldErrors.contactPerson}
+                        helperText={fieldErrors.contactPerson}
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 },
+                        }}
+                      />
+                    )}
+                  />
+                </div>
+                {/* Contact No */}
+                <div className="col-md-3 mb-3">
                   <TextField
                     label="Contact No"
                     variant="outlined"
                     size="small"
                     fullWidth
-                    name="contactNo "
+                    name="contactNo"
                     value={formData.contactNo}
                     onChange={handleInputChange}
                     error={!!fieldErrors.contactNo}
                     helperText={fieldErrors.contactNo}
-                  // inputRef={UOMDescriptionRef}
                   />
                 </div>
-
-                
                 {/* Enquiry Type */}
                 <div className="col-md-3 mb-3">
                   <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.enquiryType}>
-                    <InputLabel id="demo-simple-select-label">
-                      {
-                        <span>
-                          Enquiry Type
-                        </span>
-                      }
-                    </InputLabel>
+                    <InputLabel id="enquiryType">Enquiry Type</InputLabel>
                     <Select
-                      labelId="demo-simple-select-label"
-                      id="demo-simple-select"
-                      label="Enquiry Type"
-                      onChange={handleInputChange}
-                      name="currency"
+                      labelId="enquiryType"
+                      id="enquiryType"
+                      label="Branch/Location"
+                      onChange={(e) => {
+                        setFormData((prevData) => ({
+                          ...prevData,
+                          enquiryType: e.target.value,
+                        }));
+                      }}
+                      name="enquiryType"
                       value={formData.enquiryType}
                     >
-                      {currencies.map((item) => (
-                        <MenuItem key={item.id} value={item.enquiryType}>
-                          {item.enquiryType}
-                        </MenuItem>
-                      ))}
+                      <MenuItem value="Head Office">-- Select --</MenuItem>
+                      <MenuItem value="Branch">Mail</MenuItem>
                     </Select>
-                    {fieldErrors.enquiryType && <FormHelperText style={{ color: 'red' }}>Enquiry Type is required</FormHelperText>}
+                    {fieldErrors.enquiryType && <FormHelperText>{fieldErrors.enquiryType}</FormHelperText>}
                   </FormControl>
                 </div>
-
                 {/* Enquiry Due Date */}
                 <div className="col-md-3 mb-3">
                   <FormControl fullWidth variant="filled" size="small">
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <DatePicker
                         label="Enquiry Due Date"
-                        value={formData.refDate}
-                        onChange={(date) => handleDateChange('refDate', date)}
+                        value={formData.expectedDeliveryDate}
+                        onChange={(date) => handleDateChange('expectedDeliveryDate', date)}
                         slotProps={{
                           textField: { size: 'small', clearable: true }
                         }}
                         format="DD-MM-YYYY"
                       />
                     </LocalizationProvider>
-                    {fieldErrors.refDate && <p className="dateErrMsg">Ref Date is required</p>}
                   </FormControl>
                 </div>
-
                 {/* Expected Delivery Date */}
                 <div className="col-md-3 mb-3">
                   <FormControl fullWidth variant="filled" size="small">
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <DatePicker
                         label="Expected Delivery Date"
-                        value={formData.refDate}
-                        onChange={(date) => handleDateChange('refDate', date)}
+                        value={formData.expectDelDate}
+                        onChange={(date) => handleDateChange('expectDelDate', date)}
                         slotProps={{
                           textField: { size: 'small', clearable: true }
                         }}
                         format="DD-MM-YYYY"
                       />
                     </LocalizationProvider>
-                    {fieldErrors.refDate && <p className="dateErrMsg">Ref Date is required</p>}
                   </FormControl>
                 </div>
               </div>
@@ -840,7 +950,6 @@ const PurchaseEnquiry = () => {
                               uploadText="Upload file"
                               downloadText="Sample File"
                               onSubmit={handleSubmit}
-                              // sampleFileDownload={FirstData}
                               handleFileUpload={handleFileUpload}
                               apiUrl={`excelfileupload/excelUploadForSample`}
                               screen="PutAway"
@@ -863,156 +972,118 @@ const PurchaseEnquiry = () => {
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {detailsTableData.map((row, index) => (
-                                    <tr key={row.id}>
-                                      <td className="border px-2 py-2 text-center">
-                                        <ActionButton
-                                          title="Delete"
-                                          icon={DeleteIcon}
-                                          onClick={() =>
-                                            handleDeleteRow(
-                                              row.id,
-                                              detailsTableData,
-                                              setDetailsTableData,
-                                              detailsTableErrors,
-                                              setDetailsTableErrors
-                                            )
-                                          }
-                                        />
-                                      </td>
-                                      <td className="text-center">
-                                        <div className="pt-2">{index + 1}</div>
-                                      </td>
-                                      <td className="border px-2 py-2">
-                                        <select
-                                          value={row.item}
-                                          style={{ width: '150px' }}
-                                          className={detailsTableErrors[index]?.item ? 'error form-control' : 'form-control'}
-                                          onChange={(e) =>
-                                            setDetailsTableData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, item: e.target.value } : r))
-                                            )
-                                          }
-                                        >
-                                          <option value="">-- Select --</option>
-                                          {accountNames.map((item) => (
-                                            <option key={item.id} value={item.accountName}>
-                                              {item.accountName}
-                                            </option>
-                                          ))}
-                                        </select>
-                                        {detailsTableErrors[index]?.item && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors[index].item}
-                                          </div>
-                                        )}
-                                      </td>
-                                      <td className="border px-2 py-2">
-                                        <input
-                                          type="text"
-                                          value={row.itemDesc}
-                                          onChange={(e) => {
-                                            const value = e.target.value;
-                                            setDetailsTableData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, itemDesc: value } : r))
-                                            );
-                                            setDetailsTableErrors((prev) => {
-                                              const newErrors = [...prev];
-                                              newErrors[index] = {
-                                                ...newErrors[index],
-                                                itemDesc: !value ? 'Item Desc is required' : ''
-                                              };
-                                              return newErrors;
-                                            });
-                                          }}
-                                          className={detailsTableErrors[index]?.itemDesc ? 'error form-control' : 'form-control'}
-                                        />
-                                        {detailsTableErrors[index]?.itemDesc && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors[index].itemDesc}
-                                          </div>
-                                        )}
-                                      </td>
-                                      <td className="border px-2 py-2">
-                                        <input
-                                          type="text"
-                                          value={row.unit}
-                                          onChange={(e) => {
-                                            const value = e.target.value;
-                                            setDetailsTableData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, unit: value } : r))
-                                            );
-                                            setDetailsTableErrors((prev) => {
-                                              const newErrors = [...prev];
-                                              newErrors[index] = {
-                                                ...newErrors[index],
-                                                unit: !value ? 'Unit is required' : ''
-                                              };
-                                              return newErrors;
-                                            });
-                                          }}
-                                          className={detailsTableErrors[index]?.unit ? 'error form-control' : 'form-control'}
-                                        />
-                                        {detailsTableErrors[index]?.unit && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors[index].unit}
-                                          </div>
-                                        )}
-                                      </td>
-                                      <td className="border px-2 py-2">
-                                        <input
-                                          type="text"
-                                          value={row.qtyRequired}
-                                          onChange={(e) => {
-                                            const value = e.target.value;
-                                            setDetailsTableData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, qtyRequired: value } : r))
-                                            );
-                                            setDetailsTableErrors((prev) => {
-                                              const newErrors = [...prev];
-                                              newErrors[index] = {
-                                                ...newErrors[index],
-                                                qtyRequired: !value ? 'Qty Required is required' : ''
-                                              };
-                                              return newErrors;
-                                            });
-                                          }}
-                                          className={detailsTableErrors[index]?.qtyRequired ? 'error form-control' : 'form-control'}
-                                        />
-                                        {detailsTableErrors[index]?.qtyRequired && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors[index].qtyRequired}
-                                          </div>
-                                        )}
-                                      </td>
-                                      <td className="border px-2 py-2">
-                                        <input
-                                          type="text"
-                                          value={row.remarks}
-                                          onChange={(e) => {
-                                            const value = e.target.value;
-                                            setDetailsTableData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, remarks: value } : r))
-                                            );
-                                            setDetailsTableErrors((prev) => {
-                                              const newErrors = [...prev];
-                                              newErrors[index] = {
-                                                ...newErrors[index],
-                                                remarks: !value ? 'Remarks is required' : ''
-                                              };
-                                              return newErrors;
-                                            });
-                                          }}
-                                          className={detailsTableErrors[index]?.remarks ? 'error form-control' : 'form-control'}
-                                        />
-                                        {detailsTableErrors[index]?.remarks && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {detailsTableErrors[index].remarks}
-                                          </div>
-                                        )}
-                                      </td>
-                                    </tr>
-                                  ))}
+                                  {Array.isArray(detailsTableData) &&
+                                    detailsTableData.map((row, index) => (
+                                      <tr key={row.id}>
+                                        <td className="border px-2 py-2 text-center">
+                                          <ActionButton
+                                            title="Delete"
+                                            icon={DeleteIcon}
+                                            onClick={() =>
+                                              handleDeleteRow(
+                                                row.id,
+                                                detailsTableData,
+                                                setDetailsTableData,
+                                                detailsTableErrors,
+                                                setDetailsTableErrors
+                                              )
+                                            }
+                                          />
+                                        </td>
+                                        <td className="text-center">
+                                          <div className="pt-2">{index + 1}</div>
+                                        </td>
+                                        <td className="border px-2 py-2">
+                                          <Autocomplete
+                                            disablePortal
+                                            options={itemList}
+                                            getOptionLabel={(option) => option.item || ""}
+                                            sx={{ width: "100%" }}
+                                            size="small"
+                                            value={itemList.find((it) => it.item === row.item) || null}
+                                            onChange={(event, newValue) => {
+                                              if (newValue) {
+                                                setDetailsTableData((prev) =>
+                                                  prev.map((r) =>
+                                                    r.id === row.id
+                                                      ? {
+                                                        ...r,
+                                                        item: newValue.item,
+                                                        itemDesc: newValue.itemDesc || "",
+                                                        unit: newValue.uom || "",
+                                                        qtyRequired: newValue.qtyRequired || "",
+                                                      }
+                                                      : r
+                                                  )
+                                                );
+                                              } else {
+                                                setDetailsTableData((prev) =>
+                                                  prev.map((r) =>
+                                                    r.id === row.id
+                                                      ? { ...r, item: "", itemDesc: "", unit: "", qtyRequired: "" }
+                                                      : r
+                                                  )
+                                                );
+                                              }
+                                            }}
+                                            renderInput={(params) => (
+                                              <TextField
+                                                {...params}
+                                                label="Item"
+                                                name="item"
+                                                error={!!detailsTableErrors[index]?.item}
+                                                helperText={detailsTableErrors[index]?.item}
+                                                InputProps={{
+                                                  ...params.InputProps,
+                                                  style: { height: 40, width: 170 },
+                                                }}
+                                              />
+                                            )}
+                                          />
+                                        </td>
+                                        <td className="border px-2 py-2">
+                                          <input
+                                            type="text"
+                                            value={row.itemDesc}
+                                            className="form-control"
+                                            style={{ width: "150px" }}
+                                            disabled
+                                          />
+                                        </td>
+                                        <td className="border px-2 py-2">
+                                          <input
+                                            type="text"
+                                            value={row.unit}
+                                            className="form-control"
+                                            style={{ width: "150px" }}
+                                            disabled
+                                          />
+                                        </td>
+                                        <td className="border px-2 py-2">
+                                          <input
+                                            type="text"
+                                            value={row.qtyRequired}
+                                            className="form-control"
+                                            style={{ width: "150px" }}
+                                            disabled
+                                          />
+                                        </td>
+                                        <td className="border px-2 py-2">
+                                          <input
+                                            type="text"
+                                            value={row.remarks}
+                                            onChange={(e) => {
+                                              const value = e.target.value;
+                                              setDetailsTableData((prev) =>
+                                                prev.map((r) => (r.id === row.id ? { ...r, remarks: value } : r))
+                                              );
+                                            }}
+                                            className="form-control"
+                                          />
+                                        </td>
+                                      </tr>
+                                    ))}
+
                                 </tbody>
                               </table>
                             </div>
@@ -1031,12 +1102,18 @@ const PurchaseEnquiry = () => {
                               id="Narration"
                               label="Narration"
                               size="small"
-                              name="remarks"
-                              value={formData.remarks}
+                              name="narration"
+                              value={formData.narration}
                               multiline
                               minRows={2}
                               inputProps={{ maxLength: 30 }}
-                              onChange={handleInputChange}
+                              onChange={(e) => {
+                                const { name, value } = e.target;
+                                setFormData((prevData) => ({
+                                  ...prevData,
+                                  [name]: value,
+                                }));
+                              }}
                             />
                           </FormControl>
                         </div>
@@ -1048,7 +1125,7 @@ const PurchaseEnquiry = () => {
               </div>
             </>
           ) : (
-            <CommonTable data={data} columns={listViewColumns} blockEdit={true} toEdit={getGeneralJournalById} />
+            <CommonTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getAllPurchaseEnquiryById} />
           )}
         </div>
       </div>
