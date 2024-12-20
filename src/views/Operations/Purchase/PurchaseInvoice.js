@@ -449,8 +449,7 @@ function PurchaseInvoice() {
     if (!formData.poNo) {
       errors.poNo = 'PO No is required';
     }
-    if (!formData.grnNo) {
-      8
+    if (!formData.grnNo) { 
       errors.grnNo = 'GRN No is required';
     }
     if (!formData.dcDate) {
