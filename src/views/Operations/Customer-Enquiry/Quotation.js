@@ -298,7 +298,7 @@ const Quotation = () => {
       customerId: '',
       orgId: orgId,
       validTill: null,
-      docDate: dayjs(), 
+      docDate: dayjs(),
       netAmount: '',
       taxCode: '',
       kindAttention: '',
@@ -642,7 +642,7 @@ const Quotation = () => {
                           ...params.InputProps,
                           style: { height: 40 },
                         }}
-                        // disabled={isFieldDisabled}
+                      // disabled={isFieldDisabled}
                       />
                     )}
                   />
@@ -894,7 +894,7 @@ const Quotation = () => {
                                       <td className="text-center">
                                         <div className="pt-2">{index + 1}</div>
                                       </td>
-                                      <td className="border px-2 py-2">
+                                      {/* <td className="border px-2 py-2">
                                         <select
                                           value={row.partNo || ""}
                                           style={{ width: "150px" }}
@@ -948,9 +948,66 @@ const Quotation = () => {
                                             {detailsTableErrors[index].partNo}
                                           </div>
                                         )}
+                                      </td> */}
+
+                                      <td>
+                                        <Autocomplete
+                                          disablePortal
+                                          options={partNoList.map((option, index) => ({ ...option, key: index }))}
+                                          getOptionLabel={(option) => option.partNo || ''}
+                                          sx={{ width: '100%' }}
+                                          size="small"
+                                          value={detailsTableData[index]?.partNo
+                                            ? partNoList.find((c) => c.partNo === detailsTableData[index].partNo)
+                                            : null}
+                                          onChange={(event, newValue) => {
+                                            const selectedPartDetails = newValue;
+
+                                            // Update the selected part details in the details table data
+                                            setDetailsTableData((prev) =>
+                                              prev.map((row, i) =>
+                                                i === index
+                                                  ? {
+                                                    ...row,
+                                                    partNo: selectedPartDetails?.partNo || '',
+                                                    partDescription: selectedPartDetails?.partDescription || '',
+                                                    unit: selectedPartDetails?.unit || '',
+                                                    drawingNo: selectedPartDetails?.drawingNo || '',
+                                                    revisionNo: selectedPartDetails?.revisionNo || '',
+                                                    qtyOffered: selectedPartDetails?.qtyOffered || '',
+                                                  }
+                                                  : row
+                                              )
+                                            );
+
+                                            // Update validation errors for partNo
+                                            setDetailsTableErrors((prev) => {
+                                              const newErrors = [...prev];
+                                              newErrors[index] = {
+                                                ...newErrors[index],
+                                                partNo: !selectedPartDetails?.partNo ? 'Part No is required' : '',
+                                              };
+                                              return newErrors;
+                                            });
+                                          }}
+                                          renderInput={(params) => (
+                                            <TextField
+                                              {...params}
+                                              label="Part No"
+                                              name="partNo"
+                                              error={!!detailsTableErrors[index]?.partNo}
+                                              helperText={detailsTableErrors[index]?.partNo}
+                                              InputProps={{
+                                                ...params.InputProps,
+                                                style: { height: 40, width: 200 },
+                                              }}
+                                            />
+                                          )}
+                                        />
                                       </td>
 
-                                      
+
+
                                       <td className="border px-2 py-2">
                                         <input
                                           type="text"

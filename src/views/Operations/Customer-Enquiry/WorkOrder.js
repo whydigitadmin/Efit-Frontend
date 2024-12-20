@@ -26,7 +26,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import apiCalls from 'apicall';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import sampleFile from '../../../assets/sample-files/sample_data_buyerorder.xls';
-import CommonListViewTable from '../../basicMaster/CommonListViewTable'; 
+import CommonListViewTable from '../../basicMaster/CommonListViewTable';
 
 function WorkOrder() {
   const [showForm, setShowForm] = useState(true);
@@ -88,9 +88,9 @@ function WorkOrder() {
   const listViewColumns = [
     { accessorKey: 'docId', header: 'Document ID', size: 140 },
     { accessorKey: 'customerName', header: 'Customer Name', size: 140 },
-    { accessorKey: 'customerPoNo', header: 'Customer PO No', size: 140 },  
-    { accessorKey: 'quotationNo', header: 'Quotation No', size: 140 },  
-    { accessorKey: 'currency', header: 'Currency', size: 140 },  
+    { accessorKey: 'customerPoNo', header: 'Customer PO No', size: 140 },
+    { accessorKey: 'quotationNo', header: 'Quotation No', size: 140 },
+    { accessorKey: 'currency', header: 'Currency', size: 140 },
   ];
 
 
@@ -111,9 +111,6 @@ function WorkOrder() {
       console.error('Error fetching data:', error);
     }
   };
-
-
-
 
   const [itemParticularsData, setItemParticularsData] = useState([
     {
@@ -166,13 +163,13 @@ function WorkOrder() {
 
     return partNoList.filter((part) => !selectedPartNos.includes(part.partCode));
   };
-  
+
   const handleClear = () => {
     setFormData({
       docDate: dayjs(),
       customerName: '',
       customerPoNo: '',
-      customerCode:'',
+      customerCode: '',
       quotationNo: '',
       currency: '',
       productionManager: '',
@@ -187,7 +184,7 @@ function WorkOrder() {
       customerPoNo: '',
       quotationNo: '',
       currency: '',
-      customerCode:'',
+      customerCode: '',
       productionManager: '',
       customerDueDate: dayjs(),
       vapDueDate: dayjs(),
@@ -510,6 +507,7 @@ function WorkOrder() {
         if (response.status === true) {
           showToast('success', editId ? 'Work Order Updated Successfully' : 'Work Order Created Successfully');
           handleClear(); // Clear the form after success
+          getAllQuotationByOrgId();
         } else {
           showToast('error', response.paramObjectsMap?.message || 'Work Order creation failed');
         }
@@ -537,7 +535,7 @@ function WorkOrder() {
         setEditId(WorOde.id);
         setDocId(WorOde.docId);
         getQuotationNumber(WorOde.customerCode);
-         
+
         setFormData({
           active: WorOde.active === "Active",
           docDate: WorOde.docDate ? dayjs(WorOde.docDate, 'YYYY-MM-DD') : dayjs(),
@@ -545,13 +543,13 @@ function WorkOrder() {
           customerCode: WorOde.customerCode,
           customerPoNo: WorOde.customerPoNo,
           quotationNo: WorOde.quotationNo,
-          currency: WorOde.currency, 
+          currency: WorOde.currency,
           customerDueDate: WorOde.customerDueDate ? dayjs(WorOde.customerDueDate, 'YYYY-MM-DD') : dayjs(),
           vapDueDate: WorOde.vapDueDate ? dayjs(WorOde.vapDueDate, 'YYYY-MM-DD') : dayjs(),
-          productionManager: WorOde.productionMgr, 
-          customerSpecialRequirement: WorOde.customerSpecialRequirement,  
+          productionManager: WorOde.productionMgr,
+          customerSpecialRequirement: WorOde.customerSpecialRequirement,
           orgId: WorOde.orgId,
-          createdBy: WorOde.createdBy, 
+          createdBy: WorOde.createdBy,
         });
 
 
@@ -566,7 +564,7 @@ function WorkOrder() {
             ordQty: parseInt(row.ordQty, 10) || 0,
             freeQty: parseInt(row.freeQty, 10) || 0,
             availableStockQty: parseInt(row.availableStockQty, 10) || 0,
-            requiredQty: parseInt(row.requiredQty, 10) || 0, 
+            requiredQty: parseInt(row.requiredQty, 10) || 0,
           })) || []
         );
 
@@ -574,7 +572,7 @@ function WorkOrder() {
           WorOde.termsAndConditionsVO?.map((row) => ({
             id: row.id,
             template: row.template,
-            description: row.description, 
+            description: row.description,
           })) || []
         );
       } else {
@@ -838,6 +836,7 @@ function WorkOrder() {
                     onChange={handleInputChange}
                     error={!!fieldErrors.productionManager}
                     helperText={fieldErrors.productionManager}
+                    disabled
                   />
                 </div>
               </div>
@@ -860,9 +859,9 @@ function WorkOrder() {
                   {value === 0 && (
                     <>
                       <div className="row mt-2">
-                      <div className="mb-1">
-                        <ActionButton title="Add" icon={AddIcon} onClick={handleAddRowQuotation} />
-                      </div>
+                        <div className="mb-1">
+                          <ActionButton title="Add" icon={AddIcon} onClick={handleAddRowQuotation} />
+                        </div>
                         <div className="col-lg-12">
                           <div className="table-responsive">
                             <table className="table table-bordered ">
@@ -918,7 +917,7 @@ function WorkOrder() {
                                     <td className="text-center">
                                       <div className="pt-2">{index + 1}</div>
                                     </td>
-                                    <td className="border px-2 py-2">
+                                    {/* <td className="border px-2 py-2">
                                       <select
                                         value={row.partNo || ""}
                                         style={{ width: "150px" }}
@@ -975,7 +974,70 @@ function WorkOrder() {
                                           {itemParticularsErrors[index].partNo}
                                         </div>
                                       )}
+                                    </td> */}
+
+                                    <td>
+                                      <Autocomplete
+                                        disablePortal
+                                        options={partNoList.map((option, index) => ({ ...option, key: index }))}
+                                        getOptionLabel={(option) => option.partCode || ''}
+                                        sx={{ width: '100%' }}
+                                        size="small"
+                                        value={
+                                          itemParticularsData[index]?.partNo
+                                            ? partNoList.find((c) => c.partCode === itemParticularsData[index].partNo)
+                                            : null
+                                        }
+                                        onChange={(event, newValue) => {
+                                          const selectedPartDetails = newValue;
+
+                                          // Update the selected part details in the item particulars data
+                                          setItemParticularsData((prev) =>
+                                            prev.map((row, i) =>
+                                              i === index
+                                                ? {
+                                                  ...row,
+                                                  partNo: selectedPartDetails?.partCode || '',
+                                                  partName: selectedPartDetails?.partDescription || '',
+                                                  drawingNo: selectedPartDetails?.drawingNo || '',
+                                                  revisionNo: selectedPartDetails?.revisionNo || '',
+                                                  uom: selectedPartDetails?.uom || '',
+                                                  ordQty: selectedPartDetails?.orderQty || '',
+                                                  freeQty: '', // Assuming freeQty to be user-input; adjust as per logic
+                                                  availableStockQty: '', // Assuming it's dynamic; fetch if needed
+                                                  requiredQty: '', // Assuming requiredQty is user-input
+                                                }
+                                                : row
+                                            )
+                                          );
+
+                                          // Update validation errors for partNo
+                                          setItemParticularsErrors((prev) => {
+                                            const newErrors = [...prev];
+                                            newErrors[index] = {
+                                              ...newErrors[index],
+                                              partNo: !selectedPartDetails?.partCode ? 'Part No is required' : '',
+                                            };
+                                            return newErrors;
+                                          });
+                                        }}
+                                        renderInput={(params) => (
+                                          <TextField
+                                            {...params}
+                                            label="Part No"
+                                            name="partNo"
+                                            error={!!itemParticularsErrors[index]?.partNo}
+                                            helperText={itemParticularsErrors[index]?.partNo}
+                                            InputProps={{
+                                              ...params.InputProps,
+                                              style: { height: 40, width: 200 },
+                                            }}
+                                          />
+                                        )}
+                                      />
                                     </td>
+
+
                                     <td className="border px-2 py-2">
                                       <input
                                         style={{ width: '150px' }}
@@ -1193,9 +1255,9 @@ function WorkOrder() {
                       </div>
                     </>
                   )}
-                      {value === 1 && (
-                        <>
-                         <div className="row d-flex ml">
+                  {value === 1 && (
+                    <>
+                      <div className="row d-flex ml">
                         <div className="mb-1">
                           <ActionButton title="Add" icon={AddIcon} onClick={handleAddRowAttachment} />
                         </div>
@@ -1304,11 +1366,11 @@ function WorkOrder() {
                           </div>
                         </div>
                       </div>
-                        </>
-                      )}
-                        {value === 2 && (
-                          <>
-                          <div className="row d-flex ml">
+                    </>
+                  )}
+                  {value === 2 && (
+                    <>
+                      <div className="row d-flex ml">
                         <div className="row mt-2">
                           <>
                             <div className="row">
@@ -1332,8 +1394,8 @@ function WorkOrder() {
                           </>
                         </div>
                       </div>
-                          </>
-                        )}
+                    </>
+                  )}
                 </Box>
               </div>
 
