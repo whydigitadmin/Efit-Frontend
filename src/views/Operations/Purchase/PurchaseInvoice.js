@@ -46,6 +46,7 @@ function PurchaseInvoice() {
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [value, setValue] = useState(0);
+  const [allLocation, setAllLocation] = useState([]);
   const [editId, setEditId] = useState('');
   const [allGrnNo, setAllGrnNo] = useState([]);
   const [allPoNo, setAllPoNo] = useState([]);
@@ -175,6 +176,7 @@ function PurchaseInvoice() {
     getPurchaseInvoiceNo();
     getAllPurchaseInvoiceByOrgId();
     // getAllAccountName();
+    getAllLocation();
   }, []);
 
   const handleClear = () => {
@@ -441,6 +443,17 @@ function PurchaseInvoice() {
     }
   };
 
+  // All Location API
+  const getAllLocation = async () => {
+    try {
+      const result = await apiCalls('get', `/purchaseReturn/getLocationFromStockLocation?orgId=${orgId}`);
+      setAllLocation(result.paramObjectsMap.stockLocationVO || []);
+    } catch (err) {
+      console.log('error', err);
+    }
+  };
+
+
   const handleSave = async () => {
     const errors = {};
     if (!formData.customerName) {
@@ -449,7 +462,7 @@ function PurchaseInvoice() {
     if (!formData.poNo) {
       errors.poNo = 'PO No is required';
     }
-    if (!formData.grnNo) { 
+    if (!formData.grnNo) {
       errors.grnNo = 'GRN No is required';
     }
     if (!formData.dcDate) {
@@ -956,7 +969,7 @@ function PurchaseInvoice() {
                     </LocalizationProvider>
                   </FormControl>
                 </div>
-                <div className="col-md-3 mb-3">
+                {/* <div className="col-md-3 mb-3">
                   <TextField
                     id="location"
                     label={
@@ -974,7 +987,53 @@ function PurchaseInvoice() {
                     inputProps={{ maxLength: 40 }}
                     error={!!fieldErrors.location}
                   />
+                </div> */}
+                {/* Location */}
+                <div className="col-md-3 mb-3">
+                  <Autocomplete
+                    disablePortal
+                    options={allLocation}
+                    getOptionLabel={(option) => option.location || ''}
+                    sx={{ width: '100%' }}
+                    size="small"
+                    value={allLocation.find((c) => c.location === formData.location) || null}
+                    onChange={(event, newValue) => {
+                      if (newValue) {
+                        setFormData({
+                          ...formData,
+                          location: newValue.location,
+                          customerId: newValue.customerCode,
+                          taxCode: newValue.taxCode,
+                          currency: newValue.currency,
+                        });
+                        getAllLocation(newValue.location)
+                      } else {
+                        setFormData({
+                          ...formData,
+                          customerName: '',
+                          customerId: '',
+                          taxCode: '',
+                          currency: '',
+                        });
+                      }
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Location"
+                        name="location"
+                        error={!!fieldErrors.location}
+                        helperText={fieldErrors.location}
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 },
+                        }}
+                      // disabled={isFieldDisabled}
+                      />
+                    )}
+                  />
                 </div>
+
                 <div className="col-md-3 mb-3">
                   <TextField
                     id="inwardNo"
