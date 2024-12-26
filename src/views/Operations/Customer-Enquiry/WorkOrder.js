@@ -486,7 +486,8 @@ function WorkOrder() {
       }));
 
       const saveFormData = {
-        active: formData.active ?? true, // Default active to true
+        ...(editId && { id: editId }),
+        active: formData.active ?? true,  
         createdBy: loginUserName,
         currency: formData.currency,
         customerCode: formData.customerCode,
@@ -535,7 +536,7 @@ function WorkOrder() {
         setEditId(WorOde.id);
         setDocId(WorOde.docId);
         getQuotationNumber(WorOde.customerCode);
-
+        getWorkOrderPartNo(WorOde.customerCode, WorOde.quotationNo);
         setFormData({
           active: WorOde.active === "Active",
           docDate: WorOde.docDate ? dayjs(WorOde.docDate, 'YYYY-MM-DD') : dayjs(),
@@ -555,7 +556,6 @@ function WorkOrder() {
 
         setItemParticularsData(
           WorOde.itemParticularsVO?.map((row) => ({
-            id: row.id,
             partNo: row.partNo,
             partName: row.partName,
             drawingNo: parseInt(row.drawingNo, 10) || 0,
@@ -570,7 +570,6 @@ function WorkOrder() {
 
         setTermsandConditionsData(
           WorOde.termsAndConditionsVO?.map((row) => ({
-            id: row.id,
             template: row.template,
             description: row.description,
           })) || []
@@ -1149,7 +1148,11 @@ function WorkOrder() {
                                         onChange={(e) => {
                                           const value = e.target.value;
                                           setItemParticularsData((prev) =>
-                                            prev.map((r) => (r.id === row.id ? { ...r, ordQty: value } : r))
+                                            prev.map((r) =>
+                                              r.id === row.id
+                                                ? { ...r, ordQty: value, requiredQty: (parseFloat(value || 0) + parseFloat(r.freeQty || 0) - parseFloat(r.availableStockQty || 0)).toFixed(2) }
+                                                : r
+                                            )
                                           );
                                           setItemParticularsErrors((prev) => {
                                             const newErrors = [...prev];
@@ -1175,7 +1178,11 @@ function WorkOrder() {
                                         onChange={(e) => {
                                           const value = e.target.value;
                                           setItemParticularsData((prev) =>
-                                            prev.map((r) => (r.id === row.id ? { ...r, freeQty: value } : r))
+                                            prev.map((r) =>
+                                              r.id === row.id
+                                                ? { ...r, freeQty: value, requiredQty: (parseFloat(r.ordQty || 0) + parseFloat(value || 0) - parseFloat(r.availableStockQty || 0)).toFixed(2) }
+                                                : r
+                                            )
                                           );
                                           setItemParticularsErrors((prev) => {
                                             const newErrors = [...prev];
@@ -1201,7 +1208,11 @@ function WorkOrder() {
                                         onChange={(e) => {
                                           const value = e.target.value;
                                           setItemParticularsData((prev) =>
-                                            prev.map((r) => (r.id === row.id ? { ...r, availableStockQty: value } : r))
+                                            prev.map((r) =>
+                                              r.id === row.id
+                                                ? { ...r, availableStockQty: value, requiredQty: (parseFloat(r.ordQty || 0) + parseFloat(r.freeQty || 0) - parseFloat(value || 0)).toFixed(2) }
+                                                : r
+                                            )
                                           );
                                           setItemParticularsErrors((prev) => {
                                             const newErrors = [...prev];
@@ -1224,28 +1235,11 @@ function WorkOrder() {
                                       <input
                                         style={{ width: '150px' }}
                                         value={row.requiredQty}
-                                        onChange={(e) => {
-                                          const value = e.target.value;
-                                          setItemParticularsData((prev) =>
-                                            prev.map((r) => (r.id === row.id ? { ...r, requiredQty: value } : r))
-                                          );
-                                          setItemParticularsErrors((prev) => {
-                                            const newErrors = [...prev];
-                                            newErrors[index] = {
-                                              ...newErrors[index],
-                                              requiredQty: !value ? 'Available Stock Qty is required' : ''
-                                            };
-                                            return newErrors;
-                                          });
-                                        }}
-                                        className={itemParticularsErrors[index]?.requiredQty ? 'error form-control' : 'form-control'}
+                                        readOnly
+                                        className="form-control"
                                       />
-                                      {itemParticularsErrors[index]?.requiredQty && (
-                                        <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                          {itemParticularsErrors[index].requiredQty}
-                                        </div>
-                                      )}
                                     </td>
+
                                   </tr>
                                 ))}
                               </tbody>

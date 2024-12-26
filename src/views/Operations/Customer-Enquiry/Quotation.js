@@ -52,7 +52,7 @@ const Quotation = () => {
     customerName: '',
     customerId: '',
     enquiryNo: '',
-    enquiryDate: dayjs(),
+    enquiryDate: null,
     orgId: orgId,
     validTill: null,
     kindAttention: '',
@@ -151,6 +151,7 @@ const Quotation = () => {
 
   const getQuotationById = async (row) => {
     console.log('Row selected:', row);
+    setEditId(row.original.id)
     setShowForm(true);
     try {
       const result = await apiCalls(
@@ -166,9 +167,9 @@ const Quotation = () => {
         setEditId(Quot.id);
         setDocId(Quot.docId);
         getCustomerNameAndCode(Quot.customer);
-        getEnquiryNoAndDate(Quot.customerId, Quot.enquiryNo);
+        getEnquiryNoAndDate(Quot.customerId,);
         getProductionManager(Quot.productionManager);
-        // getPartNoAndPartDesBasedOnEnquiryNo(Quot.customerId, Quot.enquiryNo);
+        getPartNoAndPartDesBasedOnEnquiryNo(Quot.customerId, Quot.enquiryNo)
         setFormData({
           active: Quot.active === "Active",
           taxCode: Quot.taxCode,
@@ -219,7 +220,7 @@ const Quotation = () => {
   };
 
   useEffect(() => {
-    getCustomerNameAndCode(); 
+    getCustomerNameAndCode();
   }, []);
 
 
@@ -239,6 +240,9 @@ const Quotation = () => {
       console.log('error', err);
     }
   };
+  useEffect(() => {
+    getProductionManager()
+  }, [])
   const getProductionManager = async (customer) => {
     try {
       const result = await apiCalls('get', `/customerenquiry/getProductionManager?orgId=${orgId}`);
@@ -256,6 +260,39 @@ const Quotation = () => {
     } catch (err) {
       console.log('error', err);
     }
+  };
+
+  const handlePartNoChange = (index, newValue) => {
+    const selectedPartDetails = newValue;
+    console.log('Selected part details:', selectedPartDetails);
+
+    setDetailsTableData((prev) =>
+      prev.map((row, i) =>
+        i === index
+          ? {
+            ...row,
+            partNo: selectedPartDetails?.partNo || '',
+            partDescription: selectedPartDetails?.partDescription || '',
+            unit: selectedPartDetails?.unit || '',
+            drawingNo: selectedPartDetails?.drawingNo || '',
+            revisionNo: selectedPartDetails?.revisionNo || '',
+            qtyOffered: selectedPartDetails?.qtyOffered || '',
+          }
+          : row
+      )
+    );
+
+    // Update validation errors
+    setDetailsTableErrors((prev) => {
+      const newErrors = [...prev];
+      newErrors[index] = {
+        ...newErrors[index],
+        partNo: !selectedPartDetails?.partNo ? 'Part No is required' : '',
+      };
+      return newErrors;
+    });
+
+    console.log('Updated detailsTableData:', detailsTableData);
   };
 
   useEffect(() => {
@@ -357,7 +394,7 @@ const Quotation = () => {
         !lastRow.revisionNo ||
         !lastRow.qtyOffered ||
         !lastRow.basicPrice ||
-        !lastRow.discount ||
+        // !lastRow.discount ||
         !lastRow.discountAmount ||
         !lastRow.quoteAmount ||
         !lastRow.deliveryDate
@@ -379,7 +416,7 @@ const Quotation = () => {
           unitPrice: !lastRow.unitPrice ? 'Unit Price is Required' : '',
           qtyOffered: !lastRow.qtyOffered ? 'Quantity Offered is Required' : '',
           basicPrice: !lastRow.basicPrice ? 'Basic Price is Required' : '',
-          discount: !lastRow.discount ? 'Discount is Required' : '',
+          // discount: !lastRow.discount ? 'Discount is Required' : '',
           discountAmount: !lastRow.discountAmount ? 'Discount Amount is Required' : '',
           quoteAmount: !lastRow.quoteAmount ? 'Quote Amount Amount is Required' : '',
           deliveryDate: !lastRow.deliveryDate ? 'Delivery Date is Required' : ''
@@ -466,10 +503,10 @@ const Quotation = () => {
         rowErrors.basicPrice = 'Basic Price is Required';
         detailTableDataValid = false;
       }
-      if (!row.discount) {
-        rowErrors.discount = 'Discount is Required';
-        detailTableDataValid = false;
-      }
+      // if (!row.discount) {
+      //   rowErrors.discount = 'Discount is Required';
+      //   detailTableDataValid = false;
+      // }
       if (!row.discountAmount) {
         rowErrors.discountAmount = 'DiscountAmount is Required';
         detailTableDataValid = false;
@@ -502,7 +539,7 @@ const Quotation = () => {
         partDescription: row.partDescription,
         drawingNo: row.drawingNo,
         qtyOffered: parseInt(row.qtyOffered, 10),
-        revisionNo: row.revisionNo, 
+        revisionNo: row.revisionNo,
         unit: row.unit,
         unitPrice: parseFloat(row.unitPrice),
       }));
@@ -608,6 +645,7 @@ const Quotation = () => {
                     getOptionLabel={(option) => option.customer || ''}
                     sx={{ width: '100%' }}
                     size="small"
+                    disabled={!!editId}
                     value={partyList.find((c) => c.customer === formData.customerName) || null}
                     onChange={(event, newValue) => {
                       if (newValue) {
@@ -640,7 +678,7 @@ const Quotation = () => {
                           ...params.InputProps,
                           style: { height: 40 },
                         }}
-                      // disabled={isFieldDisabled}
+                      // disabled={!!editId}
                       />
                     )}
                   />
@@ -666,6 +704,7 @@ const Quotation = () => {
                     getOptionLabel={(option) => option.enquiryDocNo || ''}
                     sx={{ width: '100%' }}
                     size="small"
+                    disabled={!!editId}
                     value={enquiryList.find((eNo) => eNo.enquiryDocNo === formData.enquiryNo) || null}
                     onChange={(event, newValue) => {
                       if (newValue) {
@@ -707,6 +746,7 @@ const Quotation = () => {
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <DatePicker
                         label="Enquiry Date"
+                        disabled={!!editId}
                         value={formData.enquiryDate ? dayjs(formData.enquiryDate, 'YYYY-MM-DD') : null}
                         onChange={(date) => handleDateChange('enquiryDate', date)}
                         slotProps={{
@@ -724,6 +764,7 @@ const Quotation = () => {
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <DatePicker
                         label="Valid Till"
+                        disabled={!!editId}
                         value={formData.validTill}
                         onChange={(date) => handleDateChange('validTill', date)}
                         slotProps={{
@@ -789,6 +830,7 @@ const Quotation = () => {
                     getOptionLabel={(option) => option.productionManager}
                     sx={{ width: '100%' }}
                     size="small"
+                    disabled={!!editId}
                     value={formData.productionManager ? prodManList.find((c) => c.productionManager === formData.productionManager) : null}
                     onChange={(event, newValue) => {
                       handleInputChange({
@@ -848,7 +890,7 @@ const Quotation = () => {
                     <>
                       <div className="row d-flex ml">
                         <div className="mb-1">
-                          <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} />
+                          {/* <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} /> */}
                         </div>
                         <div className="row mt-2">
                           <div className="col-lg-12">
@@ -892,103 +934,21 @@ const Quotation = () => {
                                       </td>
                                       <td className="text-center">
                                         <div className="pt-2">{index + 1}</div>
-                                      </td>
-                                      {/* <td className="border px-2 py-2">
-                                        <select
-                                          value={row.partNo || ""}
-                                          style={{ width: "150px" }}
-                                          className={
-                                            detailsTableErrors[index]?.partNo ? "error form-control" : "form-control"
-                                          }
-                                          onChange={(e) => {
-                                            const selectedPartNo = e.target.value;
-
-                                            // Find details for the selected part
-                                            const selectedPartDetails = partNoList.find(
-                                              (item) => item.partNo === selectedPartNo
-                                            );
-
-                                            // Update partNo and related fields
-                                            setDetailsTableData((prev) =>
-                                              prev.map((r, i) =>
-                                                i === index
-                                                  ? {
-                                                    ...r,
-                                                    partNo: selectedPartDetails?.partNo || "",
-                                                    partDescription: selectedPartDetails?.partDescription || "",
-                                                    unit: selectedPartDetails?.unit || "",
-                                                    revisionNo: selectedPartDetails?.revisionNo || "",
-                                                    drawingNo: selectedPartDetails?.drawingNo || "",
-                                                  }
-                                                  : r
-                                              )
-                                            );
-
-                                            // Update validation errors
-                                            setDetailsTableErrors((prev) => {
-                                              const newErrors = [...prev];
-                                              newErrors[index] = {
-                                                ...newErrors[index],
-                                                partNo: !selectedPartNo ? "Part No is required" : "",
-                                              };
-                                              return newErrors;
-                                            });
-                                          }}
-                                        >
-                                          <option value="">-- Select --</option>
-                                          {getAvailablePartNos(row.id).map((item) => (
-                                            <option key={item.id} value={item.partNo}>
-                                              {item.partNo}
-                                            </option>
-                                          ))}
-                                        </select>
-                                        {detailsTableErrors[index]?.partNo && (
-                                          <div className="mt-2" style={{ color: "red", fontSize: "12px" }}>
-                                            {detailsTableErrors[index].partNo}
-                                          </div>
-                                        )}
-                                      </td> */}
+                                      </td> 
 
                                       <td>
                                         <Autocomplete
                                           disablePortal
-                                          options={partNoList.map((option, index) => ({ ...option, key: index }))}
+                                          options={partNoList.map((option, i) => ({ ...option, key: i }))}
                                           getOptionLabel={(option) => option.partNo || ''}
                                           sx={{ width: '100%' }}
                                           size="small"
-                                          value={detailsTableData[index]?.partNo
-                                            ? partNoList.find((c) => c.partNo === detailsTableData[index].partNo)
-                                            : null}
-                                          onChange={(event, newValue) => {
-                                            const selectedPartDetails = newValue;
-
-                                            // Update the selected part details in the details table data
-                                            setDetailsTableData((prev) =>
-                                              prev.map((row, i) =>
-                                                i === index
-                                                  ? {
-                                                    ...row,
-                                                    partNo: selectedPartDetails?.partNo || '',
-                                                    partDescription: selectedPartDetails?.partDescription || '',
-                                                    unit: selectedPartDetails?.unit || '',
-                                                    drawingNo: selectedPartDetails?.drawingNo || '',
-                                                    revisionNo: selectedPartDetails?.revisionNo || '',
-                                                    qtyOffered: selectedPartDetails?.qtyOffered || '',
-                                                  }
-                                                  : row
-                                              )
-                                            );
-
-                                            // Update validation errors for partNo
-                                            setDetailsTableErrors((prev) => {
-                                              const newErrors = [...prev];
-                                              newErrors[index] = {
-                                                ...newErrors[index],
-                                                partNo: !selectedPartDetails?.partNo ? 'Part No is required' : '',
-                                              };
-                                              return newErrors;
-                                            });
-                                          }}
+                                          value={
+                                            row.partNo
+                                              ? partNoList.find((c) => c.partNo === row.partNo)
+                                              : null
+                                          }
+                                          onChange={(event, newValue) => handlePartNoChange(index, newValue)}
                                           renderInput={(params) => (
                                             <TextField
                                               {...params}
@@ -1004,8 +964,6 @@ const Quotation = () => {
                                           )}
                                         />
                                       </td>
-
-
 
                                       <td className="border px-2 py-2">
                                         <input
@@ -1067,6 +1025,7 @@ const Quotation = () => {
                                           }}
                                           className={detailsTableErrors[index]?.unitPrice ? 'error form-control' : 'form-control'}
                                           style={{ width: '150px' }}
+                                          disabled={!!editId}
                                         />
                                         {detailsTableErrors[index]?.unitPrice && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
@@ -1101,6 +1060,7 @@ const Quotation = () => {
                                           }}
                                           className={detailsTableErrors[index]?.qtyOffered ? 'error form-control' : 'form-control'}
                                           style={{ width: '150px' }}
+                                          disabled={!!editId}
                                         />
                                         {detailsTableErrors[index]?.qtyOffered && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
@@ -1121,6 +1081,7 @@ const Quotation = () => {
                                         <input
                                           type="text"
                                           value={row.discount}
+                                          disabled={!!editId}
                                           onChange={(e) => {
                                             const value = parseFloat(e.target.value) || 0;
                                             setDetailsTableData((prev) =>
@@ -1139,7 +1100,7 @@ const Quotation = () => {
                                               const newErrors = [...prev];
                                               newErrors[index] = {
                                                 ...newErrors[index],
-                                                discount: value <= 0 ? 'Discount is Required' : '',
+                                                discount: value <= 0 ? '' : '',
                                               };
                                               return newErrors;
                                             });
@@ -1173,6 +1134,7 @@ const Quotation = () => {
                                           }}
                                           className={detailsTableErrors[index]?.discountAmount ? 'error form-control' : 'form-control'}
                                           style={{ width: '150px' }}
+                                          disabled={!!editId}
                                         />
                                         {detailsTableErrors[index]?.discountAmount && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
@@ -1187,6 +1149,7 @@ const Quotation = () => {
                                           readOnly
                                           className="form-control"
                                           style={{ width: '150px' }}
+                                          disabled={!!editId}
                                         />
                                       </td>
                                       <td className="border px-2 py-2">
@@ -1214,6 +1177,7 @@ const Quotation = () => {
                                           className={detailsTableErrors[index]?.deliveryDate ? 'error form-control' : 'form-control'}
                                           // onKeyDown={(e) => handleKeyDown(e, row, tdsTableData)}
                                           style={{ width: '150px' }}
+                                          disabled={!!editId}
                                         />
                                         {detailsTableErrors[index]?.deliveryDate && (
                                           <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
