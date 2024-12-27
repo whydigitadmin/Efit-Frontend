@@ -24,6 +24,7 @@ import Select from '@mui/material/Select';
 import InputLabel from '@mui/material/InputLabel';
 import dayjs from 'dayjs';
 import CommonBulkUpload from 'utils/CommonBulkUpload';
+import { date } from 'yup';
 
 const RouteCardEntry = () => {
   const [showForm, setShowForm] = useState(true);
@@ -32,11 +33,13 @@ const RouteCardEntry = () => {
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [value, setValue] = useState(0);
   const [editId, setEditId] = useState();
+  const [customer, setCustomer] = useState([]);
+  const [workOrder, setWorkOrder] = useState([]);
   const [uploadOpen, setUploadOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     routeCardNo: '',
-    routeDate: null,
+    docDate: dayjs(),
     customerName: '',
     woNo: '',
     fgPartName: '',
@@ -51,7 +54,7 @@ const RouteCardEntry = () => {
   });
   const [fieldErrors, setFieldErrors] = useState({
     routeCardNo: '',
-    routeDate: null,
+    docDate: dayjs(),
     customerName: '',
     woNo: '',
     fgPartName: '',
@@ -155,15 +158,72 @@ const RouteCardEntry = () => {
     }
   ]);
 
+  // List
+
+   const [listViewData, setListViewData] = useState([]);
+
   const columns = [
-    { accessorKey: 'listCode', header: 'List Code', size: 140 },
-    { accessorKey: 'listDescription', header: 'Description', size: 140 },
+    { accessorKey: 'customerName', header: 'List Code', size: 140 },
+    { accessorKey: 'customerName', header: 'Description', size: 140 },
     { accessorKey: 'active', header: 'Active', size: 140 }
   ];
 
-  // useEffect(() => {
-  //   getAllListOfValuesByOrgId();
-  // }, []);
+    // customerName API
+    const getCustomerName = async () => {
+      try {
+        const response = await apiCalls('get', `/inventory/getCustomerNameAndCodeFromRouteCardEntry?orgId=${orgId}`);
+  
+        // Update state with the new docId
+        setCustomer(response.paramObjectsMap.routeCardEntryVO);
+  
+        // Optionally update formData if docId is part of it
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+        }));
+      } catch (error) {
+        console.error('Error fetching gate passes:', error);
+      }
+    };
+
+     // WorkOrder API
+     const getWorkOrderNoFromRouteCardEntry = async (customerCode) => {
+      try {
+        const response = await apiCalls('get', `/inventory/getWorkOrderNoFromRouteCardEntry?customerCode=${customerCode}&orgId=${orgId}`);
+  
+        // Update state with the new docId
+        setWorkOrder(response.paramObjectsMap.routeCardEntryVO);
+  
+        // Optionally update formData if docId is part of it
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+        }));
+      } catch (error) {
+        console.error('Error fetching gate passes:', error);
+      }
+    };
+
+
+  useEffect(() => {
+    getRouteCardEntry();
+    getCustomerName();
+    getWorkOrderNoFromRouteCardEntry();
+  }, []);
+
+  // List API
+  const getRouteCardEntry = async () => {
+    try {
+      const response = await apiCalls('get', `/inventory/getRouteCardEntryByOrgId?orgId=${orgId}`);
+      console.log('API Response:', response);
+
+      if (response.status === true) {
+        setListViewData(response.paramObjectsMap.routeCardEntryVO);
+      } else {
+        console.error('API Error:', response);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -204,6 +264,7 @@ const RouteCardEntry = () => {
     }
   };
 
+  // Route Card Entry Details
   const handleAddRow = () => {
     if (isLastRowEmpty(routeCardEntryDetailsData)) {
       displayRowError(routeCardEntryDetailsData);
@@ -256,7 +317,6 @@ const RouteCardEntry = () => {
     }
     return false;
   };
-
   const displayRowError = (table) => {
     if (table === routeCardEntryDetailsData) {
       setRouteCardEntryErrors((prevErrors) => {
@@ -277,10 +337,9 @@ const RouteCardEntry = () => {
       });
     }
   };
-
+  // Delete Row Button
   const handleDeleteRow = (id, table, setTable, errorTable, setErrorTable) => {
     const rowIndex = table.findIndex((row) => row.id === id);
-    // If the row exists, proceed to delete
     if (rowIndex !== -1) {
       const updatedData = table.filter((row) => row.id !== id);
       const updatedErrors = errorTable.filter((_, index) => index !== rowIndex);
@@ -288,6 +347,8 @@ const RouteCardEntry = () => {
       setErrorTable(updatedErrors);
     }
   };
+
+  // handle File Attach Add Row
   const handleFileAttachAddRow = () => {
     if (isLastRowEmptyFileAttach(attachmentsData)) {
       displayRowFileAttachError(attachmentsData);
@@ -334,10 +395,12 @@ const RouteCardEntry = () => {
     }
   };
 
+  // handle Clear
+
   const handleClear = () => {
     setFormData({
       routeCardNo: '',
-      routeDate: null,
+      docDate: dayjs(),
       customerName: '',
       woNo: '',
       fgPartName: '',
@@ -401,7 +464,7 @@ const RouteCardEntry = () => {
     setAttachmentsErrors('');
     setEditId('');
   };
-
+  // handle Save
   const handleSave = async () => {
     console.log('THE HANDLE SAVE IS WORKING');
 
@@ -419,7 +482,7 @@ const RouteCardEntry = () => {
     if (!formData.rmBatchNo) errors.rmBatchNo = 'Rm Batch No is required';
     if (!formData.rmQty) errors.rmQty = 'Rm Qty No is required';
     if (!formData.narration) errors.narration = 'Narration is required';
-
+    // route Card Entry
     let routeCardEntryDetailsDataValid = true;
     if (!routeCardEntryDetailsData || !Array.isArray(routeCardEntryDetailsData) || routeCardEntryDetailsData.length === 0) {
       routeCardEntryDetailsDataValid = false;
@@ -469,6 +532,7 @@ const RouteCardEntry = () => {
       setRouteCardEntryErrors(newTableErrors);
     }
 
+    // route Card Eng Dept
     let routeCardEngDeptDataValid = true;
     const newTableErrors1 = routeCardEngDeptData.map((row) => {
       const rowErrors = {};
@@ -493,6 +557,7 @@ const RouteCardEntry = () => {
 
     setRouteCardEngDeptErrors(newTableErrors1);
 
+    // route Card Closure Data
     let routeCardClosureDataValid = true;
     const routeCardClosureErrors = routeCardClosureData.map((row) => {
       const rowErrors = {};
@@ -517,6 +582,7 @@ const RouteCardEntry = () => {
 
     setRouteCardClosureErrors(routeCardClosureErrors);
 
+    // route Card Entry Summary
     let routeCardEntrySummaryDataValid = true;
     const routeCardEntrySummaryErrors = routeCardEntrySummaryData.map((row) => {
       const rowErrors = {};
@@ -540,7 +606,7 @@ const RouteCardEntry = () => {
     });
 
     setRouteCardEntrySummaryErrors(routeCardEntrySummaryErrors);
-
+    // File attachment
     let attachmentDataValid = true;
     const attachmentErrors = attachmentsData.map((row) => {
       const rowErrors = {};
@@ -565,13 +631,6 @@ const RouteCardEntry = () => {
     ) {
       setIsLoading(true);
 
-      // const detailsVo = partCodeData.map((row) => ({
-      //   ...(editId && { id: row.id }),
-      //   valueCode: row.valueCode,
-      //   valueDescription: row.valueDesc,
-      //   active: row.active === 'true' || row.active === true // Convert string 'true' to boolean true if necessary
-      // }));
-
       const saveFormData = {
         ...(editId && { id: editId }),
         active: formData.active,
@@ -583,73 +642,28 @@ const RouteCardEntry = () => {
       };
 
       console.log('DATA TO SAVE IS:', saveFormData);
-
+      //  Save API
       try {
-        const response = await apiCalls('put', '/master/updateCreateListOfValues', saveFormData);
+        const response = await apiCalls('put', '/inventory/updateCreateRouteCardEntry', saveFormData);
         if (response.status === true) {
           console.log('Response:', response);
-          showToast('success', editId ? 'List of values updated successfully' : 'List of values created successfully');
+          showToast('success', editId ? 'Route Card Entry updated successfully' : 'Route Card Entry created successfully');
           // getAllListOfValuesByOrgId();
           handleClear();
           setIsLoading(false);
         } else {
-          showToast('error', response.paramObjectsMap.errorMessage || 'List of value creation failed');
+          showToast('error', response.paramObjectsMap.errorMessage || 'Route Card Entry creation failed');
           setIsLoading(false);
         }
       } catch (error) {
         console.error('Error:', error);
-        showToast('error', 'List of value creation failed');
+        showToast('error', 'Route Card Entry creation failed');
         setIsLoading(false);
       }
     } else {
       setFieldErrors(errors);
     }
   };
-
-  // const getAllListOfValuesByOrgId = async () => {
-  //   try {
-  //     const result = await apiCalls('get', `/master/getListOfValuesByOrgId?orgId=${orgId}`);
-  //     setData(result.paramObjectsMap.listOfValuesVO || []);
-  //     showForm(true);
-  //     console.log('Test', result);
-  //   } catch (err) {
-  //     console.log('error', err);
-  //   }
-  // };
-
-  // const getListOfValueById = async (row) => {
-  //   console.log('first', row);
-  //   setShowForm(true);
-  //   try {
-  //     const result = await apiCalls('get', `/master/getListOfValuesById?id=${row.original.id}`);
-
-  //     if (result) {
-  //       const listValueVO = result.paramObjectsMap.listOfValuesVO[0];
-  //       setEditId(row.original.id);
-
-  //       setFormData({
-  //         listCode: listValueVO.listCode || '',
-  //         listDescription: listValueVO.listDescription || '',
-  //         active: listValueVO.active || false,
-  //         id: listValueVO.id || 0
-  //       });
-  //       setRouteCardEntryDetailsData(
-  //         listValueVO.listOfValues1VO.map((cl) => ({
-  //           id: cl.id,
-  //           valueCode: cl.valueCode,
-  //           valueDesc: cl.valueDescription,
-  //           active: cl.active
-  //         }))
-  //       );
-
-  //       console.log('DataToEdit', listValueVO);
-  //     } else {
-  //       // Handle erro
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching data:', error);
-  //   }
-  // };
 
   const handleList = () => {
     setShowForm(!showForm);
@@ -702,18 +716,17 @@ const RouteCardEntry = () => {
               </div>
 
               <div className="col-md-3 mb-3">
-                <FormControl fullWidth>
+                <FormControl fullWidth variant="filled" size="small">
                   <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <DatePicker
                       label="Date"
-                      value={formData.routeDate ? dayjs(formData.routeDate, 'YYYY-MM-DD') : null}
-                      onChange={(date) => handleDateChange('routeDate', date)}
+                      value={formData.docDate}
+                      onChange={(date) => handleDateChange('docDate', date)}
+                      disabled
                       slotProps={{
                         textField: { size: 'small', clearable: true }
                       }}
                       format="DD-MM-YYYY"
-                      error={!!fieldErrors.routeDate}
-                      helperText={fieldErrors.routeDate ? fieldErrors.routeDate : ''}
                     />
                   </LocalizationProvider>
                 </FormControl>
@@ -721,32 +734,43 @@ const RouteCardEntry = () => {
 
               <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.customerName}>
-                  <InputLabel id="customerName">Customer Name</InputLabel>
-                  <Select
-                    labelId="customerName"
-                    id="customerName"
-                    label="Customer Name"
-                    onChange={handleInputChange}
-                    name="customerName"
-                    value={formData.customerName}
-                  >
-                    <MenuItem value="Head Office">Head Office</MenuItem>
-                    <MenuItem value="Branch">Branch</MenuItem>
+                  <InputLabel id="customerName-label">
+                    {
+                      <span>
+                        customerName <span className="asterisk">*</span>
+                      </span>
+                    }
+                  </InputLabel>
+                  <Select labelId="customerName-label" label="customerName" value={formData.customer} onChange={handleInputChange} name="customerName">
+                    {customer?.map((row) => (
+                      <MenuItem key={row.id} value={row.customer}>
+                        {row.customer}
+                      </MenuItem>
+                    ))}
                   </Select>
-                  {fieldErrors.customerName && <FormHelperText>{fieldErrors.customerName}</FormHelperText>}
+                  {fieldErrors.customer && <FormHelperText>{fieldErrors.customer}</FormHelperText>}
+                </FormControl>
+              </div>
+              <div className="col-md-3 mb-3">
+                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.customerName}>
+                  <InputLabel id="customerName-label">
+                    {
+                      <span>
+                        WO No <span className="asterisk">*</span>
+                      </span>
+                    }
+                  </InputLabel>
+                  <Select labelId="customerName-label" label="WO No" value={formData.workOrder} onChange={handleInputChange} name="customerName">
+                    {workOrder?.map((row) => (
+                      <MenuItem key={row.id} value={row.workOrder}>
+                        {row.workOrder}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {fieldErrors.workOrder && <FormHelperText>{fieldErrors.workOrder}</FormHelperText>}
                 </FormControl>
               </div>
 
-              <div className="col-md-3 mb-3">
-                <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.woNo}>
-                  <InputLabel id="woNo">WO No</InputLabel>
-                  <Select labelId="woNo" id="woNo" label="WO No" onChange={handleInputChange} name="woNo" value={formData.woNo}>
-                    <MenuItem value="Head Office">Head Office</MenuItem>
-                    <MenuItem value="Branch">Branch</MenuItem>
-                  </Select>
-                  {fieldErrors.woNo && <FormHelperText>{fieldErrors.woNo}</FormHelperText>}
-                </FormControl>
-              </div>
 
               <div className="col-md-3 mb-3">
                 <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.fgPartName}>
@@ -965,35 +989,6 @@ const RouteCardEntry = () => {
                                     <td className="text-center">
                                       <div className="pt-2">{index + 1}</div>
                                     </td>
-
-                                    {/* <td className="border px-2 py-2">
-                                      <Autocomplete
-                                        options={allAccountName}
-                                        getOptionLabel={(option) => option.accountName || ''}
-                                        groupBy={(option) => (option.accountName ? option.accountName[0].toUpperCase() : '')}
-                                        value={row.accountName ? allAccountName.find((a) => a.accountName === row.accountName) : null}
-                                        onChange={(event, newValue) => {
-                                          const value = newValue ? newValue.accountName : '';
-                                          setDetailsTableData((prev) =>
-                                            prev.map((r) => (r.id === row.id ? { ...r, accountName: value } : r))
-                                          );
-                                          setDetailsTableErrors((prevErrors) =>
-                                            prevErrors.map((err, idx) => (idx === index ? { ...err, accountName: '' } : err))
-                                          );
-                                        }}
-                                        size="small"
-                                        renderInput={(params) => (
-                                          <TextField
-                                            {...params}
-                                            label="Account Name"
-                                            variant="outlined"
-                                            error={!!detailsTableErrors[index]?.accountName}
-                                            helperText={detailsTableErrors[index]?.accountName}
-                                          />
-                                        )}
-                                        sx={{ width: 250 }}
-                                      />
-                                    </td> */}
 
                                     <td className="border px-2 py-2">
                                       <input
@@ -1466,84 +1461,84 @@ const RouteCardEntry = () => {
                 )}
                 {value === 4 && (
                   <>
-                  <div className="row d-flex ml">
-                    <div className="mb-1">
-                      <ActionButton title="Add" icon={AddIcon} onClick={handleFileAttachAddRow} />
-                    </div>
-                    <div className="row mt-2">
-                      <div className="col-lg-7">
-                        <div className="table-responsive">
-                          <table className="table table-bordered ">
-                            <thead>
-                              <tr style={{ backgroundColor: '#673AB7' }}>
-                                <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
-                                  Action
-                                </th>
-                                <th className="px-2 py-2 text-white text-center" style={{ width: '50px' }}>
-                                  S.No
-                                </th>
-                                <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
-                                  File Attachments
-                                </th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {attachmentsData.map((row, index) => (
-                                <tr key={row.id}>
-                                  <td className="border px-2 py-2 text-center">
-                                    <ActionButton
-                                      title="Delete"
-                                      icon={DeleteIcon}
-                                      onClick={() =>
-                                        handleDeleteRow(
-                                          row.id,
-                                          attachmentsData,
-                                          setAttachmentsData,
-                                          attachmentsErrors,
-                                          setAttachmentsErrors
-                                        )
-                                      }
-                                    />
-                                  </td>
-                                  <td className="text-center">
-                                    <div className="pt-2">{index + 1}</div>
-                                  </td>
-
-                                  <td className="border px-2 py-2" onClick={handleBulkUploadOpen}>
-                                    <input
-                                      type="text"
-                                      value={row.fileAttachment}
-                                      onChange={(e) => {
-                                        const value = e.target.value;
-                                        setAttachmentsData((prev) =>
-                                          prev.map((r) => (r.id === row.id ? { ...r, fileAttachment: value } : r))
-                                        );
-                                        setAttachmentsErrors((prev) => {
-                                          const newErrors = [...prev];
-                                          newErrors[index] = {
-                                            ...newErrors[index],
-                                            fileAttachment: !value ? 'File Attachment is required' : ''
-                                          };
-                                          return newErrors;
-                                        });
-                                      }}
-                                      className={attachmentsErrors[index]?.fileAttachment ? 'error form-control' : 'form-control'}
-                                    />
-                                    {attachmentsErrors[index]?.fileAttachment && (
-                                      <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                        {attachmentsErrors[index].fileAttachment}
-                                      </div>
-                                    )}
-                                  </td>
+                    <div className="row d-flex ml">
+                      <div className="mb-1">
+                        <ActionButton title="Add" icon={AddIcon} onClick={handleFileAttachAddRow} />
+                      </div>
+                      <div className="row mt-2">
+                        <div className="col-lg-7">
+                          <div className="table-responsive">
+                            <table className="table table-bordered ">
+                              <thead>
+                                <tr style={{ backgroundColor: '#673AB7' }}>
+                                  <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
+                                    Action
+                                  </th>
+                                  <th className="px-2 py-2 text-white text-center" style={{ width: '50px' }}>
+                                    S.No
+                                  </th>
+                                  <th className="px-2 py-2 text-white text-center" style={{ width: '200px' }}>
+                                    File Attachments
+                                  </th>
                                 </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                              </thead>
+                              <tbody>
+                                {attachmentsData.map((row, index) => (
+                                  <tr key={row.id}>
+                                    <td className="border px-2 py-2 text-center">
+                                      <ActionButton
+                                        title="Delete"
+                                        icon={DeleteIcon}
+                                        onClick={() =>
+                                          handleDeleteRow(
+                                            row.id,
+                                            attachmentsData,
+                                            setAttachmentsData,
+                                            attachmentsErrors,
+                                            setAttachmentsErrors
+                                          )
+                                        }
+                                      />
+                                    </td>
+                                    <td className="text-center">
+                                      <div className="pt-2">{index + 1}</div>
+                                    </td>
+
+                                    <td className="border px-2 py-2" onClick={handleBulkUploadOpen}>
+                                      <input
+                                        type="text"
+                                        value={row.fileAttachment}
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          setAttachmentsData((prev) =>
+                                            prev.map((r) => (r.id === row.id ? { ...r, fileAttachment: value } : r))
+                                          );
+                                          setAttachmentsErrors((prev) => {
+                                            const newErrors = [...prev];
+                                            newErrors[index] = {
+                                              ...newErrors[index],
+                                              fileAttachment: !value ? 'File Attachment is required' : ''
+                                            };
+                                            return newErrors;
+                                          });
+                                        }}
+                                        className={attachmentsErrors[index]?.fileAttachment ? 'error form-control' : 'form-control'}
+                                      />
+                                      {attachmentsErrors[index]?.fileAttachment && (
+                                        <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                          {attachmentsErrors[index].fileAttachment}
+                                        </div>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </>
+                  </>
                 )}
                 {value === 5 && (
                   <>
@@ -1574,7 +1569,7 @@ const RouteCardEntry = () => {
             data={data && data}
             columns={columns}
             blockEdit={true}
-            // toEdit={getListOfValueById}
+          // toEdit={getListOfValueById}
           />
         )}
       </div>

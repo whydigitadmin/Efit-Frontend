@@ -38,42 +38,42 @@ const ProductionPlan = () => {
   const [materialList, setMaterialList] = useState([]);
   const [formData, setFormData] = useState({
     active: true,
-    customerName: '',
-    docDate: dayjs(),
     docId: '',
-    narration: '',
-    orgId: orgId,
+    docDate: dayjs(),
+    routeCardNo: '',
+    woSoNo: '',
+    woSoDate: null,
+    customerName: '',
     part: '',
     partDesc: '',
     productionQty: '',
     productionStartDate: null,
     productionEndDate: null,
-    remarks: '',
     rawMaterial: '',
     rawMaterialDesc: '',
-    routeCardNo: '',
-    woSoNo: '',
-    woSoDate: null
+    narration: '',
+    orgId: orgId,
+    remarks: '',    
   });
 
   const [fieldErrors, setFieldErrors] = useState({
     active: true,
-    customerName: '',
-    docDate: dayjs(),
     docId: '',
-    narration: '',
-    orgId: orgId,
+    docDate: dayjs(),
+    routeCardNo: '',
+    woSoNo: '',
+    woSoDate: null,
+    customerName: '',
     part: '',
     partDesc: '',
     productionQty: '',
     productionStartDate: null,
     productionEndDate: null,
-    remarks: '',
     rawMaterial: '',
     rawMaterialDesc: '',
-    routeCardNo: '',
-    woSoNo: '',
-    woSoDate: null
+    narration: '',
+    orgId: orgId,
+    remarks: '',   
   });
 
   const listViewColumns = [
@@ -556,7 +556,7 @@ const ProductionPlan = () => {
       };
       console.log('DATA TO SAVE IS:', saveFormData);
       try {
-        const response = await apiCalls('put', `/transaction/updateCreateGeneralJournal`, saveFormData);
+        const response = await apiCalls('put', `​​/productionPlan​/updateCreateProductionPlan`, saveFormData);
         if (response.status === true) {
           console.log('Response:', response);
           showToast('success', editId ? 'General Journal Updated Successfully' : 'General Journal Created successfully');
