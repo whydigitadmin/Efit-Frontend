@@ -51,6 +51,7 @@ function PurchaseQuotation() {
   const [value, setValue] = useState(0);
   const [editId, setEditId] = useState('');
   const [customerName, setCustomerName] = useState([]);
+  const [allItemName, setItemName] = useState([]);
   const [workOrderNo, setWorkOrderNo] = useState([]);
   const [enquiryNo, setEnquiryNo] = useState([]);
   // const [allQStatus, setQStatus] = useState([]);
@@ -163,9 +164,6 @@ function PurchaseQuotation() {
     setModalOpen(false);
   };
 
-  const handleSaveSelectedRows = async () => { }
-  const handleSelectAll = () => { }
-  const getMachineMasterById = () => { }
   useEffect(() => {
     getCustomerName();
     getPurchaseQuotationDocId();
@@ -246,12 +244,11 @@ function PurchaseQuotation() {
   const handleInputChange = (e) => {
     const { name, value, selectionStart, selectionEnd, type } = e.target;
     let errorMessage = '';
-    setFormData((prevData) => ({ ...prevData, [name]: value }));
     setFieldErrors((prevErrors) => ({
       ...prevErrors,
       [name]: errorMessage
     }));
-
+    setFormData((prevData) => ({ ...prevData, [name]: value }));
     switch (name) {
       case 'enquiryNo': {
         const selectedEnquiryNo = enquiryNo.find((a) => a.purchaseEnquiryNo === value);
@@ -263,6 +260,7 @@ function PurchaseQuotation() {
             supplierName: selectedEnquiryNo.SupplierName || '',
           }));
           getContactPerson(selectedEnquiryNo.SupplierCode);
+          getItemName(selectedEnquiryNo.purchaseEnquiryNo);
         }
         break;
       }
@@ -278,7 +276,7 @@ function PurchaseQuotation() {
         break;
       }
       default:
-        break;
+      break;
     }
 
     if (!errorMessage) {
@@ -552,7 +550,7 @@ function PurchaseQuotation() {
       errors.totalDiscount = 'Total Discount is required';
     }
     if (!formData.narration) {
-      errors.narration = 'Narration  is required';
+      errors.narration = 'Narration is required';
     }
     if (!formData.amtInWords) {
       errors.amtInWords = 'Amount In Words is required';
@@ -600,7 +598,7 @@ function PurchaseQuotation() {
       return rowErrors;
     });
     let detailTableDataValid2 = true;
-    const newAttachmentTableErrors = quotationDetails.map((row) => {
+    const newAttachmentTableErrors = attachmentData.map((row) => {
       const rowErrors = {};
       if (!row.fileName) {
         rowErrors.fileName = 'File Name is required';
@@ -702,7 +700,6 @@ function PurchaseQuotation() {
       if (row.id === rowId) {
         const updatedRow = { ...row, [field]: value };
 
-        // Recalculate dependent fields
         if (field === 'quantity' || field === 'unitPrice') {
           const quantity = parseFloat(updatedRow.quantity || 0);
           const unitPrice = parseFloat(updatedRow.unitPrice || 0);
@@ -811,6 +808,15 @@ function PurchaseQuotation() {
     }
   };
 
+  const getItemName = async (enquiryNo) => {
+    try {
+      const response = await apiCalls('get', `/purchase/getItemDetailsForPurchaseQuotation?orgId=${orgId}&purchaseEnquiryNo=${enquiryNo}`);
+      setItemName(response.paramObjectsMap.itemDetails || []);
+      console.log('Item Name', response.paramObjectsMap.itemDetails || []);
+    } catch (error) {
+      console.error('Error fetching gate passes:', error);
+    }
+  };
   const getCustomerName = async () => {
     try {
       const response = await apiCalls('get', `/purchase/getCustomerNameForPurchaseIndent?orgId=${orgId}`);
@@ -856,14 +862,6 @@ function PurchaseQuotation() {
       console.error('Error fetching gate passes:', error);
     }
   };
-  const handleBulkUploadOpen = () => {
-    setUploadOpen(true);
-  };
-
-  const handleBulkUploadClose = () => {
-    setUploadOpen(false);
-  };
-
   return (
     <>
       <div>
@@ -1259,7 +1257,7 @@ function PurchaseQuotation() {
                         </div>
                         {listView ? (
                           <div className="mt-4">
-                            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getMachineMasterById} />
+                            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getPurchaseQuotationById} />
                           </div>
                         ) : (
                           <div className="row mt-2">
@@ -1307,35 +1305,57 @@ function PurchaseQuotation() {
                                           <div className="pt-2">{index + 1}</div>
                                         </td>
                                         <td className="border px-2 py-2">
-                                          <input
-                                            style={{ width: '150px' }}
-                                            value={row.item}
-                                            onChange={(e) => {
-                                              const value = e.target.value;
-                                              setQuotationDetails((prev) =>
-                                                prev.map((r) => (r.id === row.id ? { ...r, item: value } : r))
-                                              );
-                                              setQuotationDetailsTableErrors((prev) => {
-                                                const newErrors = [...prev];
-                                                newErrors[index] = {
-                                                  ...newErrors[index],
-                                                  item: !value ? 'Item is required' : ''
-                                                };
-                                                return newErrors;
-                                              });
+                                          <Autocomplete
+                                            disablePortal
+                                            options={allItemName}
+                                            getOptionLabel={(option) => option.item || ""}
+                                            sx={{ width: "100%" }}
+                                            size="small"
+                                            value={allItemName.find((it) => it.item === row.item) || null}
+                                            onChange={(event, newValue) => {
+                                              if (newValue) {
+                                                setQuotationDetails((prev) =>
+                                                  prev.map((r) =>
+                                                    r.id === row.id
+                                                      ? {
+                                                        ...r,
+                                                        item: newValue.item,
+                                                        itemDescription: newValue.itemDesc || "",
+                                                        unit: newValue.uom || "",
+                                                      }
+                                                      : r
+                                                  )
+                                                );
+                                              } else {
+                                                setQuotationDetails((prev) =>
+                                                  prev.map((r) =>
+                                                    r.id === row.id
+                                                      ? { ...r, item: "", itemDesc: "", unit: ""}
+                                                      : r
+                                                  )
+                                                );
+                                              }
                                             }}
-                                            className={quotationDetailsTableErrors[index]?.item ? 'error form-control' : 'form-control'}
+                                            renderInput={(params) => (
+                                              <TextField
+                                                {...params}
+                                                label="Item"
+                                                name="item"
+                                                error={!!quotationDetailsTableErrors[index]?.item}
+                                                helperText={quotationDetailsTableErrors[index]?.item}
+                                                InputProps={{
+                                                  ...params.InputProps,
+                                                  style: { height: 40, width: 170 },
+                                                }}
+                                              />
+                                            )}
                                           />
-                                          {quotationDetailsTableErrors[index]?.item && (
-                                            <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                              {quotationDetailsTableErrors[index].item}
-                                            </div>
-                                          )}
                                         </td>
                                         <td className="border px-2 py-2">
                                           <input
                                             style={{ width: '150px' }}
                                             value={row.itemDescription}
+                                            disabled
                                             onChange={(e) => {
                                               const value = e.target.value;
                                               setQuotationDetails((prev) =>
@@ -1362,6 +1382,7 @@ function PurchaseQuotation() {
                                           <input
                                             style={{ width: '150px' }}
                                             value={row.unit}
+                                            disabled
                                             onChange={(e) => {
                                               const value = e.target.value;
                                               setQuotationDetails((prev) =>

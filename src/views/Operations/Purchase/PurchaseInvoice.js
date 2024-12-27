@@ -46,13 +46,12 @@ function PurchaseInvoice() {
   const [orgId, setOrgId] = useState(localStorage.getItem('orgId'));
   const [loginUserName, setLoginUserName] = useState(localStorage.getItem('userName'));
   const [value, setValue] = useState(0);
-  const [allLocation, setAllLocation] = useState([]);
+  const [allItemCode, setAllItemCode] = useState([]);
   const [editId, setEditId] = useState('');
   const [allGrnNo, setAllGrnNo] = useState([]);
   const [allPoNo, setAllPoNo] = useState([]);
   const [allSupplierName, setAllSupplierName] = useState([]);
   const [invoiceNo, setInvoiceNo] = useState('');
-  const [selectedRows, setSelectedRows] = useState([]);
   const [formData, setFormData] = useState({
     invoiceDate: dayjs(),
     supplierName: '',
@@ -175,8 +174,6 @@ function PurchaseInvoice() {
     getSupplierName();
     getPurchaseInvoiceNo();
     getAllPurchaseInvoiceByOrgId();
-    // getAllAccountName();
-    getAllLocation();
   }, []);
 
   const handleClear = () => {
@@ -269,6 +266,33 @@ function PurchaseInvoice() {
       ...prevErrors,
       [name]: errorMessage
     }));
+     switch (name) {
+          case 'grnNo': {
+            const selectedGRNNo = allGrnNo.find((a) => a.grnNo === value);
+            if (selectedGRNNo) {
+              setFormData((prevData) => ({
+                ...prevData,
+                grnDate: selectedGRNNo.grnDate ? dayjs(selectedGRNNo.grnDate, 'YYYY-MM-DD') : dayjs(),
+                dcDate: selectedGRNNo.invdcDate ? dayjs(selectedGRNNo.invdcDate, 'YYYY-MM-DD') : dayjs(),
+                dcNo: selectedGRNNo.invdcNo || '',
+                address: selectedGRNNo.address || '',
+                gstNo: selectedGRNNo.gstNo || '',
+                supplierCode: selectedGRNNo.supplierCode || '',
+                gstType: selectedGRNNo.gstType || '',
+                customerName: selectedGRNNo.customerName || '',
+                exchangeRate: selectedGRNNo.exchangeRate || '',
+                location: selectedGRNNo.location || '',
+                currency: selectedGRNNo.currency || '',
+                inwardNo: selectedGRNNo.inwordNo || '',
+                grnClearTime: selectedGRNNo.grnClearTime || ''
+              }));
+              getAllItemCode(selectedGRNNo.grnNo);
+            }
+            break;
+          }
+          default:
+          break;
+        }
 
     if (!errorMessage) {
       setFormData((prevFormData) => ({
@@ -443,16 +467,14 @@ function PurchaseInvoice() {
     }
   };
 
-  // All Location API
-  const getAllLocation = async () => {
+  const getAllItemCode = async (grnNo) => {
     try {
-      const result = await apiCalls('get', `/purchaseReturn/getLocationFromStockLocation?orgId=${orgId}`);
-      setAllLocation(result.paramObjectsMap.stockLocationVO || []);
+      const result = await apiCalls('get', `/purchaseReturn/getItemCodeAndItemDescFromGrn?grnNo=${grnNo}&orgId=${orgId}`);
+      setAllItemCode(result.paramObjectsMap.grnVO || []);
     } catch (err) {
       console.log('error', err);
     }
   };
-
 
   const handleSave = async () => {
     const errors = {};
@@ -957,6 +979,7 @@ function PurchaseInvoice() {
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <DatePicker
                         label="GRN Date"
+                        disabled
                         value={formData.grnDate ? dayjs(formData.grnDate, 'YYYY-MM-DD') : null}
                         onChange={(date) => handleDateChange('grnDate', date)}
                         slotProps={{
@@ -969,9 +992,10 @@ function PurchaseInvoice() {
                     </LocalizationProvider>
                   </FormControl>
                 </div>
-                {/* <div className="col-md-3 mb-3">
+                <div className="col-md-3 mb-3">
                   <TextField
                     id="location"
+                    disabled
                     label={
                       <span>
                         Location <span className="asterisk">*</span>
@@ -987,56 +1011,11 @@ function PurchaseInvoice() {
                     inputProps={{ maxLength: 40 }}
                     error={!!fieldErrors.location}
                   />
-                </div> */}
-                {/* Location */}
-                <div className="col-md-3 mb-3">
-                  <Autocomplete
-                    disablePortal
-                    options={allLocation}
-                    getOptionLabel={(option) => option.location || ''}
-                    sx={{ width: '100%' }}
-                    size="small"
-                    value={allLocation.find((c) => c.location === formData.location) || null}
-                    onChange={(event, newValue) => {
-                      if (newValue) {
-                        setFormData({
-                          ...formData,
-                          location: newValue.location,
-                          customerId: newValue.customerCode,
-                          taxCode: newValue.taxCode,
-                          currency: newValue.currency,
-                        });
-                        getAllLocation(newValue.location)
-                      } else {
-                        setFormData({
-                          ...formData,
-                          customerName: '',
-                          customerId: '',
-                          taxCode: '',
-                          currency: '',
-                        });
-                      }
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Location"
-                        name="location"
-                        error={!!fieldErrors.location}
-                        helperText={fieldErrors.location}
-                        InputProps={{
-                          ...params.InputProps,
-                          style: { height: 40 },
-                        }}
-                      // disabled={isFieldDisabled}
-                      />
-                    )}
-                  />
                 </div>
-
                 <div className="col-md-3 mb-3">
                   <TextField
                     id="inwardNo"
+                    disabled
                     label='Inward No'
                     variant="outlined"
                     size="small"
@@ -1052,6 +1031,7 @@ function PurchaseInvoice() {
                 <div className="col-md-3 mb-3">
                   <TextField
                     id="supplierCode"
+                    disabled
                     label='Supplier Code'
                     variant="outlined"
                     size="small"
@@ -1064,7 +1044,7 @@ function PurchaseInvoice() {
                     error={!!fieldErrors.supplierCode}
                   />
                 </div>
-                <div className="col-md-3 mb-3">
+                {/* <div className="col-md-3 mb-3">
                   <TextField
                     id="gstState"
                     label='GST State'
@@ -1078,9 +1058,11 @@ function PurchaseInvoice() {
                     inputProps={{ maxLength: 40 }}
                     error={!!fieldErrors.gstState}
                   />
-                </div><div className="col-md-3 mb-3">
+                </div>*/}
+                <div className="col-md-3 mb-3"> 
                   <TextField
                     id="gstNo"
+                    disabled
                     label='GST No'
                     variant="outlined"
                     size="small"
@@ -1095,6 +1077,7 @@ function PurchaseInvoice() {
                 </div><div className="col-md-3 mb-3">
                   <TextField
                     id="isReverseCharge"
+                    // disabled
                     label='Is Reverse Charge'
                     variant="outlined"
                     size="small"
@@ -1110,6 +1093,7 @@ function PurchaseInvoice() {
                 <div className="col-md-3 mb-3">
                   <TextField
                     id="address"
+                    disabled
                     label='Address'
                     variant="outlined"
                     size="small"
@@ -1125,6 +1109,7 @@ function PurchaseInvoice() {
                 <div className="col-md-3 mb-3">
                   <TextField
                     id="currency"
+                    disabled
                     label='Currency'
                     variant="outlined"
                     size="small"
@@ -1140,6 +1125,7 @@ function PurchaseInvoice() {
                 <div className="col-md-3 mb-3">
                   <TextField
                     id="exchangeRate"
+                    disabled
                     label='Exchange Rate'
                     variant="outlined"
                     size="small"
@@ -1155,6 +1141,7 @@ function PurchaseInvoice() {
                 <div className="col-md-3 mb-3">
                   <TextField
                     id="grnClearTime"
+                    disabled
                     label='GRN Clear Time'
                     variant="outlined"
                     size="small"
@@ -1170,6 +1157,7 @@ function PurchaseInvoice() {
                 <div className="col-md-3 mb-3">
                   <TextField
                     id="dcNo"
+                    disabled
                     label='DC No'
                     variant="outlined"
                     size="small"
@@ -1187,6 +1175,7 @@ function PurchaseInvoice() {
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <DatePicker
                         label="DC Date"
+                        disabled
                         value={formData.dcDate ? dayjs(formData.dcDate, 'YYYY-MM-DD') : null}
                         onChange={(date) => handleDateChange('dcDate', date)}
                         slotProps={{
@@ -1202,6 +1191,7 @@ function PurchaseInvoice() {
                 <div className="col-md-3 mb-3">
                   <TextField
                     id="gstType"
+                    disabled
                     label='GST Type'
                     variant="outlined"
                     size="small"
@@ -1217,6 +1207,7 @@ function PurchaseInvoice() {
                 <div className="col-md-3 mb-3">
                   <TextField
                     id="customerName"
+                    disabled
                     label='Customer Name'
                     variant="outlined"
                     size="small"
@@ -1249,22 +1240,7 @@ function PurchaseInvoice() {
                       <div className="row d-flex ml">
                         <div className="mb-1">
                           <ActionButton title="Add" icon={AddIcon} onClick={handleAddRowItem} />
-                          <ActionButton title="Upload" icon={CloudUploadIcon} onClick={handleBulkUploadOpen} />
                         </div>
-                        {uploadOpen && (
-                          <CommonBulkUpload
-                            open={uploadOpen}
-                            handleClose={handleBulkUploadClose}
-                            title="Upload Files"
-                            uploadText="Upload file"
-                            downloadText="Sample File"
-                            onSubmit={handleSubmit}
-                            sampleFileDownload={sampleFile}
-                            handleFileUpload={handleFileUpload}
-                            // apiUrl={`buyerOrder/ExcelUploadForBuyerOrder?branch=${loginBranch}&branchCode=${loginBranchCode}&client=${loginClient}&createdBy=${loginUserName}&customer=${loginCustomer}&finYear=${loginFinYear}&orgId=${orgId}&type=DOC&warehouse=${loginWarehouse}`}
-                            screen="Machine Master"
-                          ></CommonBulkUpload>
-                        )}
                         {listView ? (
                           <div className="mt-4">
                             <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getMachineMasterById} />
@@ -1276,9 +1252,6 @@ function PurchaseInvoice() {
                                 <table className="table table-bordered ">
                                   <thead>
                                     <tr style={{ backgroundColor: '#673AB7' }}>
-                                      {/* <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
-                                    Action
-                                  </th> */}
                                       <th className="table-header px-2 py-2 text-white text-center" style={{ width: '10px' }}>Action</th>
                                       <th className="table-header px-2 py-2 text-white text-center" style={{ width: '50px' }}>S.No</th>
                                       <th className="table-header px-2 py-2 text-white text-center">Item Code</th>
@@ -1322,6 +1295,58 @@ function PurchaseInvoice() {
                                           <div className="pt-2">{index + 1}</div>
                                         </td>
                                         <td className="border px-2 py-2">
+                                          <Autocomplete
+                                            disablePortal
+                                            options={allItemCode}
+                                            getOptionLabel={(option) => option.itemCode || ""}
+                                            sx={{ width: "100%" }}
+                                            size="small"
+                                            value={allItemCode.find((it) => it.itemCode === row.item) || null}
+                                            onChange={(event, newValue) => {
+                                              if (newValue) {
+                                                setItemDetailsTable((prev) =>
+                                                  prev.map((r) =>
+                                                    r.id === row.id
+                                                      ? {
+                                                        ...r,
+                                                        itemCode: newValue.itemCode || "",
+                                                        itemName: newValue.itemName || "",
+                                                        receivedQuantity: newValue.receivedQty || "",
+                                                        sacCode: newValue.hsnScaCode || "",
+                                                        acceptQuantity: newValue.acceptQty || "",
+                                                        primaryUnit: newValue.primaryUnit || "",
+                                                        taxType: newValue.taxType || "",
+                                                        poRate: newValue.poRate || "",
+                                                      }
+                                                      : r
+                                                  )
+                                                );
+                                              } else {
+                                                setItemDetailsTable((prev) =>
+                                                  prev.map((r) =>
+                                                    r.id === row.id
+                                                      ? { ...r, itemCode: "", itemDesc: "", unit: ""}
+                                                      : r
+                                                  )
+                                                );
+                                              }
+                                            }}
+                                            renderInput={(params) => (
+                                              <TextField
+                                                {...params}
+                                                label="Item Code"
+                                                name="itemCode"
+                                                error={!!itemTableErrors[index]?.itemCode}
+                                                helperText={itemTableErrors[index]?.itemCode}
+                                                InputProps={{
+                                                  ...params.InputProps,
+                                                  style: { height: 40, width: 170 },
+                                                }}
+                                              />
+                                            )}
+                                          />
+                                        </td>
+                                        {/* <td className="border px-2 py-2">
                                           <input
                                             style={{ width: '150px' }}
                                             value={row.itemCode}
@@ -1346,10 +1371,11 @@ function PurchaseInvoice() {
                                               {itemTableErrors[index].itemCode}
                                             </div>
                                           )}
-                                        </td>
+                                        </td> */}
                                         <td className="border px-2 py-2">
                                           <input
                                             style={{ width: '150px' }}
+                                            disabled
                                             value={row.itemName}
                                             onChange={(e) => {
                                               const value = e.target.value;
@@ -1376,6 +1402,7 @@ function PurchaseInvoice() {
                                         <td className="border px-2 py-2">
                                           <input
                                             style={{ width: '150px' }}
+                                            disabled
                                             value={row.sacCode}
                                             onChange={(e) => {
                                               const value = e.target.value;
@@ -1398,9 +1425,11 @@ function PurchaseInvoice() {
                                               {itemTableErrors[index].sacCode}
                                             </div>
                                           )}
-                                        </td><td className="border px-2 py-2">
+                                        </td>
+                                        <td className="border px-2 py-2">
                                           <input
                                             style={{ width: '150px' }}
+                                            disabled
                                             value={row.taxType}
                                             onChange={(e) => {
                                               const value = e.target.value;
@@ -1411,7 +1440,7 @@ function PurchaseInvoice() {
                                                 const newErrors = [...prev];
                                                 newErrors[index] = {
                                                   ...newErrors[index],
-                                                  taxType: !value ? 'taxType is required' : ''
+                                                  taxType: !value ? 'Tax Type is required' : ''
                                                 };
                                                 return newErrors;
                                               });
@@ -1423,9 +1452,11 @@ function PurchaseInvoice() {
                                               {itemTableErrors[index].taxType}
                                             </div>
                                           )}
-                                        </td><td className="border px-2 py-2">
+                                        </td>
+                                        <td className="border px-2 py-2">
                                           <input
                                             style={{ width: '150px' }}
+                                            disabled
                                             value={row.primaryUnit}
                                             onChange={(e) => {
                                               const value = e.target.value;
@@ -1448,9 +1479,11 @@ function PurchaseInvoice() {
                                               {itemTableErrors[index].primaryUnit}
                                             </div>
                                           )}
-                                        </td><td className="border px-2 py-2">
+                                        </td>
+                                        <td className="border px-2 py-2">
                                           <input
                                             style={{ width: '150px' }}
+                                            disabled
                                             value={row.poRate}
                                             onChange={(e) => {
                                               const value = e.target.value;
@@ -1473,9 +1506,11 @@ function PurchaseInvoice() {
                                               {itemTableErrors[index].poRate}
                                             </div>
                                           )}
-                                        </td><td className="border px-2 py-2">
+                                        </td>
+                                        <td className="border px-2 py-2">
                                           <input
                                             style={{ width: '150px' }}
+                                            disabled
                                             value={row.receivedQuantity}
                                             onChange={(e) => {
                                               const value = e.target.value;
@@ -1498,9 +1533,11 @@ function PurchaseInvoice() {
                                               {itemTableErrors[index].receivedQuantity}
                                             </div>
                                           )}
-                                        </td><td className="border px-2 py-2">
+                                        </td>
+                                        <td className="border px-2 py-2">
                                           <input
                                             style={{ width: '150px' }}
+                                            disabled
                                             value={row.acceptQuantity}
                                             onChange={(e) => {
                                               const value = e.target.value;
@@ -1523,7 +1560,8 @@ function PurchaseInvoice() {
                                               {itemTableErrors[index].acceptQuantity}
                                             </div>
                                           )}
-                                        </td><td className="border px-2 py-2">
+                                        </td>
+                                        <td className="border px-2 py-2">
                                           <input
                                             style={{ width: '150px' }}
                                             value={row.unitPrice}
@@ -1826,92 +1864,7 @@ function PurchaseInvoice() {
             <CommonTable data={data} columns={listViewColumns} blockEdit={true} toEdit={getAllPurchaseInvoiceById} />
           )}
         </div>
-        <Dialog
-          open={modalOpen}
-          maxWidth={'md'}
-          fullWidth={true}
-          onClose={handleCloseModal}
-          PaperComponent={PaperComponent}
-          aria-labelledby="draggable-dialog-title"
-        >
-          <DialogTitle textAlign="center" style={{ cursor: 'move' }} id="draggable-dialog-title">
-            <h6>Grid Details</h6>
-          </DialogTitle>
-          <DialogContent className="pb-0">
-            <div className="row">
-              <div className="col-lg-12">
-                <div className="table-responsive">
-                  <table className="table table-bordered">
-                    <thead>
-                      <tr style={{ backgroundColor: '#673AB7' }}>
-                        <th className="px-2 py-2 text-white text-center" style={{ width: '68px' }}>
-                          <Checkbox checked={selectAll} onChange={handleSelectAll} sx={{
-                            color: 'white', // Unchecked color
-                            '&.Mui-checked': {
-                              color: 'white' // Checked color
-                            }
-                          }} />
-                        </th>
-                        <th className="px-2 py-2 text-white text-center" style={{ width: '50px' }}>
-                          S.No
-                        </th>
-                        <th className="px-2 py-2 text-white text-center">Part No *</th>
-                        <th className="px-2 py-2 text-white text-center">Part Desc</th>
-                        <th className="px-2 py-2 text-white text-center">SKU</th>
-                        <th className="px-2 py-2 text-white text-center">Batch No</th>
-                        {/* <th className="px-2 py-2 text-white text-center">Qty *</th> */}
-                        <th className="px-2 py-2 text-white text-center">Avl. Qty</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {itemDetailsTable.map((row, index) => (
-                        <tr key={index}>
-                          <td className="border p-0 text-center">
-                            <Checkbox
-                              checked={selectedRows.includes(index)}
-                              onChange={(e) => {
-                                const isChecked = e.target.checked;
-                                setSelectedRows((prev) => (isChecked ? [...prev, index] : prev.filter((i) => i !== index)));
-
-                              }}
-                            />
-                          </td>
-                          <td className="text-center p-0">
-                            <div style={{ paddingTop: 12 }}>{index + 1}</div>
-                          </td>
-                          <td className="border text-center pb-0 ps-0 pe-0" style={{ paddingTop: 12 }}>
-                            {row.partNo}
-                          </td>
-                          <td className="border text-center pb-0 ps-0 pe-0" style={{ paddingTop: 12 }}>
-                            {row.partDesc}
-                          </td>
-                          <td className="border text-center pb-0 ps-0 pe-0" style={{ paddingTop: 12 }}>
-                            {row.sku}
-                          </td>
-                          <td className="border text-center pb-0 ps-0 pe-0" style={{ paddingTop: 12 }}>
-                            {row.batchNo}
-                          </td>
-                          {/* <td className="border text-center pb-0 ps-0 pe-0" style={{ paddingTop: 12 }}>
-                                  {row.qty}
-                                </td> */}
-                          <td className="border text-center pb-0 ps-0 pe-0" style={{ paddingTop: 12 }}>
-                            {row.availQty}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </DialogContent>
-          <DialogActions sx={{ p: '1.25rem' }} className="pt-0">
-            <Button onClick={handleCloseModal}>Cancel</Button>
-            <Button color="secondary" onClick={handleSaveSelectedRows} variant="contained">
-              Proceed
-            </Button>
-          </DialogActions>
-        </Dialog>
+        
       </div>
     </>
 
