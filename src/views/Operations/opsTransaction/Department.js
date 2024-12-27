@@ -146,7 +146,7 @@ const Department = () => {
     setFormData({
       departmentCode: '',
       departmentName: '',
-      active: false,
+      active: true,
     });
     setFieldErrors({
       departmentCode: '',
@@ -182,17 +182,17 @@ const Department = () => {
         const response = await apiCalls('put', '/efitmaster/createUpdateDepartment', saveData);
         if (response.status === true) {
           console.log('Response:', response);
-          showToast('success', editId ? 'Department values updated successfully' : 'Department values created successfully');
+          showToast('success', editId ? 'Department updated successfully' : 'Department created successfully');
           getAllDepartmentByOrgId(); 
           handleClear();
           setIsLoading(false);
         } else {
-          showToast('error', response.paramObjectsMap.errorMessage || 'Department value creation failed');
+          showToast('error', response.paramObjectsMap.errorMessage || 'Department creation failed');
           setIsLoading(false);
         }
       } catch (error) {
         console.error('Error:', error);
-        showToast('error', 'Department value creation failed');
+        showToast('error', 'Department creation failed');
         setIsLoading(false);
       }
     } else {

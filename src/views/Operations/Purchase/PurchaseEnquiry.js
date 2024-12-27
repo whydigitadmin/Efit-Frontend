@@ -64,7 +64,7 @@ const PurchaseEnquiry = () => {
     expectedDeliveryDate: dayjs(),
     expectDelDate: dayjs(),
     narration: '',
-    supplierCode:"",
+    supplierCode: "",
     customerCode: '',
   });
   const [fieldErrors, setFieldErrors] = useState({
@@ -134,7 +134,7 @@ const PurchaseEnquiry = () => {
         const purchEnq = result.paramObjectsMap.purchaseEnquiryVO;
 
         setEditId(row.original.id);
-        setDocId(purchEnq.docId); 
+        setDocId(purchEnq.docId);
         setFormData({
           active: purchEnq.active || true,
           docDate: purchEnq.docDate ? dayjs(purchEnq.docDate, 'YYYY-MM-DD') : dayjs(),
@@ -382,15 +382,15 @@ const PurchaseEnquiry = () => {
     }
   };
 
-  const getPurchaseIndentNoForPurchaseEnquiry = async (customerName, workNo) => {
+  const getPurchaseIndentNoForPurchaseEnquiry = async (customerName, workOrderNo) => {
     try {
-      const result = await apiCalls('get', `/purchase/getPurchaseIndentNoForPurchaseEnquiry?customerCode=${customerName}&workOrderNo=${workNo}&orgId=${orgId}`);
+      const result = await apiCalls('get', `/purchase/getPurchaseIndentNoForPurchaseEnquiry?customerCode=${customerName}&workOrderNo=${workOrderNo}&orgId=${orgId}`);
       setPINoList(result.paramObjectsMap.purchaseIndentNo || []);
     } catch (err) {
       console.log('error', err);
     }
   };
-  // Table
+  // // Table
   const getItemDetailsForPurchaseEnquiry = async (fgItem, purchaseIndentNo) => {
     try {
       const result = await apiCalls('get', `/purchase/getItemDetailsForPurchaseEnquiry?fgItem=${fgItem}&orgId=${orgId}&purchaseIndentNo=${purchaseIndentNo}`);
@@ -533,21 +533,21 @@ const PurchaseEnquiry = () => {
     }
   };
 
-const handleCustomerChange = (event, value) => {
-  setFormData((prev) => ({
-    ...prev,
-    customerName: value?.name || '',
-    customerCode: value?.code || '', // Assuming `value` has a `code` field
-  }));
-};
+  const handleCustomerChange = (event, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      customerName: value?.name || '',
+      customerCode: value?.code || '', // Assuming `value` has a `code` field
+    }));
+  };
 
-const handleSupplierChange = (event, value) => {
-  setFormData((prev) => ({
-    ...prev,
-    supplierName: value?.name || '',
-    supplierCode: value?.code || '', // Assuming `value` has a `code` field
-  }));
-};
+  const handleSupplierChange = (event, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      supplierName: value?.name || '',
+      supplierCode: value?.code || '', // Assuming `value` has a `code` field
+    }));
+  };
   const handleBulkUploadOpen = () => {
     setUploadOpen(true);
   };
@@ -656,29 +656,23 @@ const handleSupplierChange = (event, value) => {
                     getOptionLabel={(option) => option.workOrderNo || ''}
                     sx={{ width: '100%' }}
                     size="small"
-                    value={workOrdNoList.find((qu) => qu.workOrderNo === formData.workOrderNo) || null}
+                    value={workOrdNoList.find((qu) => qu.workOrderNo === formData.workOrderNo) || null} 
                     onChange={(event, newValue) => {
-                      console.log('Selected Work Order:', newValue);
                       if (newValue) {
-                        setFormData((prevData) => {
-                          const updatedFormData = {
-                            ...prevData,
-                            workOrderNo: newValue.workOrderNo,
-                            customerPONo: newValue.customerPoNo,
-                            fgItem: newValue.fgPartDesc,
-                          };
-
-                          // Invoke the dependent function after state update
-                          getPurchaseIndentNoForPurchaseEnquiry(updatedFormData.customerCode, newValue.workOrderNo);
-
-                          return updatedFormData;
-                        });
+                        setFormData(prevData => ({
+                          ...prevData,
+                          workOrderNo: newValue.workOrderNo,
+                          customerPONo: newValue.customerPoNo,
+                          fgItem: newValue.fgPart,
+                        }));
+                    
+                        if (formData.customerCode) {
+                          getPurchaseIndentNoForPurchaseEnquiry(formData.customerCode, newValue.workOrderNo);
+                        }
                       } else {
-                        setFormData((prevData) => ({
+                        setFormData(prevData => ({
                           ...prevData,
                           workOrderNo: '',
-                          customerPONo: '',
-                          fgItem: '',
                         }));
                       }
                     }}
@@ -697,7 +691,9 @@ const handleSupplierChange = (event, value) => {
                     )}
                   />
                 </div>
+
                 {/* P.I No */}
+
                 <div className="col-md-3 mb-3">
                   <Autocomplete
                     disablePortal
@@ -718,7 +714,9 @@ const handleSupplierChange = (event, value) => {
                       });
 
                       if (selectedPINO) {
-                        getItemDetailsForPurchaseEnquiry(formData.fgItem, selectedPINO); // Pass fgItem along with pINo
+                        getItemDetailsForPurchaseEnquiry(formData.fgItem, newValue.purchaseIndentNo);
+                        console.log('Selected P.I No:', selectedPINO);
+
                       }
                     }}
                     renderInput={(params) => (
@@ -726,8 +724,8 @@ const handleSupplierChange = (event, value) => {
                         {...params}
                         label="P.I No"
                         name="pINo"
-                        error={!!fieldErrors.pINo} // Display error if there is a validation issue
-                        helperText={fieldErrors.pINo} // Show error message
+                        error={!!fieldErrors.pINo}
+                        helperText={fieldErrors.pINo}
                         InputProps={{
                           ...params.InputProps,
                           style: { height: 40 },

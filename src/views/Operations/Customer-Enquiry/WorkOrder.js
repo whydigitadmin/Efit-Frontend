@@ -241,39 +241,39 @@ function WorkOrder() {
     setValue(newValue);
   };
 
-  const handleAddRowQuotation = () => {
-    if (isLastRowEmptyQuotation(itemParticularsData)) {
-      displayRowErrorQuotation(itemParticularsData);
-      return;
-    }
-    const newRow = {
-      id: Date.now(),
-      partNo: '',
-      partName: '',
-      drawingNo: '',
-      revisionNo: '',
-      uom: '',
-      ordQty: '',
-      freeQty: '',
-      availableStockQty: '',
-      requiredQty: ''
-    };
-    setItemParticularsData([...itemParticularsData, newRow]);
-    setItemParticularsErrors([
-      ...itemParticularsErrors,
-      {
-        partNo: '',
-        partName: '',
-        drawingNo: '',
-        revisionNo: '',
-        uom: '',
-        ordQty: '',
-        freeQty: '',
-        availableStockQty: '',
-        requiredQty: ''
-      }
-    ]);
-  };
+  // const handleAddRowQuotation = () => {
+  //   if (isLastRowEmptyQuotation(itemParticularsData)) {
+  //     displayRowErrorQuotation(itemParticularsData);
+  //     return;
+  //   }
+  //   const newRow = {
+  //     id: Date.now(),
+  //     partNo: '',
+  //     partName: '',
+  //     drawingNo: '',
+  //     revisionNo: '',
+  //     uom: '',
+  //     ordQty: '',
+  //     freeQty: '',
+  //     availableStockQty: '',
+  //     requiredQty: ''
+  //   };
+  //   setItemParticularsData([...itemParticularsData, newRow]);
+  //   setItemParticularsErrors([
+  //     ...itemParticularsErrors,
+  //     {
+  //       partNo: '',
+  //       partName: '',
+  //       drawingNo: '',
+  //       revisionNo: '',
+  //       uom: '',
+  //       ordQty: '',
+  //       freeQty: '',
+  //       availableStockQty: '',
+  //       requiredQty: ''
+  //     }
+  //   ]);
+  // };
 
   const isLastRowEmptyQuotation = (table) => {
     const lastRow = table[table.length - 1];
@@ -486,7 +486,8 @@ function WorkOrder() {
       }));
 
       const saveFormData = {
-        active: formData.active ?? true, // Default active to true
+          ...(editId && { id: editId }),
+        active: formData.active ?? true,  
         createdBy: loginUserName,
         currency: formData.currency,
         customerCode: formData.customerCode,
@@ -535,7 +536,7 @@ function WorkOrder() {
         setEditId(WorOde.id);
         setDocId(WorOde.docId);
         getQuotationNumber(WorOde.customerCode);
-
+        getWorkOrderPartNo(WorOde.customerCode, WorOde.quotationNo);
         setFormData({
           active: WorOde.active === "Active",
           docDate: WorOde.docDate ? dayjs(WorOde.docDate, 'YYYY-MM-DD') : dayjs(),
@@ -555,7 +556,6 @@ function WorkOrder() {
 
         setItemParticularsData(
           WorOde.itemParticularsVO?.map((row) => ({
-            id: row.id,
             partNo: row.partNo,
             partName: row.partName,
             drawingNo: parseInt(row.drawingNo, 10) || 0,
@@ -570,7 +570,6 @@ function WorkOrder() {
 
         setTermsandConditionsData(
           WorOde.termsAndConditionsVO?.map((row) => ({
-            id: row.id,
             template: row.template,
             description: row.description,
           })) || []
@@ -656,6 +655,7 @@ function WorkOrder() {
                     options={partyList}
                     getOptionLabel={(option) => option?.customer || ''}
                     sx={{ width: '100%' }}
+                    disabled={!!editId}
                     size="small"
                     value={partyList.find((c) => c.customer === formData.customerName) || null}
                     onChange={(event, newValue) => {
@@ -707,6 +707,7 @@ function WorkOrder() {
                     helperText={<span style={{ color: 'red' }}>{fieldErrors.customerPoNo ? fieldErrors.customerPoNo : ''}</span>}
                     inputProps={{ maxLength: 40 }}
                     error={!!fieldErrors.customerPoNo}
+                    disabled={!!editId}
                   />
                 </div>
                 <div className="col-md-3 mb-3">
@@ -733,6 +734,7 @@ function WorkOrder() {
                       options={quotationList.map((option, index) => ({ ...option, key: index }))}
                       getOptionLabel={(option) => option.quotationNo || ''}
                       sx={{ width: '100%' }}
+                      disabled={!!editId}
                       size="small"
                       value={quotationList.find((qu) => qu.quotationNo === formData.quotationNo) || null}
                       onChange={(event, newValue) => {
@@ -789,6 +791,7 @@ function WorkOrder() {
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <DatePicker
                         label="Customer Due Date"
+                        disabled={!!editId}
                         value={formData.customerDueDate ? dayjs(formData.customerDueDate, 'YYYY-MM-DD') : null}
                         onChange={(date) => handleDateChange('customerDueDate', date)}
                         slotProps={{
@@ -811,6 +814,7 @@ function WorkOrder() {
                             Vap Due Date <span className="asterisk">*</span>
                           </span>
                         }
+                        disabled={!!editId}
                         value={formData.vapDueDate ? dayjs(formData.vapDueDate, 'YYYY-MM-DD') : null}
                         onChange={(date) => handleDateChange('vapDueDate', date)}
                         slotProps={{
@@ -860,7 +864,7 @@ function WorkOrder() {
                     <>
                       <div className="row mt-2">
                         <div className="mb-1">
-                          <ActionButton title="Add" icon={AddIcon} onClick={handleAddRowQuotation} />
+                          {/* <ActionButton title="Add" icon={AddIcon} onClick={handleAddRowQuotation} /> */}
                         </div>
                         <div className="col-lg-12">
                           <div className="table-responsive">
@@ -916,65 +920,7 @@ function WorkOrder() {
                                     </td>
                                     <td className="text-center">
                                       <div className="pt-2">{index + 1}</div>
-                                    </td>
-                                    {/* <td className="border px-2 py-2">
-                                      <select
-                                        value={row.partNo || ""}
-                                        style={{ width: "150px" }}
-                                        className={
-                                          itemParticularsErrors[index]?.partNo ? "error form-control" : "form-control"
-                                        }
-                                        onChange={(e) => {
-                                          const selectedPartNo = e.target.value;
-
-                                          // Find details for the selected part
-                                          const selectedPartDetails = partNoList.find(
-                                            (item) => item.partCode === selectedPartNo
-                                          );
-
-                                          // Update partNo and related fields
-                                          setItemParticularsData((prev) =>
-                                            prev.map((r, i) =>
-                                              i === index
-                                                ? {
-                                                  ...r,
-                                                  partNo: selectedPartDetails?.partCode || "",
-                                                  partName: selectedPartDetails?.partDescription || "",
-                                                  drawingNo: selectedPartDetails?.drawingNo || "",
-                                                  uom: selectedPartDetails?.uom || "",
-                                                  ordQty: selectedPartDetails?.orderQty || "",
-                                                  revisionNo: selectedPartDetails?.revisionNo || "",
-                                                  qtyOffered: selectedPartDetails?.qtyOffered || "",
-                                                  productionManager: selectedPartDetails?.productionManager || "",
-                                                }
-                                                : r
-                                            )
-                                          );
-
-                                          // Update validation errors
-                                          setItemParticularsErrors((prev) => {
-                                            const newErrors = [...prev];
-                                            newErrors[index] = {
-                                              ...newErrors[index],
-                                              partNo: !selectedPartNo ? "Part No is required" : "",
-                                            };
-                                            return newErrors;
-                                          });
-                                        }}
-                                      >
-                                        <option value="">-- Select --</option>
-                                        {getAvailablePartNos(row.id).map((item) => (
-                                          <option key={item.id} value={item.partCode}>
-                                            {item.partCode}
-                                          </option>
-                                        ))}
-                                      </select>
-                                      {itemParticularsErrors[index]?.partNo && (
-                                        <div className="mt-2" style={{ color: "red", fontSize: "12px" }}>
-                                          {itemParticularsErrors[index].partNo}
-                                        </div>
-                                      )}
-                                    </td> */}
+                                    </td> 
 
                                     <td>
                                       <Autocomplete
@@ -1057,6 +1003,7 @@ function WorkOrder() {
                                           });
                                         }}
                                         className={itemParticularsErrors[index]?.partName ? 'error form-control' : 'form-control'}
+                                        disabled
                                       />
                                       {itemParticularsErrors[index]?.partName && (
                                         <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
@@ -1083,6 +1030,7 @@ function WorkOrder() {
                                           });
                                         }}
                                         className={itemParticularsErrors[index]?.drawingNo ? 'error form-control' : 'form-control'}
+                                        disabled
                                       />
                                       {itemParticularsErrors[index]?.drawingNo && (
                                         <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
@@ -1110,6 +1058,7 @@ function WorkOrder() {
                                           });
                                         }}
                                         className={itemParticularsErrors[index]?.revisionNo ? 'error form-control' : 'form-control'}
+                                        disabled
                                       />
                                       {itemParticularsErrors[index]?.revisionNo && (
                                         <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
@@ -1135,6 +1084,7 @@ function WorkOrder() {
                                           });
                                         }}
                                         className={itemParticularsErrors[index]?.uom ? 'error form-control' : 'form-control'}
+                                        disabled
                                       />
                                       {itemParticularsErrors[index]?.uom && (
                                         <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
@@ -1149,7 +1099,11 @@ function WorkOrder() {
                                         onChange={(e) => {
                                           const value = e.target.value;
                                           setItemParticularsData((prev) =>
-                                            prev.map((r) => (r.id === row.id ? { ...r, ordQty: value } : r))
+                                            prev.map((r) =>
+                                              r.id === row.id
+                                                ? { ...r, ordQty: value, requiredQty: (parseFloat(value || 0) + parseFloat(r.freeQty || 0) - parseFloat(r.availableStockQty || 0)).toFixed(2) }
+                                                : r
+                                            )
                                           );
                                           setItemParticularsErrors((prev) => {
                                             const newErrors = [...prev];
@@ -1161,6 +1115,7 @@ function WorkOrder() {
                                           });
                                         }}
                                         className={itemParticularsErrors[index]?.ordQty ? 'error form-control' : 'form-control'}
+                                        disabled
                                       />
                                       {itemParticularsErrors[index]?.ordQty && (
                                         <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
@@ -1175,7 +1130,11 @@ function WorkOrder() {
                                         onChange={(e) => {
                                           const value = e.target.value;
                                           setItemParticularsData((prev) =>
-                                            prev.map((r) => (r.id === row.id ? { ...r, freeQty: value } : r))
+                                            prev.map((r) =>
+                                              r.id === row.id
+                                                ? { ...r, freeQty: value, requiredQty: (parseFloat(r.ordQty || 0) + parseFloat(value || 0) - parseFloat(r.availableStockQty || 0)).toFixed(2) }
+                                                : r
+                                            )
                                           );
                                           setItemParticularsErrors((prev) => {
                                             const newErrors = [...prev];
@@ -1187,6 +1146,7 @@ function WorkOrder() {
                                           });
                                         }}
                                         className={itemParticularsErrors[index]?.freeQty ? 'error form-control' : 'form-control'}
+                                        disabled={!!editId}
                                       />
                                       {itemParticularsErrors[index]?.freeQty && (
                                         <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
@@ -1201,7 +1161,11 @@ function WorkOrder() {
                                         onChange={(e) => {
                                           const value = e.target.value;
                                           setItemParticularsData((prev) =>
-                                            prev.map((r) => (r.id === row.id ? { ...r, availableStockQty: value } : r))
+                                            prev.map((r) =>
+                                              r.id === row.id
+                                                ? { ...r, availableStockQty: value, requiredQty: (parseFloat(r.ordQty || 0) + parseFloat(r.freeQty || 0) - parseFloat(value || 0)).toFixed(2) }
+                                                : r
+                                            )
                                           );
                                           setItemParticularsErrors((prev) => {
                                             const newErrors = [...prev];
@@ -1213,6 +1177,7 @@ function WorkOrder() {
                                           });
                                         }}
                                         className={itemParticularsErrors[index]?.availableStockQty ? 'error form-control' : 'form-control'}
+                                        disabled={!!editId}
                                       />
                                       {itemParticularsErrors[index]?.availableStockQty && (
                                         <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
@@ -1224,28 +1189,11 @@ function WorkOrder() {
                                       <input
                                         style={{ width: '150px' }}
                                         value={row.requiredQty}
-                                        onChange={(e) => {
-                                          const value = e.target.value;
-                                          setItemParticularsData((prev) =>
-                                            prev.map((r) => (r.id === row.id ? { ...r, requiredQty: value } : r))
-                                          );
-                                          setItemParticularsErrors((prev) => {
-                                            const newErrors = [...prev];
-                                            newErrors[index] = {
-                                              ...newErrors[index],
-                                              requiredQty: !value ? 'Available Stock Qty is required' : ''
-                                            };
-                                            return newErrors;
-                                          });
-                                        }}
-                                        className={itemParticularsErrors[index]?.requiredQty ? 'error form-control' : 'form-control'}
+                                        readOnly
+                                        className="form-control"
                                       />
-                                      {itemParticularsErrors[index]?.requiredQty && (
-                                        <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                          {itemParticularsErrors[index].requiredQty}
-                                        </div>
-                                      )}
                                     </td>
+
                                   </tr>
                                 ))}
                               </tbody>
