@@ -1394,9 +1394,9 @@ export const PartyMaster = () => {
     if (!formData.agentName) {
       errors.agentName = 'Agent Name is required';
     }
-    if (!formData.accountType) {
-      errors.accountType = 'Accounts Type is required';
-    }
+    // if (!formData.accountType) {
+    //   errors.accountType = 'Accounts Type is required';
+    // }
     if (!formData.bussinessType) {
       errors.bussinessType = 'Business Type is required';
     }
@@ -1412,9 +1412,9 @@ export const PartyMaster = () => {
     if (!formData.customerCoord) {
       errors.customerCoord = 'Customer Coordinator is required';
     }
-    if (!formData.accountName) {
-      errors.accountName = 'Account Name is required';
-    }
+    // if (!formData.accountName) {
+    //   errors.accountName = 'Account Name is required';
+    // }
     if (formData.gstRegistered === 'YES' && !formData.gstIn) {
       errors.gstIn = 'GST is Required';
     } else if (formData.gstRegistered === 'YES' && formData.gstIn.length < 15) {

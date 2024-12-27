@@ -35,17 +35,22 @@ const PurchaseIndent = () => {
   const [orgId, setOrgId] = useState(parseInt(localStorage.getItem('orgId'), 10));
   const [value, setValue] = useState(0);
   const [editId, setEditId] = useState('');
-  const [typeName, setTypeName] = useState([]);
+  const [indentTypeList, setIndentTypeList] = useState([]);
   const [indentCustomer, setIndentCustomer] = useState([]);
-  const [indentDepartment, setIndentDepartment] = useState([]);
+  const [departmentList, setDepartmentList] = useState([]);
+  const [workOrderList, setWorkOrderList] = useState([]);
+  const [workOrderDetailsList, setWorkOrderDetailsList] = useState([]);
+  const [itemDetailsList, setItemDetailsList] = useState([]);
+  const [employeeList, setEmployeeList] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [listView, setListView] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
 
   const [formData, setFormData] = useState({
-    indentNo: '',
-    purchaseIndentDate: '',
+    docId: '',
+    docDate: dayjs(),
     customerName: '',
+    customerCode: '',
     workOrderNo: '',
     department: '',
     fgPart: '',
@@ -60,9 +65,8 @@ const PurchaseIndent = () => {
   });
 
   const [fieldErrors, setFieldErrors] = useState({
-    indentNo: '',
-    purchaseIndentDate: '',
     customerName: '',
+    customerCode: '',
     workOrderNo: '',
     department: '',
     fgPart: '',
@@ -77,9 +81,9 @@ const PurchaseIndent = () => {
   });
 
   const listViewColumns = [
-    { accessorKey: 'indentNo', header: 'Indent No', size: 140 },
-    { accessorKey: 'purchaseIndentDate', header: 'Date', size: 140 },
-    { accessorKey: 'itemType', header: 'Indent Type', size: 140 },
+    { accessorKey: 'docId', header: 'Indent No', size: 140 },
+    { accessorKey: 'docDate', header: 'Date', size: 140 },
+    { accessorKey: 'indentType', header: 'Indent Type', size: 140 },
     { accessorKey: 'customerName', header: 'Customer Name', size: 140 },
     { accessorKey: 'workOrderNo', header: 'Work Order No', size: 140 },
     { accessorKey: 'department', header: 'Department', size: 140 },
@@ -90,44 +94,55 @@ const PurchaseIndent = () => {
     { accessorKey: 'customerPoNo', header: 'Customer PO No', size: 140 }
   ];
 
-  const [indentDocumentsData, setIndentDocumentsData] = useState([
+  const [purchaseDetails, setPurchaseDetails] = useState([
     {
       id: 1,
       item: '',
-      description: 'Description',
-      uom: 'Description',
-      qty: '',
-      avlStock: 2,
+      itemDescription: '',
+      uom: '',
       indentQty: '',
-
+      avlStock: 100, //hardcoded
+      indentQty: ''
     }
   ]);
-  const [indentDocumentsErrors, setIndentDocumentsErrors] = useState([
+  const [purchaseDetailsErrors, setPurchaseDetailsErrors] = useState([
     {
       item: '',
-      description: '',
+      itemDescription: '',
       uom: '',
-      qty: '',
-      avlStock: '',
       indentQty: '',
+      avlStock: '',
+      indentQty: ''
     }
   ]);
 
   useEffect(() => {
-    getIndendType();
-    getAllPurchaseIndent();
-    getCustomerName(orgId);
-    getIndentDepartment();
+    getpurchaseIndentDocId();
+    getIndentType();
+    getCustomerNameForPurchaseIndent();
+    getDepartmentForPurchase();
+    getRequestedByForPurchase();
+    // getAllEnquiryByOrgId();
   }, []);
 
-  const getIndendType = async () => {
+  const getpurchaseIndentDocId = async () => {
     try {
-      const response = await apiCalls('get', `documentType/getIndentType`);
+      const response = await apiCalls('get', `/purchase/getpurchaseIndentDocId?orgId=${orgId}`);
+      setFormData((prevData) => ({
+        ...prevData,
+        docId: response.paramObjectsMap.purchaseIndentDocId,
+        docDate: dayjs()
+      }));
+    } catch (error) {
+      console.error('Error fetching gate passes:', error);
+    }
+  };
+
+  const getIndentType = async () => {
+    try {
+      const response = await apiCalls('get', `purchase/getIndentType?orgId=${orgId}`);
       if (response.status === true) {
-        const indentTypeData = response.paramObjectsMap.indentType
-          .map(({ id, itemType }) => ({ id, itemType }));
-        setTypeName(indentTypeData);
-        return indentTypeData;
+        setIndentTypeList(response.paramObjectsMap.indentType);
       } else {
         console.error('API Error:', response);
         return response;
@@ -138,14 +153,11 @@ const PurchaseIndent = () => {
     }
   };
 
-  const getCustomerName = async (orgId) => {
+  const getDepartmentForPurchase = async () => {
     try {
-      const response = await apiCalls('get', `documentType/getCustomerNameForPurchaseIndent?orgId=${orgId}`);
+      const response = await apiCalls('get', `purchase/getDepartmentForPurchase?orgId=${orgId}`);
       if (response.status === true) {
-        const indentCustomerData = response.paramObjectsMap.customerNameList
-          .map(({ id, customerName }) => ({ id, customerName }));
-        setIndentCustomer(indentCustomerData);
-        return indentCustomerData;
+        setDepartmentList(response.paramObjectsMap.department);
       } else {
         console.error('API Error:', response);
         return response;
@@ -156,14 +168,73 @@ const PurchaseIndent = () => {
     }
   };
 
-  const getIndentDepartment = async () => {
+  const getRequestedByForPurchase = async () => {
     try {
-      const response = await apiCalls('get', `documentType/getDepartmentForPurchase`);
+      const response = await apiCalls('get', `purchase/getRequestedByForPurchase?orgId=${orgId}`);
       if (response.status === true) {
-        const indentDepartmentData = response.paramObjectsMap.department
-          .map(({ id, department }) => ({ id, department }));
-        setIndentCustomer(indentDepartmentData);
-        return indentDepartmentData;
+        setEmployeeList(response.paramObjectsMap.RequestedBy);
+      } else {
+        console.error('API Error:', response);
+        return response;
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      return error;
+    }
+  };
+
+  const getCustomerNameForPurchaseIndent = async () => {
+    try {
+      const response = await apiCalls('get', `purchase/getCustomerNameForPurchaseIndent?orgId=${orgId}`);
+      if (response.status === true) {
+        setIndentCustomer(response.paramObjectsMap.customerNameList);
+      } else {
+        console.error('API Error:', response);
+        return response;
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      return error;
+    }
+  };
+
+  const getWorkOrderNoForPurchaseIndent = async (customerCode) => {
+    try {
+      const response = await apiCalls('get', `purchase/getWorkOrderNoForPurchaseIndent?customerCode=${customerCode}&orgId=${orgId}`);
+      if (response.status === true) {
+        setWorkOrderList(response.paramObjectsMap.workOrderNo);
+        console.log('response.paramObjectsMap.workOrderNo', response.paramObjectsMap.workOrderNo);
+      } else {
+        console.error('API Error:', response);
+        return response;
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      return error;
+    }
+  };
+
+  const getWorkOrderDetailsForPurchaseIndent = async (workOrderNo) => {
+    try {
+      const response = await apiCalls('get', `purchase/getWorkOrderDetailsForPurchaseIndent?workOrderNo=${workOrderNo}&orgId=${orgId}`);
+      if (response.status === true) {
+        setWorkOrderDetailsList(response.paramObjectsMap.workOrderDtls);
+        console.log('response.paramObjectsMap.workOrderDtls', response.paramObjectsMap.workOrderDtls);
+      } else {
+        console.error('API Error:', response);
+        return response;
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      return error;
+    }
+  };
+  const getBomItemDetailsForPurchase = async (fgPart) => {
+    try {
+      const response = await apiCalls('get', `purchase/getBomItemDetailsForPurchase?fgPart=${fgPart}&orgId=${orgId}`);
+      if (response.status === true) {
+        setItemDetailsList(response.paramObjectsMap.itemDetails);
+        console.log('response.paramObjectsMap.itemDetails', response.paramObjectsMap.itemDetails);
       } else {
         console.error('API Error:', response);
         return response;
@@ -180,7 +251,7 @@ const PurchaseIndent = () => {
       console.log('API Response:', response);
 
       if (response.status === true) {
-        setEditId(row.original.id)
+        setEditId(row.original.id);
         setListView(false);
         const purchaseIndentVO = response.paramObjectsMap?.purchaseIndentVO;
         if (Array.isArray(purchaseIndentVO) && purchaseIndentVO[0]) {
@@ -197,7 +268,7 @@ const PurchaseIndent = () => {
             fgQty: particularIndent.fgQty || '',
             indentType: particularIndent.indentType || '',
             requestedBy: particularIndent.requestedBy || '',
-            workOrderNo: particularIndent.workOrderNo || '',
+            workOrderNo: particularIndent.workOrderNo || ''
           }));
         } else {
           console.error('No purchase indent found in response:', response);
@@ -205,7 +276,6 @@ const PurchaseIndent = () => {
       } else {
         console.error('API Error:', response);
       }
-
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -227,177 +297,62 @@ const PurchaseIndent = () => {
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value, checked, selectionStart, selectionEnd, type } = e.target;
-
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [name]: value, // Update only the specific field
-    }));
-
-    if (type === 'checkbox') {
-      setFormData({ ...formData, [name]: checked });
-    }
-
-    setFieldErrors({ ...fieldErrors, [name]: '' });
-
-    if (type === 'text' || type === 'textarea') {
-      setTimeout(() => {
-        const inputElement = document.getElementsByName(name)[0];
-        if (inputElement && inputElement.setSelectionRange) {
-          inputElement.setSelectionRange(selectionStart, selectionEnd);
-        }
-      }, 0);
-    }
+  const handleInputChange = (e, fieldType, index) => {
+    const { name, value, type, checked } = e.target;
     const inputValue = type === 'checkbox' ? checked : value;
     setFormData({ ...formData, [name]: inputValue });
     setFieldErrors({ ...fieldErrors, [name]: false });
-  };
+    let errorMessage = '';
+    const alphaNumericRegex = /^[A-Za-z0-9]*$/;
 
-  const handleSave = async () => {
-    const errors = {};
-
-    if (!formData.indentNo) {
-      errors.indentNo = 'Indent No is required';
-    }
-    // if (!formData.purchaseIndentDate) {
-    //   errors.purchaseIndentDate = 'Date is required';
-    // }
-    if (!formData.itemType) {
-      errors.itemType = 'Indent Type is required';
-    }
-    if (!formData.customerName) {
-      errors.customerName = 'Customer Name is required';
-    }
-    if (!formData.workOrderNo) {
-      errors.workOrderNo = 'Work Order No is required';
-    }
-    if (!formData.department) {
-      errors.department = 'Department is required';
-    }
-    if (!formData.fgPart) {
-      errors.fgPart = 'FG Part is required';
-    }
-    if (!formData.fgPartDesc) {
-      errors.fgPartDesc = 'FG Part Desc is required';
-    }
-    if (!formData.fgQty) {
-      errors.fgQty = 'FG Qty is required';
-    }
-    if (!formData.requestedBy) {
-      errors.requestedBy = 'Requested By is required';
-    }
-    if (!formData.customerPoNo) {
-      errors.customerPoNo = 'Customer PO No is required';
-    }
-    if (!formData.verifiedBy) {
-      errors.verifiedBy = 'Verified By is required';
-    }
-    if (!formData.remarks) {
-      errors.remarks = 'Remarks is required';
-    }
-
-    setFieldErrors(errors);
-
-
-    let indentDocumentsDataValid = true;
-    if (!indentDocumentsData || !Array.isArray(indentDocumentsData) || indentDocumentsData.length === 0) {
-      indentDocumentsDataValid = false;
-      setIndentDocumentsErrors([{ general: 'PurchaseIndent is required' }]);
+    if (errorMessage) {
+      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: errorMessage }));
     } else {
-      const newTableErrors = indentDocumentsData.map((row, index) => {
-        const rowErrors = {};
-        // if (!row.item) {
-        //   rowErrors.item = 'Item is required';
-        //   indentDocumentsDataValid = false;
-        // }
-        if (!row.qty) {
-          rowErrors.qty = 'Required QTY is required';
-          indentDocumentsDataValid = false;
+      if (name === 'customerName') {
+        const selectedCustomer = indentCustomer.find((scr) => scr.customerName === value);
+
+        if (selectedCustomer) {
+          setFormData((prevData) => ({
+            ...prevData,
+            customerCode: selectedCustomer.customerCode,
+            customerName: selectedCustomer.customerName
+          }));
+          getWorkOrderNoForPurchaseIndent(selectedCustomer.customerCode);
         }
-        if (!row.indentQty) {
-          rowErrors.indentQty = 'Indent QTY is required';
-          indentDocumentsDataValid = false;
-        }
-
-        return rowErrors;
-      });
-      setIndentDocumentsErrors(newTableErrors);
-    }
-    setFieldErrors(errors);
-
-    if (Object.keys(errors).length === 0 && indentDocumentsDataValid) {
-      setIsLoading(true);
-
-      const detailsVo = indentDocumentsData.map((row) => ({
-        ...(editId && { id: row.id }),
-        item: row.item,
-        itemDescription: row.description,
-        uom: row.uom,
-        reqQty: parseInt(row.qty, 10),
-        avlStock: parseInt(row.avlStock, 10),
-        indentQty: parseInt(row.indentQty, 10)
-      }));
-
-      const saveFormData = {
-        ...(editId && { id: editId }),
-        createdBy: loginUserName,
-        purchaseIndentDTO1: detailsVo,
-        customerName: formData.customerName,
-        customerPoNo: formData.customerPoNo,
-        department: formData.department,
-        fgPart: formData.fgPart,
-        fgPartDesc: formData.fgPartDesc,
-        verifiedBy: formData.verifiedBy,
-        fgQty: parseInt(formData.fgQty, 10),
-        indentType: formData.indentType,
-        purchaseIndentDTO2: formData.purchaseIndentDTO2,
-        requestedBy: formData.requestedBy,
-        workOrderNo: formData.workOrderNo,
-        orgId: orgId,
-        finYear: finYear,
-      };
-
-      console.log('DATA TO SAVE IS:', saveFormData);
-
-      try {
-        const response = await apiCalls('put', 'documentType/updateCreatePurchaseIndent', saveFormData);
-        if (response.status === true) {
-          console.log('Response:', response);
-          showToast('success', editId ? 'List of values updated successfully' : 'Material Type values created successfully');
-
-          handleClear();
-          setIsLoading(false);
-        } else {
-          showToast('error', response.paramObjectsMap.errorMessage || 'Material Type value creation failed');
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        showToast('error', 'Material Type value creation failed');
-        setIsLoading(false);
       }
-    }
+      if (name === 'workOrderNo') {
+        const selectedWorkOrderNo = workOrderList.find((scr) => scr.workOrderNo === value);
+        console.log('selectedWorkOrderNo', selectedWorkOrderNo);
 
-    else {
-      setFieldErrors(errors);
+        if (selectedWorkOrderNo) {
+          getWorkOrderDetailsForPurchaseIndent(selectedWorkOrderNo.workOrderNo);
+        }
+      }
+      // if (name === 'fgPart') {
+      //   const selectedFgPart = workOrderDetailsList.find((scr) => scr.fgPart === value);
+      //   console.log('selectedFgPart', selectedFgPart);
+
+      //   if (selectedFgPart) {
+      //     setFormData((prevData) => ({
+      //       ...prevData,
+      //       customerPoNo: selectedFgPart.customerPoNo,
+      //       fgPart: selectedFgPart.fgPart,
+      //       fgPartDesc: selectedFgPart.fgPartDesc,
+      //       fgQty: selectedFgPart.fgQty
+      //     }));
+      //     getBomItemDetailsForPurchase(selectedFgPart.fgPart);
+      //   }
+      // }
+      setFieldErrors((prevErrors) => ({ ...prevErrors, [name]: '' }));
     }
   };
-
-
-
-
-
-
 
   const handleClear = () => {
     setFormData({
-      indentNo: '',
-      purchaseIndentDate: '',
-      itemType: '',
-      customerName: "",
-      workOrderNo: "",
-      department: "",
+      indentType: '',
+      customerName: '',
+      workOrderNo: '',
+      department: '',
       fgPart: '',
       fgPartDesc: '',
       fgQty: '',
@@ -405,53 +360,54 @@ const PurchaseIndent = () => {
       customerPoNo: '',
       orgId: orgId
     });
-    setFieldErrors({
-      indentNo: false,
-    });
-    setIndentDocumentsData([{ id: 1, item: '', description: '', uom: '', qty: '', avlStock: '', indentQty: '', verifiedBy: '', remarks: '' }]);
-    setIndentDocumentsErrors('');
+    setFieldErrors({});
+    setPurchaseDetails([
+      { id: 1, item: '', itemDescription: '', uom: '', indentQty: '', avlStock: '', indentQty: '', verifiedBy: '', remarks: '' }
+    ]);
+    setPurchaseDetailsErrors('');
     setEditId('');
   };
 
   const handleAddRow = () => {
-    if (isLastRowEmpty(indentDocumentsData)) {
-      displayRowError(indentDocumentsData);
+    if (isLastRowEmpty(purchaseDetails)) {
+      displayRowError(purchaseDetails);
       return;
     }
     const newRow = {
       id: Date.now(),
       item: '',
-      description: '',
+      itemDescription: '',
       uom: '',
-      qty: '',
+      indentQty: '',
       avlStock: '',
       indentQty: ''
     };
-    setIndentDocumentsData([...indentDocumentsData, newRow]);
-    setIndentDocumentsErrors([...indentDocumentsErrors, { item: '', description: '', uom: '', qty: '', avlStock: '', indentQty: '', verifiedBy: '', remarks: '' }]);
+    setPurchaseDetails([...purchaseDetails, newRow]);
+    setPurchaseDetailsErrors([
+      ...purchaseDetailsErrors,
+      { item: '', itemDescription: '', uom: '', indentQty: '', avlStock: '', indentQty: '' }
+    ]);
   };
 
   const isLastRowEmpty = (table) => {
     const lastRow = table[table.length - 1];
     if (!lastRow) return false;
 
-    if (table === indentDocumentsData) {
-      return !lastRow.item || !lastRow.description || !lastRow.uom || !lastRow.qty || !lastRow.avlStock || !lastRow.indentQty || !lastRow.verifiedBy || !lastRow.remarks;
+    if (table === purchaseDetails) {
+      return !lastRow.item || !lastRow.itemDescription || !lastRow.uom || !lastRow.indentQty || !lastRow.avlStock || !lastRow.indentQty;
     }
     return false;
   };
 
   const displayRowError = (table) => {
-    if (table === indentDocumentsData) {
-      setIndentDocumentsErrors((prevErrors) => {
+    if (table === purchaseDetails) {
+      setPurchaseDetailsErrors((prevErrors) => {
         const newErrors = [...prevErrors];
         newErrors[table.length - 1] = {
           ...newErrors[table.length - 1],
           item: !table[table.length - 1].item ? 'Item is required' : '',
-          qty: !table[table.length - 1].qty ? 'Require Qty is required' : '',
-          indentQty: !table[table.length - 1].indentQty ? 'Indent Qty is required' : '',
-          verifiedBy: !table[table.length - 1].verifiedBy ? 'VerifiedBy is required' : '',
-          remarks: !table[table.length - 1].remarks ? 'Remarks is required' : '',
+          indentQty: !table[table.length - 1].indentQty ? 'Require Qty is required' : '',
+          indentQty: !table[table.length - 1].indentQty ? 'Indent Qty is required' : ''
         };
         return newErrors;
       });
@@ -469,23 +425,10 @@ const PurchaseIndent = () => {
     }
   };
 
-  // const handleIndentChange = (row, index, event) => {
-  //   const value = event.target.value;
-  //   const selectedRole = roleList.find((role) => role.role === value);
-  //   setIndentDocumentsData((prev) => prev.map((r) => (r.id === row.id ? { ...r, role: value, roleId: selectedRole.id } : r)));
-  //   setIndentDocumentsErrors((prev) => {
-  //     const newErrors = [...prev];
-  //     newErrors[index] = {
-  //       ...newErrors[index],
-  //       role: !value ? 'Role is required' : ''
-  //     };
-  //     return newErrors;
-  //   });
-  // };
   const handleIndentChange = (row, index, event) => {
-    const updatedRows = [...indentDocumentsData]; // Clone the data
+    const updatedRows = [...purchaseDetails]; // Clone the data
     updatedRows[index].value = event.target.value; // Update the value
-    setIndentDocumentsData(updatedRows); // Update the state
+    setPurchaseDetails(updatedRows); // Update the state
   };
 
   const handleView = () => {
@@ -509,7 +452,7 @@ const PurchaseIndent = () => {
   };
 
   const handleSubmit = () => {
-    toast.success("File uploded sucessfully")
+    toast.success('File uploded sucessfully');
     console.log('Submit clicked');
     handleBulkUploadClose();
     // getAllData();
@@ -518,6 +461,106 @@ const PurchaseIndent = () => {
   const handleDateChange = (name, date) => {
     setFormData({ ...formData, [name]: date });
     setFieldErrors({ ...fieldErrors, [name]: false });
+  };
+
+  const handleSave = async () => {
+    const errors = {};
+
+    if (!formData.indentType) {
+      errors.indentType = 'Indent Type is required';
+    }
+    if (!formData.customerName) {
+      errors.customerName = 'Customer Name is required';
+    }
+    if (!formData.workOrderNo) {
+      errors.workOrderNo = 'Work Order No is required';
+    }
+    if (!formData.department) {
+      errors.department = 'Department is required';
+    }
+
+    setFieldErrors(errors);
+
+    let indentDocumentsDataValid = true;
+    if (!purchaseDetails || !Array.isArray(purchaseDetails) || purchaseDetails.length === 0) {
+      indentDocumentsDataValid = false;
+      setPurchaseDetailsErrors([{ general: 'PurchaseIndent is required' }]);
+    } else {
+      const newTableErrors = purchaseDetails.map((row, index) => {
+        const rowErrors = {};
+        if (!row.item) {
+          rowErrors.item = 'Item is required';
+          indentDocumentsDataValid = false;
+        }
+        if (!row.reqQty) {
+          rowErrors.reqQty = 'Required QTY is required';
+          indentDocumentsDataValid = false;
+        }
+        if (!row.indentQty) {
+          rowErrors.indentQty = 'Indent QTY is required';
+          indentDocumentsDataValid = false;
+        }
+
+        return rowErrors;
+      });
+      setPurchaseDetailsErrors(newTableErrors);
+    }
+    setFieldErrors(errors);
+
+    if (Object.keys(errors).length === 0 && indentDocumentsDataValid) {
+      setIsLoading(true);
+
+      const detailsVo = purchaseDetails.map((row) => ({
+        ...(editId && { id: row.id }),
+        item: row.item,
+        itemDescription: row.itemDescription,
+        uom: row.uom,
+        reqQty: parseInt(row.reqQty, 10),
+        avlStock: parseInt(row.avlStock, 10),
+        indentQty: parseInt(row.indentQty, 10)
+      }));
+
+      const saveFormData = {
+        ...(editId && { id: editId }),
+        createdBy: loginUserName,
+        purchaseIndentDTO1: detailsVo,
+        customerName: formData.customerName,
+        customerPoNo: formData.customerPoNo,
+        department: formData.department,
+        fgPart: formData.fgPart,
+        fgPartDesc: formData.fgPartDesc,
+        verifiedBy: formData.verifiedBy,
+        fgQty: parseInt(formData.fgQty, 10),
+        indentType: formData.indentType,
+        purchaseIndentDTO2: formData.purchaseIndentDTO2,
+        requestedBy: formData.requestedBy,
+        workOrderNo: formData.workOrderNo,
+        orgId: orgId,
+        finYear: finYear
+      };
+
+      console.log('DATA TO SAVE IS:', saveFormData);
+
+      try {
+        const response = await apiCalls('put', 'purchase/updateCreatePurchaseIndent', saveFormData);
+        if (response.status === true) {
+          console.log('Response:', response);
+          showToast('success', editId ? 'Purchase Indent updated successfully' : 'Purchase Indent created successfully');
+
+          handleClear();
+          setIsLoading(false);
+        } else {
+          showToast('error', response.paramObjectsMap.errorMessage || 'Purchase Indent creation failed');
+          setIsLoading(false);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        showToast('error', 'Purchase Indent creation failed');
+        setIsLoading(false);
+      }
+    } else {
+      setFieldErrors(errors);
+    }
   };
 
   return (
@@ -544,29 +587,27 @@ const PurchaseIndent = () => {
                     variant="outlined"
                     size="small"
                     fullWidth
-                    required
-                    name="indentNo"
-                    value={formData.indentNo}
-                    onChange={handleInputChange}
-                    error={!!fieldErrors.indentNo}
-                    helperText={fieldErrors.indentNo}
+                    name="docId"
+                    disabled
+                    value={formData.docId}
                     inputProps={{ maxLength: 10 }}
                   />
                 </div>
 
                 <div className="col-md-3 mb-3">
-                  <FormControl fullWidth required>
+                  <FormControl fullWidth>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <DatePicker
-                        label="Date"
-                        value={formData.purchaseIndentDate ? dayjs(formData.purchaseIndentDate, 'YYYY-MM-DD') : dayjs()} // Default to current date
-                        onChange={(date) => handleDateChange('purchaseIndentDate', date)}
+                        label="Indent Date"
+                        disabled
+                        value={formData.docDate ? dayjs(formData.docDate, 'YYYY-MM-DD') : dayjs()}
+                        onChange={(date) => handleDateChange('docDate', date)}
                         slotProps={{
                           textField: { size: 'small', clearable: true }
                         }}
                         format="DD-MM-YYYY"
-                        error={!!fieldErrors.purchaseIndentDate}
-                        helperText={<span style={{ color: 'red' }}>{fieldErrors.purchaseIndentDate ? 'Date is required' : ''}</span>}
+                        error={!!fieldErrors.docDate}
+                        helperText={<span style={{ color: 'red' }}>{fieldErrors.docDate ? 'Date is required' : ''}</span>}
                       />
                     </LocalizationProvider>
                   </FormControl>
@@ -575,54 +616,49 @@ const PurchaseIndent = () => {
                 <div className="col-md-3 mb-3">
                   <Autocomplete
                     disablePortal
-                    options={typeName}
-                    getOptionLabel={(option) => option.itemType || ''}
+                    options={indentTypeList.map((option, index) => ({ ...option, key: index }))}
+                    getOptionLabel={(option) => option.materialType || ''}
                     sx={{ width: '100%' }}
                     size="small"
-                    value={typeName.find((option) => option.itemType === formData.itemType) || null}
+                    value={formData.materialType ? indentTypeList.find((c) => c.materialType === formData.materialType) : null}
                     onChange={(event, newValue) => {
                       handleInputChange({
                         target: {
-                          name: 'itemType',
-                          value: newValue ? newValue.itemType : '',
-                        },
+                          name: 'materialType',
+                          value: newValue ? newValue.materialType : ''
+                        }
                       });
                     }}
                     renderInput={(params) => (
                       <TextField
                         {...params}
                         label="Indent Type"
-                        name="itemType"
-                        error={!!fieldErrors.itemType}
-                        helperText={fieldErrors.itemType}
+                        name="materialType"
+                        error={!!fieldErrors.materialType}
+                        helperText={fieldErrors.materialType}
                         InputProps={{
                           ...params.InputProps,
-                          style: { height: 40 },
+                          style: { height: 40 }
                         }}
                       />
                     )}
                   />
                 </div>
 
-
                 <div className="col-md-3 mb-3">
                   <Autocomplete
                     disablePortal
-                    options={indentCustomer}
+                    options={indentCustomer.map((option, index) => ({ ...option, key: index }))}
                     getOptionLabel={(option) => option.customerName || ''}
                     sx={{ width: '100%' }}
                     size="small"
-                    value={
-                      formData.customerName
-                        ? indentCustomer.find((c) => c.customerName === formData.customerName) || null
-                        : null
-                    }
+                    value={formData.customerName ? indentCustomer.find((c) => c.customerName === formData.customerName) : null}
                     onChange={(event, newValue) => {
                       handleInputChange({
                         target: {
                           name: 'customerName',
-                          value: newValue ? newValue.customerName : '',
-                        },
+                          value: newValue ? newValue.customerName : ''
+                        }
                       });
                     }}
                     renderInput={(params) => (
@@ -634,7 +670,38 @@ const PurchaseIndent = () => {
                         helperText={fieldErrors.customerName}
                         InputProps={{
                           ...params.InputProps,
-                          style: { height: 40 },
+                          style: { height: 40 }
+                        }}
+                      />
+                    )}
+                  />
+                </div>
+                <div className="col-md-3 mb-3">
+                  <Autocomplete
+                    disablePortal
+                    options={workOrderList.map((option, index) => ({ ...option, key: index }))}
+                    getOptionLabel={(option) => option.workOrderNo || ''}
+                    sx={{ width: '100%' }}
+                    size="small"
+                    value={formData.workOrderNo ? workOrderList.find((c) => c.workOrderNo === formData.workOrderNo) : null}
+                    onChange={(event, newValue) => {
+                      handleInputChange({
+                        target: {
+                          name: 'workOrderNo',
+                          value: newValue ? newValue.workOrderNo : ''
+                        }
+                      });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Work Order No"
+                        name="workOrderNo"
+                        error={!!fieldErrors.workOrderNo}
+                        helperText={fieldErrors.workOrderNo}
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 }
                         }}
                       />
                     )}
@@ -642,59 +709,19 @@ const PurchaseIndent = () => {
                 </div>
 
                 <div className="col-md-3 mb-3">
-                  <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.workOrderNo}>
-                    <InputLabel id="work-order-label">Work Order No</InputLabel>
-                    <Select
-                      labelId="work-order-label"
-                      label="Work Order No"
-                      value={formData.workOrderNo || ''}
-                      onChange={(e) => {
-                        handleInputChange({
-                          target: {
-                            name: 'workOrderNo',
-                            value: e.target.value,
-                          },
-                        });
-                      }}
-                      name="workOrderNo"
-                    >
-                      <MenuItem value="">
-                        <em>None</em>
-                      </MenuItem>
-                      {/* Manual selection options */}
-                      <MenuItem value="WorkOrder1">Work Order 1</MenuItem>
-                      <MenuItem value="WorkOrder2">Work Order 2</MenuItem>
-                      <MenuItem value="ManualOption1">Manual Option 1</MenuItem>
-                      <MenuItem value="ManualOption2">Manual Option 2</MenuItem>
-                    </Select>
-                    {fieldErrors.workOrderNo && <FormHelperText>{fieldErrors.workOrderNo}</FormHelperText>}
-                  </FormControl>
-                </div>
-
-
-                <div className="col-md-3 mb-3">
                   <Autocomplete
                     disablePortal
-                    options={[
-                      ...indentDepartment, // Existing options
-                      { department: 'Manual Option 1' }, // Manual selection 1
-                      { department: 'Manual Option 2' }, // Manual selection 2
-                    ]}
-                    getOptionLabel={(option) => option.department || ''}
+                    options={departmentList.map((option, index) => ({ ...option, key: index }))}
+                    getOptionLabel={(option) => option.departmentName || ''}
                     sx={{ width: '100%' }}
                     size="small"
-                    value={
-                      formData.department
-                        ? indentDepartment.find((c) => c.department === formData.department) ||
-                        { department: formData.department }
-                        : null
-                    }
+                    value={formData.department ? departmentList.find((c) => c.departmentName === formData.department) : null}
                     onChange={(event, newValue) => {
                       handleInputChange({
                         target: {
                           name: 'department',
-                          value: newValue?.department || '',
-                        },
+                          value: newValue ? newValue.departmentName : ''
+                        }
                       });
                     }}
                     renderInput={(params) => (
@@ -706,15 +733,14 @@ const PurchaseIndent = () => {
                         helperText={fieldErrors.department}
                         InputProps={{
                           ...params.InputProps,
-                          style: { height: 40 },
+                          style: { height: 40 }
                         }}
                       />
                     )}
                   />
                 </div>
 
-
-                <div className="col-md-3 mb-3">
+                {/* <div className="col-md-3 mb-3">
                   <TextField
                     id="outlined-textarea-zip"
                     label="FG Part"
@@ -723,10 +749,39 @@ const PurchaseIndent = () => {
                     fullWidth
                     name="fgPart"
                     value={formData.fgPart}
-                    onChange={handleInputChange}
-                    error={!!fieldErrors.fgPart}
-                    helperText={fieldErrors.fgPart}
+                    disabled
                     inputProps={{ maxLength: 40 }}
+                  />
+                </div> */}
+                <div className="col-md-3 mb-3">
+                  <Autocomplete
+                    disablePortal
+                    options={workOrderDetailsList.map((option, index) => ({ ...option, key: index }))}
+                    getOptionLabel={(option) => option.fgPart || ''}
+                    sx={{ width: '100%' }}
+                    size="small"
+                    value={formData.fgPart ? workOrderDetailsList.find((c) => c.fgPart === formData.fgPart) : null}
+                    onChange={(event, newValue) => {
+                      handleInputChange({
+                        target: {
+                          name: 'fgPart',
+                          value: newValue ? newValue.fgPart : ''
+                        }
+                      });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="FG Part"
+                        name="fgPart"
+                        error={!!fieldErrors.fgPart}
+                        helperText={fieldErrors.fgPart}
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 }
+                        }}
+                      />
+                    )}
                   />
                 </div>
                 <div className="col-md-3 mb-3">
@@ -738,9 +793,7 @@ const PurchaseIndent = () => {
                     name="fgPartDesc"
                     fullWidth
                     value={formData.fgPartDesc}
-                    onChange={handleInputChange}
-                    error={!!fieldErrors.fgPartDesc}
-                    helperText={fieldErrors.fgPartDesc}
+                    disabled
                     inputProps={{ maxLength: 15 }}
                   />
                 </div>
@@ -753,27 +806,43 @@ const PurchaseIndent = () => {
                     name="fgQty"
                     fullWidth
                     value={formData.fgQty}
-                    onChange={handleInputChange}
-                    error={!!fieldErrors.fgQty}
-                    helperText={fieldErrors.fgQty}
+                    disabled
                     inputProps={{ maxLength: 15 }}
                   />
                 </div>
+
                 <div className="col-md-3 mb-3">
-                  <TextField
-                    id="outlined-textarea"
-                    label="Requested By"
-                    variant="outlined"
+                  <Autocomplete
+                    disablePortal
+                    options={employeeList.map((option, index) => ({ ...option, key: index }))}
+                    getOptionLabel={(option) => option.employeeName || ''}
+                    sx={{ width: '100%' }}
                     size="small"
-                    name="requestedBy"
-                    fullWidth
-                    value={formData.requestedBy}
-                    onChange={handleInputChange}
-                    error={!!fieldErrors.requestedBy}
-                    helperText={fieldErrors.requestedBy}
-                    inputProps={{ maxLength: 15 }}
+                    value={formData.requestedBy ? employeeList.find((c) => c.employeeName === formData.requestedBy) : null}
+                    onChange={(event, newValue) => {
+                      handleInputChange({
+                        target: {
+                          name: 'requestedBy',
+                          value: newValue ? newValue.employeeName : ''
+                        }
+                      });
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Requested By"
+                        name="requestedBy"
+                        error={!!fieldErrors.requestedBy}
+                        helperText={fieldErrors.requestedBy}
+                        InputProps={{
+                          ...params.InputProps,
+                          style: { height: 40 }
+                        }}
+                      />
+                    )}
                   />
                 </div>
+
                 <div className="col-md-3 mb-3">
                   <TextField
                     id="outlined-textarea"
@@ -783,9 +852,7 @@ const PurchaseIndent = () => {
                     name="customerPoNo"
                     fullWidth
                     value={formData.customerPoNo}
-                    onChange={handleInputChange}
-                    error={!!fieldErrors.customerPoNo}
-                    helperText={fieldErrors.customerPoNo}
+                    disabled
                     inputProps={{ maxLength: 15 }}
                   />
                 </div>
@@ -805,13 +872,12 @@ const PurchaseIndent = () => {
                   </Tabs>
                 </Box>
                 <Box sx={{ padding: 2 }}>
-
                   {value === 0 && (
                     <>
                       <div className="row d-flex ml">
                         <div className="mb-1">
                           <ActionButton title="Add" icon={AddIcon} onClick={handleAddRow} />
-                          <ActionButton icon={CloudUploadIcon} title='Upload' onClick={handleBulkUploadOpen} />
+                          <ActionButton icon={CloudUploadIcon} title="Upload" onClick={handleBulkUploadOpen} />
 
                           {uploadOpen && (
                             <CommonBulkUpload
@@ -833,7 +899,6 @@ const PurchaseIndent = () => {
                             <div className="table-responsive">
                               <table className="table table-bordered ">
                                 <thead>
-
                                   <tr style={{ backgroundColor: '#673AB7' }}>
                                     <th className="table-header">Action</th>
                                     <th className="table-header">S.No</th>
@@ -844,202 +909,238 @@ const PurchaseIndent = () => {
                                     <th className="table-header">Avl. Stock</th>
                                     <th className="table-header">Indent QTY</th>
                                   </tr>
-
                                 </thead>
                                 <tbody>
-                                  {indentDocumentsData.map((row, index) => (
-                                    <tr key={row.id}>
-                                      <td className="border px-2 py-2 text-center">
-                                        <ActionButton
-                                          title="Delete"
-                                          icon={DeleteIcon}
-                                          onClick={() =>
-                                            handleDeleteRow(
-                                              row.id,
-                                              indentDocumentsData,
-                                              setIndentDocumentsData,
-                                              indentDocumentsErrors,
-                                              setIndentDocumentsErrors
-                                            )
-                                          }
-                                        />
-                                      </td>
-                                      <td className="text-center">
-                                        <div className="pt-2">{index + 1}</div>
-                                      </td>
-                                      <td className="border px-2 py-2">
-                                        <select
-                                          value={row?.value || ''}
-                                          style={{ width: '150px' }}
-                                          onChange={(e) => handleIndentChange(row, index, e)}
-                                          className={`form-control ${indentDocumentsErrors?.[index]?.item ? 'error' : ''}`}
-                                        >
-                                          <option value="">Select Option</option>
-                                          <option value="Select Option1">Select Option1</option>
-                                          <option value="Select Option2">Select Option2</option>
-                                        </select>
-                                        {indentDocumentsErrors?.[index]?.item && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {indentDocumentsErrors[index].item}
-                                          </div>
-                                        )}
-                                      </td>
-
-                                      <td className="border px-2 py-2">
-                                        <input
-                                          type="text"
-                                          style={{ width: '150px' }}
-                                          disabled
-                                          value={row.description}
-                                          onChange={(e) => {
-                                            const value = e.target.value;
-                                            setIndentDocumentsData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, description: value } : r))
-                                            );
-                                            setIndentDocumentsErrors((prev) => {
-                                              const newErrors = [...prev];
-                                              newErrors[index] = {
-                                                ...newErrors[index],
-                                                description: !value ? 'Item Decreption is required' : ''
-                                              };
-                                              return newErrors;
-                                            });
-                                          }}
-                                          className={indentDocumentsErrors[index]?.description ? 'error form-control' : 'form-control'}
-                                        />
-                                        {indentDocumentsErrors[index]?.description && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {indentDocumentsErrors[index].description}
-                                          </div>
-                                        )}
-                                      </td>
-
-                                      <td className="border px-2 py-2">
-                                        <input
-                                          type="text"
-                                          disabled
-                                          style={{ width: '150px' }}
-                                          value={row.uom}
-                                          onChange={(e) => {
-                                            const value = e.target.value;
-                                            setIndentDocumentsData((prev) =>
-                                              prev.map((r) => (r.id === row.id ? { ...r, uom: value } : r))
-                                            );
-                                            setIndentDocumentsErrors((prev) => {
-                                              const newErrors = [...prev];
-                                              newErrors[index] = {
-                                                ...newErrors[index],
-                                                uom: !value ? 'UOM is required' : ''
-                                              };
-                                              return newErrors;
-                                            });
-                                          }}
-                                          className={indentDocumentsErrors[index]?.uom ? 'error form-control' : 'form-control'}
-                                        />
-                                        {indentDocumentsErrors[index]?.uom && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {indentDocumentsErrors[index].uom}
-                                          </div>
-                                        )}
-                                      </td>
-
-                                      <td className="border px-2 py-2">
-                                        <input
-                                          type="text"
-                                          style={{ width: '150px' }}
-                                          value={row.qty}
-                                          onChange={(e) => {
-                                            const value = e.target.value;
-
-                                            if (/^\d*$/.test(value)) {
-                                              setIndentDocumentsData((prev) =>
-                                                prev.map((r) => (r.id === row.id ? { ...r, qty: value } : r))
+                                  {purchaseDetails.map((row, index) => {
+                                    const availableItems = itemDetailsList.filter(
+                                      (option) => !purchaseDetails.some((data) => data.item === option.item && data.id !== row.id)
+                                    );
+                                    return (
+                                      <tr key={row.id}>
+                                        <td className="border px-2 py-2 text-center">
+                                          <ActionButton
+                                            title="Delete"
+                                            icon={DeleteIcon}
+                                            onClick={() =>
+                                              handleDeleteRow(
+                                                row.id,
+                                                purchaseDetails,
+                                                setPurchaseDetails,
+                                                purchaseDetailsErrors,
+                                                setPurchaseDetailsErrors
+                                              )
+                                            }
+                                          />
+                                        </td>
+                                        <td className="text-center">
+                                          <div className="pt-2">{index + 1}</div>
+                                        </td>
+                                        <td className="border px-2 py-2">
+                                          <Autocomplete
+                                            disablePortal
+                                            options={availableItems.map((option, index) => ({ ...option, key: index }))}
+                                            getOptionLabel={(option) => option.item || ''}
+                                            sx={{ width: '100%' }}
+                                            size="small"
+                                            value={itemDetailsList.find((c) => c.item === row.item) || null}
+                                            onChange={(event, newValue) => {
+                                              const selectedItem = newValue ? newValue.item : '';
+                                              const selectedItemDesc = newValue ? newValue.itemDesc : '';
+                                              const selectedItemUnit = newValue ? newValue.primaryUnit : '';
+                                              const selectedItemBomQty = newValue ? newValue.bomQty : '';
+                                              setPurchaseDetails((prev) =>
+                                                prev.map((r) =>
+                                                  r.id === row.id
+                                                    ? {
+                                                        ...r,
+                                                        item: selectedItem,
+                                                        itemDescription: selectedItemDesc,
+                                                        uom: selectedItemUnit,
+                                                        reqQty: selectedItemBomQty
+                                                      }
+                                                    : r
+                                                )
                                               );
-                                              setIndentDocumentsErrors((prev) => {
+                                              setPurchaseDetailsErrors((prev) => {
                                                 const newErrors = [...prev];
                                                 newErrors[index] = {
                                                   ...newErrors[index],
-                                                  qty: !value ? 'Qty is required' : '',
+                                                  item: !selectedItem ? 'Item is required' : ''
                                                 };
                                                 return newErrors;
                                               });
-                                            }
-                                          }}
-                                          className={indentDocumentsErrors[index]?.qty ? 'error form-control' : 'form-control'}
-                                        />
-                                        {indentDocumentsErrors[index]?.qty && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {indentDocumentsErrors[index].qty}
-                                          </div>
-                                        )}
-                                      </td>
+                                            }}
+                                            renderInput={(params) => (
+                                              <TextField
+                                                {...params}
+                                                label="Item"
+                                                name="item"
+                                                error={!!purchaseDetailsErrors[index]?.item}
+                                                helperText={purchaseDetailsErrors[index]?.item}
+                                                InputProps={{
+                                                  ...params.InputProps,
+                                                  style: { height: 40, width: 200 }
+                                                }}
+                                              />
+                                            )}
+                                          />
+                                        </td>
 
-                                      <td className="border px-2 py-2">
-                                        <input
-                                          type="text"
-                                          disabled
-                                          style={{ width: '150px' }}
-                                          value={row.avlStock}
-                                          onChange={(e) => {
-                                            const value = e.target.value;
-
-                                            // Allow only numeric values or an empty string
-                                            if (/^\d*$/.test(value)) {
-                                              setIndentDocumentsData((prev) =>
-                                                prev.map((r) => (r.id === row.id ? { ...r, avlStock: value } : r))
+                                        <td className="border px-2 py-2">
+                                          <input
+                                            type="text"
+                                            style={{ width: '150px' }}
+                                            disabled
+                                            value={row.itemDescription}
+                                            onChange={(e) => {
+                                              const value = e.target.value;
+                                              setPurchaseDetails((prev) =>
+                                                prev.map((r) => (r.id === row.id ? { ...r, itemDescription: value } : r))
                                               );
-                                              setIndentDocumentsErrors((prev) => {
+                                              setPurchaseDetailsErrors((prev) => {
                                                 const newErrors = [...prev];
                                                 newErrors[index] = {
                                                   ...newErrors[index],
-                                                  avlStock: !value ? 'Avl Stock is required' : '', // Show error if value is empty
+                                                  itemDescription: !value ? 'Item Description is required' : ''
                                                 };
                                                 return newErrors;
                                               });
+                                            }}
+                                            className={
+                                              purchaseDetailsErrors[index]?.itemDescription ? 'error form-control' : 'form-control'
                                             }
-                                          }}
-                                          className={indentDocumentsErrors[index]?.avlStock ? 'error form-control' : 'form-control'}
-                                        />
-                                        {indentDocumentsErrors[index]?.avlStock && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {indentDocumentsErrors[index].avlStock}
-                                          </div>
-                                        )}
-                                      </td>
+                                          />
+                                          {purchaseDetailsErrors[index]?.itemDescription && (
+                                            <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                              {purchaseDetailsErrors[index].itemDescription}
+                                            </div>
+                                          )}
+                                        </td>
 
-                                      <td className="border px-2 py-2">
-                                        <input
-                                          type="text"
-                                          style={{ width: '150px' }}
-                                          value={row.indentQty}
-                                          onChange={(e) => {
-                                            const value = e.target.value;
-
-                                            if (/^\d*$/.test(value)) {
-                                              setIndentDocumentsData((prev) =>
-                                                prev.map((r) => (r.id === row.id ? { ...r, indentQty: value } : r))
-                                              );
-                                              setIndentDocumentsErrors((prev) => {
+                                        <td className="border px-2 py-2">
+                                          <input
+                                            type="text"
+                                            disabled
+                                            style={{ width: '150px' }}
+                                            value={row.uom}
+                                            onChange={(e) => {
+                                              const value = e.target.value;
+                                              setPurchaseDetails((prev) => prev.map((r) => (r.id === row.id ? { ...r, uom: value } : r)));
+                                              setPurchaseDetailsErrors((prev) => {
                                                 const newErrors = [...prev];
                                                 newErrors[index] = {
                                                   ...newErrors[index],
-                                                  indentQty: !value ? 'Indent Qty is required' : ''
+                                                  uom: !value ? 'UOM is required' : ''
                                                 };
                                                 return newErrors;
                                               });
-                                            }
-                                          }}
-                                          className={indentDocumentsErrors[index]?.indentQty ? 'error form-control' : 'form-control'}
-                                        />
-                                        {indentDocumentsErrors[index]?.indentQty && (
-                                          <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
-                                            {indentDocumentsErrors[index].indentQty}
-                                          </div>
-                                        )}
-                                      </td>
+                                            }}
+                                            className={purchaseDetailsErrors[index]?.uom ? 'error form-control' : 'form-control'}
+                                          />
+                                          {purchaseDetailsErrors[index]?.uom && (
+                                            <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                              {purchaseDetailsErrors[index].uom}
+                                            </div>
+                                          )}
+                                        </td>
 
-                                    </tr>
-                                  ))}
+                                        <td className="border px-2 py-2">
+                                          <input
+                                            type="text"
+                                            style={{ width: '150px' }}
+                                            value={row.reqQty}
+                                            onChange={(e) => {
+                                              const value = e.target.value;
+
+                                              if (/^\d*$/.test(value)) {
+                                                setPurchaseDetails((prev) =>
+                                                  prev.map((r) => (r.id === row.id ? { ...r, reqQty: value } : r))
+                                                );
+                                                setPurchaseDetailsErrors((prev) => {
+                                                  const newErrors = [...prev];
+                                                  newErrors[index] = {
+                                                    ...newErrors[index],
+                                                    reqQty: !value ? 'Require Qty is required' : ''
+                                                  };
+                                                  return newErrors;
+                                                });
+                                              }
+                                            }}
+                                            className={purchaseDetailsErrors[index]?.reqQty ? 'error form-control' : 'form-control'}
+                                          />
+                                          {purchaseDetailsErrors[index]?.reqQty && (
+                                            <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                              {purchaseDetailsErrors[index].reqQty}
+                                            </div>
+                                          )}
+                                        </td>
+
+                                        <td className="border px-2 py-2">
+                                          <input
+                                            type="text"
+                                            disabled
+                                            style={{ width: '150px' }}
+                                            value={row.avlStock}
+                                            onChange={(e) => {
+                                              const value = e.target.value;
+
+                                              // Allow only numeric values or an empty string
+                                              if (/^\d*$/.test(value)) {
+                                                setPurchaseDetails((prev) =>
+                                                  prev.map((r) => (r.id === row.id ? { ...r, avlStock: value } : r))
+                                                );
+                                                setPurchaseDetailsErrors((prev) => {
+                                                  const newErrors = [...prev];
+                                                  newErrors[index] = {
+                                                    ...newErrors[index],
+                                                    avlStock: !value ? 'Avl Stock is required' : '' // Show error if value is empty
+                                                  };
+                                                  return newErrors;
+                                                });
+                                              }
+                                            }}
+                                            className={purchaseDetailsErrors[index]?.avlStock ? 'error form-control' : 'form-control'}
+                                          />
+                                          {purchaseDetailsErrors[index]?.avlStock && (
+                                            <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                              {purchaseDetailsErrors[index].avlStock}
+                                            </div>
+                                          )}
+                                        </td>
+
+                                        <td className="border px-2 py-2">
+                                          <input
+                                            type="text"
+                                            style={{ width: '150px' }}
+                                            value={row.indentQty}
+                                            onChange={(e) => {
+                                              const value = e.target.value;
+
+                                              if (/^\d*$/.test(value)) {
+                                                setPurchaseDetails((prev) =>
+                                                  prev.map((r) => (r.id === row.id ? { ...r, indentQty: value } : r))
+                                                );
+                                                setPurchaseDetailsErrors((prev) => {
+                                                  const newErrors = [...prev];
+                                                  newErrors[index] = {
+                                                    ...newErrors[index],
+                                                    indentQty: !value ? 'Indent Qty is required' : ''
+                                                  };
+                                                  return newErrors;
+                                                });
+                                              }
+                                            }}
+                                            className={purchaseDetailsErrors[index]?.indentQty ? 'error form-control' : 'form-control'}
+                                          />
+                                          {purchaseDetailsErrors[index]?.indentQty && (
+                                            <div className="mt-2" style={{ color: 'red', fontSize: '12px' }}>
+                                              {purchaseDetailsErrors[index].indentQty}
+                                            </div>
+                                          )}
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
                                 </tbody>
                               </table>
                             </div>
@@ -1051,7 +1152,7 @@ const PurchaseIndent = () => {
 
                   {value === 1 && (
                     <>
-                      {indentDocumentsData.map((row, index) => (
+                      {purchaseDetails.map((row, index) => (
                         <div className="row d-flex">
                           <div className="col-md-3 mb-3">
                             <FormControl size="small" variant="outlined" fullWidth error={!!fieldErrors.verifiedBy}>
@@ -1088,22 +1189,18 @@ const PurchaseIndent = () => {
                                   // Update formData directly
                                   setFormData((prev) => ({
                                     ...prev,
-                                    remarks: value,
+                                    remarks: value
                                   }));
 
                                   // Update documents data if necessary
-                                  setIndentDocumentsData((prev) =>
-                                    prev.map((r) =>
-                                      r.id === formData.id ? { ...r, row: value } : r
-                                    )
-                                  );
+                                  setPurchaseDetails((prev) => prev.map((r) => (r.id === formData.id ? { ...r, row: value } : r)));
 
                                   // Update field errors
-                                  setIndentDocumentsErrors((prev) => {
+                                  setPurchaseDetailsErrors((prev) => {
                                     const newErrors = [...prev];
                                     newErrors[index] = {
                                       ...newErrors[index],
-                                      row: !value ? 'File Name is required' : '',
+                                      row: !value ? 'File Name is required' : ''
                                     };
                                     return newErrors;
                                   });
@@ -1114,22 +1211,15 @@ const PurchaseIndent = () => {
                               />
                             </FormControl>
                           </div>
-
                         </div>
                       ))}
                     </>
                   )}
                 </Box>
               </div>
-
             </>
           ) : (
-            <CommonListViewTable
-              data={listViewData}
-              columns={listViewColumns}
-              blockEdit={true}
-              toEdit={getPurchaseIndentById}
-            />
+            <CommonListViewTable data={listViewData} columns={listViewColumns} blockEdit={true} toEdit={getPurchaseIndentById} />
           )}
         </div>
       </div>
