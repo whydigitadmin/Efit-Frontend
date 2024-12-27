@@ -46,7 +46,7 @@ const ThirdPartyReportDetails = () => {
     supplierName: '',
     thirdPartyDetails: '',
     thirdPartyAddress: '',
-    inwardNo:''
+    inwardNo: ''
   });
 
   const [fieldErrors, setFieldErrors] = useState({
@@ -92,19 +92,19 @@ const ThirdPartyReportDetails = () => {
   const [attachmentTable, setAttachmentTable] = useState([
     {
       id: 1,
-      itemId: '',
+      itemId: ''
       // description: ''
     }
   ]);
   const [attachmentTableErrors, setAttachmentTableErrors] = useState([
     {
-      itemId: '',
+      itemId: ''
       // description: ''
     }
   ]);
   const handleClear = () => {
     setFormData({
-      docDate:dayjs(),
+      docDate: dayjs(),
       grnno: '',
       workOrderNo: '',
       poNo: '',
@@ -115,7 +115,7 @@ const ThirdPartyReportDetails = () => {
     });
     // getAllActiveCurrency(orgId);
     setFieldErrors({
-      docDate:dayjs(),
+      docDate: dayjs(),
       grnno: '',
       workOrderNo: '',
       poNo: '',
@@ -124,27 +124,11 @@ const ThirdPartyReportDetails = () => {
       thirdPartyDetails: '',
       thirdPartyAddress: ''
     });
-    setDetailsTableData([
-      { id: 1,
-        itemId: '',
-        itemParticular: '',
-        inspectionType: '',
-        certificateNo: '',
-        status: '',
-        remarks: ''}
-    ]);
-    setDetailsTableErrors([
-      { id: 1,
-        itemId: '',
-        itemParticular: '',
-        inspectionType: '',
-        certificateNo: '',
-        status: '',
-        remarks: ''}
-    ]);
+    setDetailsTableData([{ id: 1, itemId: '', itemParticular: '', inspectionType: '', certificateNo: '', status: '', remarks: '' }]);
+    setDetailsTableErrors([{ id: 1, itemId: '', itemParticular: '', inspectionType: '', certificateNo: '', status: '', remarks: '' }]);
     setAttachmentTable([
       {
-        itemId: '',
+        itemId: ''
         // description: ''
       }
     ]);
@@ -164,9 +148,7 @@ const ThirdPartyReportDetails = () => {
 
   const getThirdPartyDocId = async () => {
     try {
-      const response = await apiCalls(
-        'get',`/grn/getThirdPartyInspectionDocId?orgId=${orgId}`
-      );
+      const response = await apiCalls('get', `/grn/getThirdPartyInspectionDocId?orgId=${orgId}`);
       setDocId(response.paramObjectsMap.thirdPartyInspectionDocId);
     } catch (error) {
       console.error('Error fetching gate passes:', error);
@@ -190,7 +172,7 @@ const ThirdPartyReportDetails = () => {
       if (result) {
         const tpiVO = result.paramObjectsMap.thirdPartyInspectionVO[0];
         setEditId(row.original.id);
-        setDocId(tpiVO.docId)
+        setDocId(tpiVO.docId);
         setFormData({
           grnno: tpiVO.grnno,
           id: tpiVO.id,
@@ -228,8 +210,7 @@ const ThirdPartyReportDetails = () => {
     try {
       const response = await apiCalls('get', `/grn/getThirdPartyDetailsForThirdPartyInsp?orgId=${orgId}`);
       console.log('getThirdPartyDetailsAndAddress:', response);
-      setThirdPartyDetailsAndAddress(response.paramObjectsMap.chCode)
-      
+      setThirdPartyDetailsAndAddress(response.paramObjectsMap.chCode);
     } catch (error) {
       console.error('Error fetching ItemWise Process Master data:', error);
     }
@@ -238,69 +219,124 @@ const ThirdPartyReportDetails = () => {
     try {
       const response = await apiCalls('get', `/grn/getGRNForThirdPartyInsp?orgId=${orgId}`);
       console.log('getGrnWorkPoCNSn:', response);
-      setGrnWorkPoCNSn(response.paramObjectsMap.chCode)
-      
+      setGrnWorkPoCNSn(response.paramObjectsMap.chCode);
     } catch (error) {
       console.error('Error fetching ItemWise Process Master data:', error);
     }
   };
+  // const getItemId = async (inwardNo) => {
+  //   try {
+  //     const response = await apiCalls('get', `/grn/getItemForGRN?inwardNo=${inwardNo}&orgId=${orgId}`);
+  //     console.log('getGrnWorkPoCNSn:', response);
+  //     setThirdPartyInspectionItemId(response.paramObjectsMap.chCode);
+  //   } catch (error) {
+  //     console.error('Error fetching ItemWise Process Master data:', error);
+  //   }
+  // };
   const getItemId = async (inwardNo) => {
     try {
       const response = await apiCalls('get', `/grn/getItemForGRN?inwardNo=${inwardNo}&orgId=${orgId}`);
-      console.log('getGrnWorkPoCNSn:', response);
-      setThirdPartyInspectionItemId(response.paramObjectsMap.chCode)
-    } catch (error) {
-      console.error('Error fetching ItemWise Process Master data:', error);
-    }
-  };
-  const handleInputChange = (e) => {
-    const { name, value, selectionStart, selectionEnd, type } = e.target;
-    let errorMessage = '';
-    let updatedFormData = { ...formData, [name]: value };
-  
-    if (name === 'thirdPartyDetails') {
-      const thirdParty = ThirdPartyDetailsAndAddress.find((item) => item.partyName === value);
-      updatedFormData = {
-        ...updatedFormData,
-        thirdPartyAddress: thirdParty ? thirdParty.address : '',
-      };
-    }
-    if (name === 'grnno') {
-      const grn = grnWorkPoCNSn.find((item) => item.grnno === value);
-      updatedFormData = {
-        ...updatedFormData,
-        // workOrderNo: grn ? grn.workOrderNo : '',
-        poNo: grn ? grn.pono : '',
-        customerName: grn ? grn.customer : '',
-        supplierName: grn ? grn.suppliername : '',
-        inwardNo: grn ? grn.inwardno : '',
-      };
-    }
+      console.log('getItemId response:', response);
 
-    if (name === 'itemId') {
-      const thirdPartyTable = thirdPartyInspectionItemId.find((item) => item.thirdPartyDetails === value);
-      updatedFormData = {
-        ...updatedFormData,
-        itemParticular: thirdPartyTable ? thirdPartyTable.itemParticular : '',
-      };
-    }
-  
-    setFieldErrors((prevErrors) => ({
-      ...prevErrors,
-      [name]: errorMessage,
-    }));
-    setFormData(updatedFormData);
-  
-    // Preserve cursor position for text inputs
-    if ((type === 'text' || type === 'textarea') && !errorMessage) {
-      setTimeout(() => {
-        const inputElement = document.getElementsByName(name)[0];
-        if (inputElement && inputElement.setSelectionRange) {
-          inputElement.setSelectionRange(selectionStart, selectionEnd);
-        }
-      }, 0);
+      // Update additional data from the API response
+      setThirdPartyInspectionItemId(response.paramObjectsMap.chCode || []);
+    } catch (error) {
+      console.error('Error fetching Item details:', error);
     }
   };
+
+  // const handleInputChange = (e) => {
+  //   const { name, value, selectionStart, selectionEnd, type } = e.target;
+  //   let errorMessage = '';
+  //   let updatedFormData = { ...formData, [name]: value };
+
+  //   if (name === 'thirdPartyDetails') {
+  //     const thirdParty = ThirdPartyDetailsAndAddress.find((item) => item.partyName === value);
+  //     updatedFormData = {
+  //       ...updatedFormData,
+  //       thirdPartyAddress: thirdParty ? thirdParty.address : '',
+  //     };
+  //   }
+  //   if (name === 'grnno') {
+  //     const grn = grnWorkPoCNSn.find((item) => item.grnno === value);
+  //     updatedFormData = {
+  //       ...updatedFormData,
+  //       // workOrderNo: grn ? grn.workOrderNo : '',
+  //       poNo: grn ? grn.pono : '',
+  //       customerName: grn ? grn.customer : '',
+  //       supplierName: grn ? grn.suppliername : '',
+  //       inwardNo: grn ? grn.inwardno : '',
+  //     };
+  //   }
+
+  //   if (name === 'itemId') {
+  //     const thirdPartyTable = thirdPartyInspectionItemId.find((item) => item.thirdPartyDetails === value);
+  //     updatedFormData = {
+  //       ...updatedFormData,
+  //       itemParticular: thirdPartyTable ? thirdPartyTable.itemParticular : '',
+  //     };
+  //   }
+
+  //   setFieldErrors((prevErrors) => ({
+  //     ...prevErrors,
+  //     [name]: errorMessage,
+  //   }));
+  //   setFormData(updatedFormData);
+
+  //   // Preserve cursor position for text inputs
+  //   if ((type === 'text' || type === 'textarea') && !errorMessage) {
+  //     setTimeout(() => {
+  //       const inputElement = document.getElementsByName(name)[0];
+  //       if (inputElement && inputElement.setSelectionRange) {
+  //         inputElement.setSelectionRange(selectionStart, selectionEnd);
+  //       }
+  //     }, 0);
+  //   }
+  // };
+  // const handleInputChange = (e) => {
+  //   const { name, value, type, checked } = e.target;
+  //   const inputValue = type === 'checkbox' ? checked : value;
+  //   setFormData({ ...formData, [name]: inputValue });
+  //   setFieldErrors({ ...fieldErrors, [name]: false });
+  // };
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    const inputValue = type === 'checkbox' ? checked : value;
+
+    // Update the form data for the current field
+    setFormData((prevFormData) => ({ ...prevFormData, [name]: inputValue }));
+    setFieldErrors((prevFieldErrors) => ({ ...prevFieldErrors, [name]: false }));
+
+    // Additional logic for `grnno`
+    if (name === 'grnno') {
+      // Find the selected GRN data
+      const selectedGRN = grnWorkPoCNSn.find((grn) => grn.grnno === value);
+
+      if (selectedGRN) {
+        // Map the related fields
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          poNo: selectedGRN.pono || '',
+          customerName: selectedGRN.customer || '',
+          supplierName: selectedGRN.suppliername || ''
+        }));
+
+        // Fetch additional data using a separate function
+        if (selectedGRN.inwardno) {
+          getItemId(selectedGRN.inwardno);
+        }
+      } else {
+        // Clear the dependent fields if no GRN is selected
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          poNo: '',
+          customerName: '',
+          supplierName: ''
+        }));
+      }
+    }
+  };
+
   const handleDateChange = (field, date) => {
     const formattedDate = dayjs(date);
     console.log('formattedDate', formattedDate);
@@ -314,22 +350,25 @@ const ThirdPartyReportDetails = () => {
     }
     const newRow = {
       id: Date.now(),
-      itemId:'',
-      itemParticular:'',
-      inspectionType:'',
-      certificateNo:'',
-      status:'',
-      remarks:''
+      itemId: '',
+      itemParticular: '',
+      inspectionType: '',
+      certificateNo: '',
+      status: '',
+      remarks: ''
     };
     setDetailsTableData([...detailsTableData, newRow]);
-    setDetailsTableErrors([...detailsTableErrors, { 
-      itemId:'',
-      itemParticular:'',
-      inspectionType:'',
-      certificateNo:'',
-      status:'',
-      remarks:'' 
-    }]);
+    setDetailsTableErrors([
+      ...detailsTableErrors,
+      {
+        itemId: '',
+        itemParticular: '',
+        inspectionType: '',
+        certificateNo: '',
+        status: '',
+        remarks: ''
+      }
+    ]);
   };
 
   const isLastRowEmpty = (table) => {
@@ -337,12 +376,14 @@ const ThirdPartyReportDetails = () => {
     if (!lastRow) return false;
 
     if (table === detailsTableData) {
-      return !lastRow.itemId ||
-      !lastRow.itemParticular ||
-      !lastRow.inspectionType ||
-      !lastRow.certificateNo ||
-      !lastRow.status ||
-      !lastRow.remarks;
+      return (
+        !lastRow.itemId ||
+        !lastRow.itemParticular ||
+        !lastRow.inspectionType ||
+        !lastRow.certificateNo ||
+        !lastRow.status ||
+        !lastRow.remarks
+      );
     }
     return false;
   };
@@ -373,12 +414,10 @@ const ThirdPartyReportDetails = () => {
     const newRow = {
       id: Date.now(),
       itemId: '',
-      attachment:''
+      attachment: ''
     };
     setAttachmentTable([...attachmentTable, newRow]);
-    setAttachmentTableErrors([...attachmentTableErrors, { itemId: '',
-      attachment:''
-     }]);
+    setAttachmentTableErrors([...attachmentTableErrors, { itemId: '', attachment: '' }]);
   };
 
   const isTermsLastRowEmpty = (table) => {
@@ -386,8 +425,7 @@ const ThirdPartyReportDetails = () => {
     if (!lastRow) return false;
 
     if (table === attachmentTable) {
-      return !lastRow.itemId ||
-      !lastRow.attachment
+      return !lastRow.itemId || !lastRow.attachment;
     }
     return false;
   };
@@ -613,13 +651,7 @@ const ThirdPartyReportDetails = () => {
                       });
                     }}
                     renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="GRN No"
-                        name="grnno"
-                        error={!!fieldErrors.grnno}
-                        helperText={fieldErrors.grnno}
-                      />
+                      <TextField {...params} label="GRN No" name="grnno" error={!!fieldErrors.grnno} helperText={fieldErrors.grnno} />
                     )}
                   />
                 </div>
@@ -690,11 +722,15 @@ const ThirdPartyReportDetails = () => {
                 <div className="col-md-3 mb-3">
                   <Autocomplete
                     disablePortal
-                    options={ThirdPartyDetailsAndAddress.map((option, index) => ({ ...option, key: index }))}
+                    options={thirdPartyInspectionItemId.map((option, index) => ({ ...option, key: index }))}
                     getOptionLabel={(option) => option.partyName || ''}
                     sx={{ width: '100%' }}
                     size="small"
-                    value={formData.thirdPartyDetails ? ThirdPartyDetailsAndAddress.find((c) => c.partyName === formData.thirdPartyDetails) : null}
+                    value={
+                      formData.thirdPartyDetails
+                        ? thirdPartyInspectionItemId.find((c) => c.partyName === formData.thirdPartyDetails)
+                        : null
+                    }
                     onChange={(event, newValue) => {
                       handleInputChange({
                         target: {
@@ -999,7 +1035,13 @@ const ThirdPartyReportDetails = () => {
                                           title="Delete"
                                           icon={DeleteIcon}
                                           onClick={() =>
-                                            handleDeleteRow(row.id, attachmentTable, setAttachmentTable, attachmentTableErrors, setAttachmentTableErrors)
+                                            handleDeleteRow(
+                                              row.id,
+                                              attachmentTable,
+                                              setAttachmentTable,
+                                              attachmentTableErrors,
+                                              setAttachmentTableErrors
+                                            )
                                           }
                                         />
                                       </td>

@@ -37,7 +37,7 @@ const GRN = () => {
   const [accountNames, setAccountNames] = useState([]);
   const [currencies, setCurrencies] = useState([]);
   const [uploadOpen, setUploadOpen] = useState(false);
-
+  const [allLocation, setAllLocation] = useState([]);
 
   const [formData, setFormData] = useState({
     purchaseEnquiryNo: '',
@@ -215,9 +215,8 @@ const GRN = () => {
 
   const getAccountNameFromGroup = async () => {
     try {
-      const response = await apiCalls('get', `/transaction/getAccountNameFromGroup?orgId=${orgId}`);
-      setAccountNames(response.paramObjectsMap.generalJournalVO);
-      console.log('generalJournalVO', response.paramObjectsMap.generalJournalVO);
+      const response = await apiCalls('get', `/purchaseReturn/getLocationFromStockLocation?orgId=${orgId}`);
+      setAllLocation(response.paramObjectsMap.stockLocationVO);
     } catch (error) {
       console.error('Error fetching gate passes:', error);
     }
@@ -679,9 +678,9 @@ const GRN = () => {
                       name="location"
                       value={formData.location}
                     >
-                      {currencies.map((item) => (
-                        <MenuItem key={item.id} value={item.location}>
-                          {item.location}
+                      {allLocation.map((loc) => (
+                        <MenuItem key={loc.id} value={loc.location}>
+                          {loc.location}
                         </MenuItem>
                       ))}
                     </Select>
